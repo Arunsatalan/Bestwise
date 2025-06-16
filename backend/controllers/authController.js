@@ -109,9 +109,11 @@ exports.loginUser = async (req, res) => {
         role: user.role,
         password: user.password,
         
+        
         address: user.address,
         phone: user.phone,
-        zipCode: user.zipCode      }
+        zipCode: user.zipCode
+      }
     });
 
   } catch (err) {
