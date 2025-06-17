@@ -2,7 +2,7 @@ const jwt = require("jsonwebtoken");
 const User = require('../models/User');
 
 
-// Token generator
+// Token generator--summatesing
 const generateToken = (user) => {
   return jwt.sign(
     { id: user._id, role: user.role },
@@ -53,7 +53,10 @@ exports.registerUser = async (req, res) => {
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
-        role: user.role
+        role: user.role,
+        address: user.address,
+        phone: user.phone,
+        zipCode: user.zipCode
       }
     });
 
@@ -106,6 +109,9 @@ exports.loginUser = async (req, res) => {
         role: user.role,
         password: user.password,
         phone: user.phone,
+        address: user.address,
+        phone: user.phone,
+        zipCode: user.zipCode
       }
     });
 

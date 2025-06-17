@@ -1,5 +1,6 @@
 import './globals.css';
 import ReduxProvider from './ReduxProvider';
+import { Toaster } from 'react-hot-toast';
 
 export const metadata = {
   title: 'Best Wishes',
@@ -10,7 +11,10 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body className="antialiased">
-        <ReduxProvider>{children}</ReduxProvider>
+        <ReduxProvider>
+          {children}
+          <Toaster position="top-center" />
+        </ReduxProvider>
       </body>
     </html>
   );
