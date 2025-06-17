@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useDispatch, useSelector } from 'react-redux';
 import { LuShoppingCart } from "react-icons/lu";
@@ -12,12 +12,69 @@ import Link from 'next/link';
 import { Heart, Flame } from 'lucide-react';
 import Image from 'next/image';
 import { getProducts } from '../../actions/productAction'
+import { addToCart } from '../../slices/cartSlice';
+import { addToWishlist, removeFromWishlist } from '../../slices/wishlistSlice';
 import { AiFillStar, AiOutlineStar, AiTwotoneStar } from 'react-icons/ai';
+import { toast } from 'react-hot-toast';
 
 function ProductDetailPage() {
   const { id } = useParams();
   const { allProducts } = useSelector((state) => state.productsState);
+  const { wishlistItems } = useSelector((state) => state.wishlistState);
   const product = allProducts?.find((item) => item._id === id);
+  const [quantity, setQuantity] = useState(1);
+
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    dispatch(getProducts());
+    console.log(allProducts)
+  }, [dispatch])
+
+  // Handle add to cart
+  const handleAddToCart = () => {
+    if (!product) return;
+    
+    const cartItem = {
+      id: product._id,
+      _id: product._id,
+      title: product.title,
+      price: product.price,
+      image: "/mug.jpg", // Using default image for now
+      quantity: quantity
+    };
+    
+    dispatch(addToCart(cartItem));
+    toast.success(`${product.title} added to cart!`);
+  };
+
+  // Handle add/remove from wishlist
+  const handleWishlistToggle = () => {
+    if (!product) return;
+    
+    const isInWishlist = wishlistItems.some(item => item._id === product._id);
+    
+    if (isInWishlist) {
+      dispatch(removeFromWishlist(product._id));
+      toast.success(`${product.title} removed from wishlist!`);
+    } else {
+      dispatch(addToWishlist(product));
+      toast.success(`${product.title} added to wishlist!`);
+    }
+  };
+
+  // Check if product is in wishlist
+  const isInWishlist = () => {
+    if (!product) return false;
+    return wishlistItems.some(item => item._id === product._id);
+  };
+
+  // Handle quantity changes
+  const handleQuantityChange = (newQuantity) => {
+    if (newQuantity >= 1 && newQuantity <= (product?.stock || 10)) {
+      setQuantity(newQuantity);
+    }
+  };
 
   if (!product) {
     return (
@@ -26,13 +83,6 @@ function ProductDetailPage() {
       </div>
     );
   }
-
-  const dispatch = useDispatch();
-
-  useEffect(() => {
-    dispatch(getProducts());
-    console.log(allProducts)
-  }, [dispatch])
 
   return (
 
@@ -64,7 +114,12 @@ function ProductDetailPage() {
           <div className='flex-col justify-center space-y-[15px]'>
             <div className='flex justify-between items-center'>
               <span className='font-extra-large font-bold'>{product.title}</span>
-              <span><FaRegHeart /></span>
+              <button 
+                onClick={handleWishlistToggle}
+                className="hover:scale-110 transition-transform"
+              >
+                <FaRegHeart className={`text-2xl ${isInWishlist() ? 'text-red-500 fill-red-500' : 'text-gray-400'}`} />
+              </button>
             </div>
             <div className='flex items-center'>
               <div className='flex items-center pr-[15px]'>
@@ -78,25 +133,40 @@ function ProductDetailPage() {
             </div>
             <div className='flex items-center space-x-[10px]'>
               <span className='font-medium'>Quantity</span>
-              <button className='border bg-[#D9D9D9] rounded-[5px] w-[25px] h-[25px]'>-</button>
-              <span className='w-[48px] h-[40px] border flex justify-center items-center font-large rounded-[5px]'>1</span>
-              <button className='border bg-[#D9D9D9] rounded-[5px] w-[25px] h-[25px]'>+</button>
+              <button 
+                className='border bg-[#D9D9D9] rounded-[5px] w-[25px] h-[25px]'
+                onClick={() => handleQuantityChange(quantity - 1)}
+              >
+                -
+              </button>
+              <span className='w-[48px] h-[40px] border flex justify-center items-center font-large rounded-[5px]'>
+                {quantity}
+              </span>
+              <button 
+                className='border bg-[#D9D9D9] rounded-[5px] w-[25px] h-[25px]'
+                onClick={() => handleQuantityChange(quantity + 1)}
+              >
+                +
+              </button>
               <span className='pl-[50px] text-green-500'>{product.stock > 0 ? "In stock" : "Out of stock"}</span>
             </div>
           </div>
 
           <div className='flex-col justify-center space-y-[15px] pt-[15px]'>
-            <button className='flex justify-center items-center border text-[#822BE2] rounded-[8px] w-full h-[50px] gap-2 font-bold'>
+            <button 
+              onClick={handleAddToCart}
+              className='flex justify-center items-center border text-[#822BE2] rounded-[8px] w-full h-[50px] gap-2 font-bold hover:bg-purple-50 transition-colors'
+            >
               Add to cart <LuShoppingCart />
             </button>
-            <button className='flex justify-center items-center border text-white bg-[#822BE2] rounded-[8px] w-full h-[50px] gap-2 font-bold'>
+            <button className='flex justify-center items-center border text-white bg-[#822BE2] rounded-[8px] w-full h-[50px] gap-2 font-bold hover:bg-purple-700 transition-colors'>
               Get now
             </button>
             <div className='w-full flex gap-[15px]'>
-              <button className='border text-[#822BE2] rounded-[8px] w-[50%] h-[50px] font-semibold'>
+              <button className='border text-[#822BE2] rounded-[8px] w-[50%] h-[50px] font-semibold hover:bg-purple-50 transition-colors'>
                 Apply Collaborative
               </button>
-              <button className='border text-[#822BE2] rounded-[8px] w-[50%] h-[50px] font-semibold'>
+              <button className='border text-[#822BE2] rounded-[8px] w-[50%] h-[50px] font-semibold hover:bg-purple-50 transition-colors'>
                 Apply Surprise Gift
               </button>
             </div>
@@ -123,16 +193,16 @@ function ProductDetailPage() {
       {/* all Products */}
       <div className="flex flex-wrap gap-4 mt-[100px]">
         {allProducts && allProducts.length > 0 ? (
-          allProducts.slice(0, 9).map((product) => (
+          allProducts.slice(0, 9).map((relatedProduct) => (
             <Link
-              key={product._id}
-              href={`/productDetail/${product._id}`}
+              key={relatedProduct._id}
+              href={`/productDetail/${relatedProduct._id}`}
               className="w-[173px] h-[261px] rounded-lg block"
             >
               <div className="relative">
                 <Image
                   src="/mug.jpg" // Replace with product.
-                  alt={product.title}
+                  alt={relatedProduct.title}
                   width={172}
                   height={172}
                   className="rounded-lg object-cover"
@@ -146,14 +216,14 @@ function ProductDetailPage() {
               </div>
 
               <div className="mt-2 px-1">
-                <h3 className="font-medium truncate">{product.title}</h3>
+                <h3 className="font-medium truncate">{relatedProduct.title}</h3>
                 <p className="font-medium text-gray-700">
-                  US ${product.price}
+                  US ${relatedProduct.price}
                 </p>
                 <div className="flex text-yellow-400 text-xs sm:text-sm mt-1">
                   {Array.from({ length: 5 }, (_, i) => {
-                    const fullStars = Math.floor(product.rating || 0);
-                    const hasHalfStar = (product.rating || 0) - fullStars >= 0.5;
+                    const fullStars = Math.floor(relatedProduct.rating || 0);
+                    const hasHalfStar = (relatedProduct.rating || 0) - fullStars >= 0.5;
 
                     if (i < fullStars) {
                       return <AiFillStar key={i} />;

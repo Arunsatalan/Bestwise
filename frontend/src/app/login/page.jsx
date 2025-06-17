@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 import axios from 'axios';
 import { useDispatch } from 'react-redux';
-import { userLogin } from '../../app/slices/userSlice';
+import { loginUser } from '../../app/slices/userSlice';
 import logo from '../../assets/logo.png';
 import { useRouter } from 'next/navigation';
 import Loader from '../components/loader/page';
@@ -31,7 +31,7 @@ function Page() {
 
       const userData = res.data.user;
 
-      dispatch(userLogin({
+      dispatch(loginUser({
         user: userData,
         role: userData.role,
       }));

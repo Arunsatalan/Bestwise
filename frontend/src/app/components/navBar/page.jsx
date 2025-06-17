@@ -5,13 +5,16 @@ import logo from '../../../../public/logo.png';
 import { MdOutlineShoppingCart } from 'react-icons/md';
 import { CiSearch } from 'react-icons/ci';
 import { HiMenu, HiX } from 'react-icons/hi';
+import { FaRegHeart, FaHeart } from 'react-icons/fa';
 import { useDispatch, useSelector } from 'react-redux';
-import { userLogout } from '@/app/slices/userSlice';
+import { logoutUser } from '@/app/slices/userSlice';
 import { useRouter } from 'next/navigation';
 import ReminderGift from '../../modal/reminder/page';
 
 function Navbar() {
   const { user } = useSelector((state) => state.userState);
+  const { cartItems } = useSelector((state) => state.cartState);
+  const { wishlistItems } = useSelector((state) => state.wishlistState);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [giftDropdownOpen, setGiftDropdownOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
@@ -29,7 +32,7 @@ function Navbar() {
   };
 
   const logoutHandler = () => {
-    dispatch(userLogout());
+    dispatch(logoutUser());
     setUserDropdownOpen(false);
   };
 
@@ -78,8 +81,25 @@ function Navbar() {
                 </li>
 
                 <li className="cursor-pointer hover:text-[#822BE2] transition-colors">About Us</li>
-                <li className="cursor-pointer hover:text-[#822BE2] transition-colors" onClick={() => handleNavigation('/user/checkout')}>
+                
+                {/* Wishlist */}
+                <li className="relative cursor-pointer hover:text-[#822BE2] transition-colors" onClick={() => handleNavigation('/user/wishlist')}>
+                  <FaRegHeart size={24} />
+                  {wishlistItems.length > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                      {wishlistItems.length}
+                    </span>
+                  )}
+                </li>
+
+                {/* Cart */}
+                <li className="relative cursor-pointer hover:text-[#822BE2] transition-colors" onClick={() => handleNavigation('/user/checkout')}>
                   <MdOutlineShoppingCart size={24} />
+                  {cartItems.length > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-purple-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                      {cartItems.length}
+                    </span>
+                  )}
                 </li>
 
                 {/* User */}
@@ -98,7 +118,7 @@ function Navbar() {
                   {userDropdownOpen && (
                     <ul className="absolute right-0 mt-2 bg-white border border-gray-200 rounded-md shadow-lg w-40 text-sm z-50">
                       <li className="px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors" onClick={() => handleNavigation('/user/profile')}>Profile</li>
-                      <li className="px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors">Wishlists</li>
+                      <li className="px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors" onClick={() => handleNavigation('/user/wishlist')}>Wishlists</li>
                       <li className="px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors" onClick={() => handleNavigation('/user/history')}>History</li>
                       <li className="px-4 py-3 hover:bg-red-50 cursor-pointer text-red-500 transition-colors" onClick={logoutHandler}>Logout</li>
                     </ul>
@@ -144,12 +164,30 @@ function Navbar() {
               </div>
 
               <div className="cursor-pointer hover:text-[#822BE2] transition-colors py-2">About Us</div>
-              <div className="cursor-pointer hover:text-[#822BE2] transition-colors py-2" onClick={() => handleNavigation('/user/checkout')}>Cart</div>
+              
+              {/* Mobile Wishlist */}
+              <div className="flex items-center justify-between cursor-pointer hover:text-[#822BE2] transition-colors py-2" onClick={() => handleNavigation('/user/wishlist')}>
+                <span>Wishlist</span>
+                {wishlistItems.length > 0 && (
+                  <span className="bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    {wishlistItems.length}
+                  </span>
+                )}
+              </div>
+              
+              {/* Mobile Cart */}
+              <div className="flex items-center justify-between cursor-pointer hover:text-[#822BE2] transition-colors py-2" onClick={() => handleNavigation('/user/checkout')}>
+                <span>Cart</span>
+                {cartItems.length > 0 && (
+                  <span className="bg-purple-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    {cartItems.length}
+                  </span>
+                )}
+              </div>
 
               {user ? (
                 <>
                   <div className="hover:text-[#822BE2] transition-colors py-2" onClick={() => handleNavigation('/user/profile')}>Profile</div>
-                  <div className="hover:text-[#822BE2] transition-colors py-2">Wishlists</div>
                   <div className="hover:text-[#822BE2] transition-colors py-2" onClick={() => handleNavigation('/user/history')}>History</div>
                   <div className="text-red-500 hover:text-red-600 transition-colors py-2" onClick={logoutHandler}>Logout</div>
                 </>
