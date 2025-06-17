@@ -14,14 +14,19 @@ import Footer from "./components/footer/page"
 import Navbar from "./components/navBar/page"
 import { useDispatch, useSelector } from "react-redux"
 import { getProducts } from "./actions/productAction"
+import { addToCart } from "./slices/cartSlice"
+import { addToWishlist, removeFromWishlist } from "./slices/wishlistSlice"
 import Link from "next/link"
 import { AiFillStar, AiOutlineStar, AiTwotoneStar } from 'react-icons/ai';
 import Loader from "./components/loader/page"
+import { toast } from 'react-hot-toast'
 
 const images = ["/1.jpg", "/2.jpg", "/3.jpg"]
 
 export default function FancyCarousel() {
   const { allProducts } = useSelector((state) => state.productsState)
+  const { cartItems } = useSelector((state) => state.cartState)
+  const { wishlistItems } = useSelector((state) => state.wishlistState)
   const dispatch = useDispatch()
     
   const [loading, setLoading] = useState(true);
@@ -31,6 +36,38 @@ export default function FancyCarousel() {
     console.log(allProducts)
   }, [dispatch])
 
+  // Handle add to cart
+  const handleAddToCart = (product) => {
+    const cartItem = {
+      id: product._id,
+      _id: product._id,
+      title: product.title,
+      price: product.price,
+      image: "/mug.jpg", // Using default image for now
+      quantity: 1
+    };
+    
+    dispatch(addToCart(cartItem));
+    toast.success(`${product.title} added to cart!`);
+  };
+
+  // Handle add/remove from wishlist
+  const handleWishlistToggle = (product) => {
+    const isInWishlist = wishlistItems.some(item => item._id === product._id);
+    
+    if (isInWishlist) {
+      dispatch(removeFromWishlist(product._id));
+      toast.success(`${product.title} removed from wishlist!`);
+    } else {
+      dispatch(addToWishlist(product));
+      toast.success(`${product.title} added to wishlist!`);
+    }
+  };
+
+  // Check if product is in wishlist
+  const isInWishlist = (productId) => {
+    return wishlistItems.some(item => item._id === productId);
+  };
 
   const cards = [
     {
@@ -214,8 +251,7 @@ export default function FancyCarousel() {
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 ">
             {allProducts && allProducts.length > 0 ? (
               allProducts.slice(0, 12).map((product) => (
-                <Link key={product._id} href={`/productDetail/${product._id}`} className="block">
-
+                <Card key={product._id} className="group hover:shadow-lg transition-shadow">
                   <CardContent className="p-0 border-1 border-[#D9D9D9] rounded-[10px]">
                     <div className="relative">
                       <Image
@@ -228,12 +264,23 @@ export default function FancyCarousel() {
                       <div className="absolute top-2 left-2 bg-red-100 rounded-full p-1">
                         <Flame className="text-red-500 w-3 h-3 sm:w-4 sm:h-4" />
                       </div>
-                      <div className="absolute top-2 right-2 bg-purple-100 rounded-full p-1 cursor-pointer hover:bg-purple-200 transition-colors">
-                        <Heart className="text-purple-500 w-3 h-3 sm:w-4 sm:h-4" />
+                      <div 
+                        className="absolute top-2 right-2 bg-purple-100 rounded-full p-1 cursor-pointer hover:bg-purple-200 transition-colors"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleWishlistToggle(product);
+                        }}
+                      >
+                        <Heart 
+                          className={`w-3 h-3 sm:w-4 sm:h-4 ${isInWishlist(product._id) ? 'text-red-500 fill-red-500' : 'text-purple-500'}`} 
+                        />
                       </div>
                     </div>
                     <div className="p-3">
-                      <h3 className="font-medium text-sm sm:text-base truncate">{product.title}</h3>
+                      <Link href={`/productDetail/${product._id}`}>
+                        <h3 className="font-medium text-sm sm:text-base truncate hover:text-purple-600 transition-colors">{product.title}</h3>
+                      </Link>
                       <p className="font-semibold text-purple-600 text-sm sm:text-base">US ${product.price}</p>
                       <div className="flex text-yellow-400 text-xs sm:text-sm mt-1">
                         <div className="flex text-yellow-400 text-xs sm:text-sm mt-1">
@@ -250,13 +297,20 @@ export default function FancyCarousel() {
                             }
                           })}
                         </div>
-
-
                       </div>
+                      <Button 
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleAddToCart(product);
+                        }}
+                        className="w-full mt-2 bg-purple-600 hover:bg-purple-700 text-white text-sm py-1"
+                      >
+                        Add to Cart
+                      </Button>
                     </div>
                   </CardContent>
-
-                </Link>
+                </Card>
               ))
             ) : (
               <div className="col-span-full text-center py-12">

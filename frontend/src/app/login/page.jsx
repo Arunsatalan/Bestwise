@@ -4,10 +4,11 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 import axios from 'axios';
 import { useDispatch } from 'react-redux';
-import { userLogin } from '../../app/slices/userSlice';
+import { loginUser } from '../../app/slices/userSlice';
 import logo from '../../assets/logo.png';
 import { useRouter } from 'next/navigation';
 import Loader from '../components/loader/page';
+import Link from 'next/link';
 
 function Page() {
   const dispatch = useDispatch();
@@ -30,7 +31,7 @@ function Page() {
 
       const userData = res.data.user;
 
-      dispatch(userLogin({
+      dispatch(loginUser({
         user: userData,
         role: userData.role,
       }));
@@ -113,7 +114,7 @@ function Page() {
               </button>
 
               <div className='w-full flex justify-center items-center font-content'>
-                <span>Don't have an account? <span className='underline text-blue-500 cursor-pointer'>Sign up</span></span>
+                <span>Don't have an account? <Link href='/signup' className='underline text-blue-500 cursor-pointer'>Sign up</Link></span>
               </div>
             </div>
           </div>
