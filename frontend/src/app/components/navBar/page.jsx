@@ -12,7 +12,6 @@ import ReminderGift from '../../modal/reminder/page';
 import { Heart } from 'lucide-react';
 import { clearCart } from '@/app/slices/cartSlice';
 import { clearWishlist } from '@/app/slices/wishlistSlice';
-import axios from 'axios';
 
 function Navbar() {
   const { user } = useSelector((state) => state.userState);
