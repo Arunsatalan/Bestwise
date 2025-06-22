@@ -22,9 +22,7 @@ app.use(cookieParser());
 //  Routes
 app.use('/api', authRoutes);
 app.use('/api/products', productRoutes);
-<<<<<<< HEAD
-=======
 app.use('/api/orders', orderRoutes);
->>>>>>> b72d6a6e57ab8402290872919715d1d3ec70ee5a
+
 
 module.exports = app;
