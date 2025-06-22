@@ -136,16 +136,12 @@ export default function ProductForm({ product = null }) {
     setCurrentStep("preview")
   }
 
-  const handleSubmit = async () => {
+const handleSubmit = async () => {
   setLoading(true);
 
   try {
-  const API_URL = "http://localhost:5000/api/products";
-
-const url = product
-  ? `${API_URL}/${product.id}`
-  : API_URL;
-
+    const API_URL = "http://localhost:5000/api/products";
+    const url = product ? `${API_URL}/${product.id}` : API_URL;
     const method = product ? "PUT" : "POST";
 
     const response = await fetch(url, {
@@ -157,16 +153,19 @@ const url = product
     if (response.ok) {
       setCurrentStep("confirm");
     } else {
-      throw new Error("Failed to save product");
+      const errorData = await response.json();
+      console.error("Backend error response:", errorData);
+      throw new Error(errorData.message || "Failed to save product");
     }
   } catch (error) {
     console.error("Error saving product:", error);
-    alert("Error saving product");
+    alert("Error saving product: " + error.message);
     setCurrentStep("preview");
   } finally {
     setLoading(false);
   }
 };
+
   const getFilterDisplayName = (filterType) => {
     return filterType.charAt(0).toUpperCase() + filterType.slice(1).replace(/([A-Z])/g, " $1")
   }
