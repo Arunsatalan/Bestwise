@@ -17,11 +17,15 @@ import { getProducts } from "./actions/productAction"
 import Link from "next/link"
 import { AiFillStar, AiOutlineStar, AiTwotoneStar } from 'react-icons/ai';
 import Loader from "./components/loader/page"
+import { addToCart } from "./slices/cartSlice";
+import { addToWishlist } from "./slices/wishlistSlice";
+import { toast, Toaster } from 'sonner';
 
 const images = ["/1.jpg", "/2.jpg", "/3.jpg"]
 
 export default function FancyCarousel() {
   const { allProducts } = useSelector((state) => state.productsState)
+  const { isAuthenticated } = useSelector((state) => state.userState)
   const dispatch = useDispatch()
     
   const [loading, setLoading] = useState(true);
@@ -215,7 +219,6 @@ export default function FancyCarousel() {
             {allProducts && allProducts.length > 0 ? (
               allProducts.slice(0, 12).map((product) => (
                 <Link key={product._id} href={`/productDetail/${product._id}`} className="block">
-
                   <CardContent className="p-0 border-1 border-[#D9D9D9] rounded-[10px]">
                     <div className="relative">
                       <Image
@@ -228,7 +231,14 @@ export default function FancyCarousel() {
                       <div className="absolute top-2 left-2 bg-red-100 rounded-full p-1">
                         <Flame className="text-red-500 w-3 h-3 sm:w-4 sm:h-4" />
                       </div>
-                      <div className="absolute top-2 right-2 bg-purple-100 rounded-full p-1 cursor-pointer hover:bg-purple-200 transition-colors">
+                      <div className="absolute top-2 right-2 bg-purple-100 rounded-full p-1 cursor-pointer hover:bg-purple-200 transition-colors"
+                        onClick={e => {
+                          e.preventDefault();
+                          if (!isAuthenticated) return alert('Please login to add to wishlist');
+                          dispatch(addToWishlist(product));
+                          toast.success('Added to wishlist!');
+                        }}
+                      >
                         <Heart className="text-purple-500 w-3 h-3 sm:w-4 sm:h-4" />
                       </div>
                     </div>
@@ -240,7 +250,6 @@ export default function FancyCarousel() {
                           {Array.from({ length: 5 }, (_, i) => {
                             const fullStars = Math.floor(product.rating || 0);
                             const hasHalfStar = (product.rating || 0) - fullStars >= 0.5;
-
                             if (i < fullStars) {
                               return <AiFillStar key={i} />;
                             } else if (i === fullStars && hasHalfStar) {
@@ -250,12 +259,20 @@ export default function FancyCarousel() {
                             }
                           })}
                         </div>
-
-
                       </div>
+                      <Button
+                        className="mt-2 w-full bg-purple-600 hover:bg-purple-700 text-white"
+                        onClick={e => {
+                          e.preventDefault();
+                          if (!isAuthenticated) return alert('Please login to add to cart');
+                          dispatch(addToCart({ product, quantity: 1 }));
+                          toast.success('Added to cart!');
+                        }}
+                      >
+                        Add to Cart
+                      </Button>
                     </div>
                   </CardContent>
-
                 </Link>
               ))
             ) : (
@@ -409,6 +426,8 @@ export default function FancyCarousel() {
           }
         }
       `}</style>
+
+      <Toaster position="top-center" richColors closeButton />
     </div>
   )
 }

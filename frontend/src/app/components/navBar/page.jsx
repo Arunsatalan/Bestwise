@@ -9,9 +9,14 @@ import { useDispatch, useSelector } from 'react-redux';
 import { userLogout } from '@/app/slices/userSlice';
 import { useRouter } from 'next/navigation';
 import ReminderGift from '../../modal/reminder/page';
+import { Heart } from 'lucide-react';
+import { clearCart } from '@/app/slices/cartSlice';
+import { clearWishlist } from '@/app/slices/wishlistSlice';
 
 function Navbar() {
   const { user } = useSelector((state) => state.userState);
+  const cartCount = useSelector((state) => state.cartState.items.length);
+  const wishlistCount = useSelector((state) => state.wishlistState.items.length);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [giftDropdownOpen, setGiftDropdownOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
@@ -30,6 +35,8 @@ function Navbar() {
 
   const logoutHandler = () => {
     dispatch(userLogout());
+    dispatch(clearCart());
+    dispatch(clearWishlist());
     setUserDropdownOpen(false);
   };
 
@@ -79,7 +86,20 @@ function Navbar() {
 
                 <li className="cursor-pointer hover:text-[#822BE2] transition-colors">About Us</li>
                 <li className="cursor-pointer hover:text-[#822BE2] transition-colors" onClick={() => handleNavigation('/user/checkout')}>
-                  <MdOutlineShoppingCart size={24} />
+                  <div className="relative">
+                    <MdOutlineShoppingCart size={24} />
+                    {cartCount > 0 && (
+                      <span className="absolute -top-2 -right-2 bg-purple-600 text-white text-xs rounded-full px-1.5 py-0.5">{cartCount}</span>
+                    )}
+                  </div>
+                </li>
+                <li className="cursor-pointer hover:text-[#822BE2] transition-colors" onClick={() => handleNavigation('/user/wishlist')}>
+                  <div className="relative">
+                    <Heart size={22} className="text-[#822BE2]" />
+                    {wishlistCount > 0 && (
+                      <span className="absolute -top-2 -right-2 bg-purple-600 text-white text-xs rounded-full px-1.5 py-0.5">{wishlistCount}</span>
+                    )}
+                  </div>
                 </li>
 
                 {/* User */}

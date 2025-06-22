@@ -1,4 +1,4 @@
-import React from 'react';
+
 import DashboardSidebar from '../components/sidebar/page';
 
 export default function RootLayout({ children }) {
