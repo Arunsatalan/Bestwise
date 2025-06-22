@@ -20,6 +20,6 @@ app.use(cookieParser());
 
 //  Routes
 app.use('/api', authRoutes);
-app.use('/api', productRoutes);
+app.use('/api/products', productRoutes);
 
 module.exports = app;

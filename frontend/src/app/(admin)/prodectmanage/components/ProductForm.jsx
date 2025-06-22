@@ -22,7 +22,7 @@ const RichTextEditor = dynamic(
   () => import("./RichTextEditor"),
   { ssr: false, loading: () => <Textarea disabled placeholder="Loading editor..." /> }
 )
-
+const API_BASE = "http://localhost:5000/api/products";
 const defaultProduct = {
   name: "",
   sku: "",
@@ -137,34 +137,36 @@ export default function ProductForm({ product = null }) {
   }
 
   const handleSubmit = async () => {
-    setLoading(true)
+  setLoading(true);
 
-    try {
-      const url = product ? `/api/products/${product.id}` : "/api/products"
-      const method = product ? "PUT" : "POST"
+  try {
+  const API_URL = "http://localhost:5000/api/products";
 
-      const response = await fetch(url, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      })
+const url = product
+  ? `${API_URL}/${product.id}`
+  : API_URL;
 
-      if (response.ok) {
-        setCurrentStep("confirm")
-      } else {
-        throw new Error("Failed to save product")
-      }
-    } catch (error) {
-      console.error("Error saving product:", error)
-      alert("Error saving product")
-      setCurrentStep("preview")
-    } finally {
-      setLoading(false)
+    const method = product ? "PUT" : "POST";
+
+    const response = await fetch(url, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(formData),
+    });
+
+    if (response.ok) {
+      setCurrentStep("confirm");
+    } else {
+      throw new Error("Failed to save product");
     }
+  } catch (error) {
+    console.error("Error saving product:", error);
+    alert("Error saving product");
+    setCurrentStep("preview");
+  } finally {
+    setLoading(false);
   }
-
+};
   const getFilterDisplayName = (filterType) => {
     return filterType.charAt(0).toUpperCase() + filterType.slice(1).replace(/([A-Z])/g, " $1")
   }

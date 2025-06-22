@@ -1,142 +1,64 @@
-const mongoose = require("mongoose");
+const mongoose = require("mongoose")
 
-const productSchema = new mongoose.Schema(
-  {
-    title: {
-      type: String,
-      required: [true, "Please enter product title"],
-      trim: true,
-    },
-    description: {
-      type: String,
-      required: [true, "Please enter product description"],
-    },
+const variantSchema = new mongoose.Schema({
+  id: String,
+  sku: String,
+  attributes: { type: Map, of: String },
+  price: Number,
+  stock: Number,
+  weight: Number,
+  enabled: Boolean,
+})
 
-    // Main category (for rough grouping)
-    mainCategory: {
-      type: String,
-      required: true,
-      enum: {
-        values: [
-          "Balloon",
-          "Card",
-          "Gift Box",
-          "Cake Topper",
-          "Decoration Item",
-          "Photo Frame",
-          "Mug",
-          "Toy",
-          "Other",
-        ],
-        message: "Please select a valid category",
-      },
-    },
+const productSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  sku: { type: String, required: true, unique: true },
+  shortDescription: { type: String, required: true },
+  detailedDescription: String,
+  mainCategory: { type: String, required: true },
+  filters: { type: Map, of: [String], default: {} },
+  tags: [String],
+  images: [{ id: String, url: String, name: String, size: Number }],
+  videos: [{ id: String, url: String, name: String, size: Number }],
+  costPrice: Number,
+  retailPrice: Number,
+  salePrice: { type: Number, default: 0 },
+  taxClass: { type: String, enum: ["standard", "reduced", "zero", "exempt"], default: "standard" },
+  stock: Number,
+  stockStatus: { type: String, enum: ["in-stock", "low-stock", "out-of-stock", "backordered"], default: "in-stock" },
+  weight: Number,
+  dimensions: { length: Number, width: Number, height: Number },
+  shippingClass: { type: String, enum: ["standard", "express", "overnight", "free", "heavy"], default: "standard" },
+  variants: [variantSchema],
+  status: { type: String, enum: ["draft", "active", "archived"], default: "draft" },
+  featured: Boolean,
+  seoTitle: String,
+  seoDescription: String,
+  createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+}, {
+  timestamps: true,
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true },
+})
 
-    // 🎯 Faceted Attributes
-    facets: {
-      events: [
-        {
-          type: String,
-          enum: [
-            "Anniversary",
-            "Birthday",
-            "British Souvenir",
-            "Christmas",
-            "Easter",
-            "Father's Day",
-            "Mother's Day",
-            "Halloween",
-            "Teachers & Graduation",
-            "Valentine's Day",
-            "Wedding",
-            "Other",
-          ],
-        },
-      ],
-      relation: {
-        type: String,
-        enum: [
-          "Father",
-          "Mother",
-          "Brother",
-          "Sister",
-          "Friend",
-          "Grandfather",
-          "Grandmother",
-          "Husband",
-          "Wife",
-          "Other",
-        ],
-      },
-      material: {
-        type: String,
-        enum: ["Foil", "Latex", "Paper", "Plastic", "Ceramic", "Wood", "Other"],
-      },
-      size: {
-        type: String,
-        enum: ["Small", "Medium", "Large", "Extra Large"],
-      },
-      color: {
-        type: String,
-      },
-      type: {
-        type: String,
-        enum: [
-          "Helium Balloon",
-          "Air Balloon",
-          "Pop-up Card",
-          "Musical Card",
-          "LED Gift",
-          "Customizable",
-          "Combo",
-          "Other",
-        ],
-      },
-    },
+productSchema.virtual("price").get(function () {
+  return this.salePrice > 0 ? this.salePrice : this.retailPrice
+})
 
-    price: {
-      type: Number,
-      required: [true, "Please enter price"],
-    },
+productSchema.virtual("profitMargin").get(function () {
+  const sellingPrice = this.salePrice > 0 ? this.salePrice : this.retailPrice
+  return this.costPrice > 0 ? (((sellingPrice - this.costPrice) / this.costPrice) * 100).toFixed(2) : 0
+})
 
-    imageUrls: [
-      {
-        type: String,
-        required: true,
-      },
-    ],
+productSchema.pre("save", function (next) {
+  if (this.stock === 0) this.stockStatus = "out-of-stock"
+  else if (this.stock <= 10) this.stockStatus = "low-stock"
+  else this.stockStatus = "in-stock"
 
-    stock: {
-      type: Number,
-      default: 0,
-    },
+  if (!this.seoTitle) this.seoTitle = this.name.substring(0, 60)
+  if (!this.seoDescription) this.seoDescription = this.shortDescription
+  next()
+})
 
-    isAvailable: {
-      type: Boolean,
-      default: true,
-    },
-    rating:{
-      type:Number,
-      default: 0
-    },
-    owner: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
-    },
-
-    rentType: {
-      type: String,
-      enum: ["none", "daily", "weekly", "monthly"],
-      default: "none",
-    },
-
-    createdAt: {
-      type: Date,
-      default: Date.now,
-    },
-  },
-  { timestamps: true }
-);
-
-module.exports = mongoose.model("Product", productSchema);
+module.exports = mongoose.model("Product", productSchema)
