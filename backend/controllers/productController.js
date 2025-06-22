@@ -1,98 +1,135 @@
 // controllers/productController.js
 const Product = require("../models/Product");
+const { validationResult } = require("express-validator");
 
-
-
-// addProduct.js - admin only
-exports.addProduct = async (req, res) => {
+exports.getAllProducts = async (req, res) => {
   try {
     const {
-      title,
-      description,
-      mainCategory,
-      facets,
-      price,
-      imageUrls,
-      stock,
-      rating,
-      isAvailable,
-      rentType,
-    } = req.body;
+      page = 1,
+      limit = 10,
+      search,
+      category,
+      status,
+      sortBy = "createdAt",
+      sortOrder = "desc",
+    } = req.query;
 
-    if (
-      !title ||
-      !description ||
-      !mainCategory ||
-      !price ||
-      !imageUrls ||
-      !Array.isArray(imageUrls) ||
-      imageUrls.length === 0
-    ) {
-      return res.status(400).json({
-        success: false,
-        message: "Please fill all required fields",
-      });
-    }
+    const query = {};
+    if (search) query.$text = { $search: search };
+    if (category) query.mainCategory = category;
+    if (status) query.status = status;
 
-    const product = await Product.create({
-      title,
-      description,
-      mainCategory,
-      facets,
-      price,
-      imageUrls,
-      stock,
-      rating,
-      isAvailable,
-      rentType,
-      owner: req.user._id, // ensure req.user is set from middleware
-    });
+    const sort = {};
+    sort[sortBy] = sortOrder === "desc" ? -1 : 1;
 
-    return res.status(201).json({
+    const products = await Product.find(query)
+      .sort(sort)
+      .limit(limit * 1)
+      .skip((page - 1) * limit);
+    const total = await Product.countDocuments(query);
+
+    res.json({
       success: true,
-      message: "Product created successfully",
-      product,
+      data: products,
+      pagination: {
+        page: +page,
+        limit: +limit,
+        total,
+        pages: Math.ceil(total / limit),
+      },
     });
   } catch (error) {
-    console.error("Add Product Error:", error);
-    return res.status(500).json({
+    res.status(500).json({
       success: false,
-      message: "Server error while creating product",
+      message: "Error fetching products",
       error: error.message,
     });
   }
 };
 
-
-
-// get single Product
-exports.getProduct = async (req, res) =>{
-     try {
-    const productId = req.params.id;  
-
-    const product = await Product.findById(productId);
-
-    if (!product) {
-      return res.status(404).json({ message: 'Product not found' });
-    }
-    res.status(200).json(product);  // Send the product data as JSON
-  } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-
-}
-
-// Get all products
-exports.getAllProducts = async (req, res) => {
+exports.getProduct = async (req, res) => {
   try {
-    const products = await Product.find().limit(10); // Fetch all products from the DB
+    const product = await Product.findById(req.params.id);
+    if (!product)
+      return res.status(404).json({ success: false, message: "Product not found" });
 
-    if (products.length === 0) {
-      return res.status(404).json({ message: 'No products found' });
+    res.json({ success: true, data: product });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error fetching product",
+      error: error.message,
+    });
+  }
+};
+
+exports.createProduct = async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      console.log("Validation errors:", errors.array());
+      return res.status(400).json({ success: false, errors: errors.array() });
     }
 
-    res.status(200).json(products); // Send all products as JSON
+    const { sku } = req.body;
+    if (!sku) {
+      return res.status(400).json({ success: false, message: "SKU is required" });
+    }
+
+    const existing = await Product.findOne({ sku: sku.toUpperCase() });
+    if (existing) {
+      return res.status(400).json({ success: false, message: "SKU already exists" });
+    }
+
+    const product = new Product({ ...req.body, sku: sku.toUpperCase() });
+    await product.save();
+
+    res.status(201).json({ success: true, message: "Product created", data: product });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    console.error("❌ Error in createProduct:", error.message);
+    res.status(500).json({ success: false, message: "Server error", error: error.message });
+  }
+};
+
+exports.updateProduct = async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty())
+      return res.status(400).json({ success: false, errors: errors.array() });
+
+    const product = await Product.findById(req.params.id);
+    if (!product)
+      return res.status(404).json({ success: false, message: "Product not found" });
+
+    const update = { ...req.body, sku: req.body.sku.toUpperCase() };
+    const updated = await Product.findByIdAndUpdate(req.params.id, update, {
+      new: true,
+      runValidators: true,
+    });
+
+    res.json({ success: true, message: "Product updated", data: updated });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error updating product",
+      error: error.message,
+    });
+  }
+};
+
+exports.deleteProduct = async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+    if (!product)
+      return res.status(404).json({ success: false, message: "Product not found" });
+
+    await Product.findByIdAndDelete(req.params.id);
+    res.json({ success: true, message: "Product deleted" });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error deleting product",
+      error: error.message,
+    });
   }
 };
