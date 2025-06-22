@@ -22,7 +22,7 @@ const RichTextEditor = dynamic(
   () => import("./RichTextEditor"),
   { ssr: false, loading: () => <Textarea disabled placeholder="Loading editor..." /> }
 )
-const API_BASE = "http://localhost:5000/api/products";
+// const API_BASE = "http://localhost:5000/api/products";
 const defaultProduct = {
   name: "",
   sku: "",
