@@ -32,7 +32,7 @@ export default function FancyCarousel() {
 
   useEffect(() => {
     dispatch(getProducts())
-    console.log(allProducts)
+    console.log("checkig",allProducts)
   }, [dispatch])
 
 

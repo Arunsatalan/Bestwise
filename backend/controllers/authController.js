@@ -107,10 +107,8 @@ exports.loginUser = async (req, res) => {
         lastName: user.lastName,
         email: user.email,
         role: user.role,
-        password: user.password,
         phone: user.phone,
         address: user.address,
-        phone: user.phone,
         zipCode: user.zipCode
       }
     });
