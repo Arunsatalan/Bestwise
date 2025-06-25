@@ -24,10 +24,11 @@ function Page() {
     setLoading(true);
 
     try {
-      const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/login`, {
-        email,
-        password
-      });
+      const res = await axios.post(
+        `${process.env.NEXT_PUBLIC_API_URL}/login`,
+        { email, password },
+        { withCredentials: true }
+      );
 
       const userData = res.data.user;
 

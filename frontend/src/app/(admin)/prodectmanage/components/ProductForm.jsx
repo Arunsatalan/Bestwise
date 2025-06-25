@@ -140,7 +140,7 @@ const handleSubmit = async () => {
   setLoading(true);
 
   try {
-    const API_URL = "http://localhost:5000/api/products";
+    const API_URL = `${process.env.NEXT_PUBLIC_API_URL}/products`;
     const url = product ? `${API_URL}/${product.id}` : API_URL;
     const method = product ? "PUT" : "POST";
 

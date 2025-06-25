@@ -59,14 +59,22 @@ export default function CheckoutPage() {
                                         <div className="relative w-[15%] ">
                                             <Image
                                                 src={item.product.image || "/mug.jpg"}
+<<<<<<< HEAD
                                                 alt={item.product.title}
+=======
+                                                alt={item.product.name}
+>>>>>>> b72d6a6e57ab8402290872919715d1d3ec70ee5a
                                                 width={130}
                                                 height={120}
                                                 className="rounded-lg object-cover"
                                             />
                                         </div>
                                         <div className='w-[40%] flex-col pl-[20px]'>
+<<<<<<< HEAD
                                             <p className='font-large'>{item.product.title}</p>
+=======
+                                            <p className='font-large'>{item.product.name}</p>
+>>>>>>> b72d6a6e57ab8402290872919715d1d3ec70ee5a
                                             <p className='font-large font-semibold'>US ${item.product.price}</p>
                                             <div className="flex text-yellow-400 text-xs sm:text-sm mt-1">
                                                 <div className="flex text-yellow-400 text-xs sm:text-sm mt-1">
