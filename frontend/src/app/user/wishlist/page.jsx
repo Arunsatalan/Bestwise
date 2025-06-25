@@ -35,13 +35,21 @@ export default function WishlistPage() {
               >
                 <Image
                   src={product.image || '/mug.jpg'}
+
+                  alt={product.title}
+
                   alt={product.name}
+
                   width={500}
                   height={300}
                   className="w-full h-52 object-cover"
                 />
                 <div className="p-4 flex flex-col justify-between flex-grow">
                   <div className="mb-4">
+
+                    <h2 className="font-semibold text-lg text-gray-800">{product.title}</h2>
+                    <p className="text-purple-600 font-bold mt-1">US ${product.price}</p>
+
                     <h2 className="font-semibold text-lg text-gray-800">{product.name}</h2>
                     <p className="text-purple-600 font-bold mt-1">US ${product.price}</p>
                     <div className="flex text-yellow-400 text-xs sm:text-sm mt-1">
@@ -59,6 +67,7 @@ export default function WishlistPage() {
                         })}
                       </div>
                     </div>
+
                   </div>
                   <button
                     onClick={() => handleRemove(product._id)}

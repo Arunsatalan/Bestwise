@@ -27,8 +27,59 @@ function Navbar() {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const searchRef = useRef(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  const searchRef = useRef(null);
   const dispatch = useDispatch();
   const router = useRouter();
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (searchRef.current && !searchRef.current.contains(event.target)) {
+        setIsSearchFocused(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  const handleSearch = async (query) => {
+    setSearchQuery(query);
+    if (query.length > 1) {
+      setIsSearching(true);
+      try {
+        const { data } = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/products?search=${encodeURIComponent(query)}`);
+        console.log('Search results:', data);
+        setSearchResults(data.data || []);
+      } catch (error) {
+        console.error('Error fetching search results:', error);
+        setSearchResults([]);
+      } finally {
+        setIsSearching(false);
+      }
+    } else {
+      setSearchResults([]);
+    }
+  };
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      router.push(`/allProducts?search=${encodeURIComponent(searchQuery)}`);
+      setIsSearchFocused(false);
+    }
+  };
+
+  const handleProductClick = (id) => {
+    setSearchQuery('');
+    setSearchResults([]);
+    setIsSearchFocused(false);
+    router.push(`/productDetail/${id}`);
+  };
 
   useEffect(() => {
     const handleClickOutside = (event) => {
