@@ -24,7 +24,4 @@ app.use('/api', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
 
-
 module.exports = app;
-
-//hellow

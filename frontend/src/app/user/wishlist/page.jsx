@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { RiDeleteBin6Line } from 'react-icons/ri';
 import { removeFromWishlist } from '../../slices/wishlistSlice';
 import { toast, Toaster } from 'sonner';
+import { AiFillStar, AiOutlineStar, AiTwotoneStar } from 'react-icons/ai';
 
 export default function WishlistPage() {
   const wishlist = useSelector((state) => state.wishlistState.items);
@@ -34,15 +35,39 @@ export default function WishlistPage() {
               >
                 <Image
                   src={product.image || '/mug.jpg'}
+
                   alt={product.title}
+
+                  alt={product.name}
+
                   width={500}
                   height={300}
                   className="w-full h-52 object-cover"
                 />
                 <div className="p-4 flex flex-col justify-between flex-grow">
                   <div className="mb-4">
+
                     <h2 className="font-semibold text-lg text-gray-800">{product.title}</h2>
                     <p className="text-purple-600 font-bold mt-1">US ${product.price}</p>
+
+                    <h2 className="font-semibold text-lg text-gray-800">{product.name}</h2>
+                    <p className="text-purple-600 font-bold mt-1">US ${product.price}</p>
+                    <div className="flex text-yellow-400 text-xs sm:text-sm mt-1">
+                      <div className="flex text-yellow-400 text-xs sm:text-sm mt-1">
+                        {Array.from({ length: 5 }, (_, i) => {
+                          const fullStars = Math.floor(product.rating || 0);
+                          const hasHalfStar = (product.rating || 0) - fullStars >= 0.5;
+                          if (i < fullStars) {
+                            return <AiFillStar key={i} />;
+                          } else if (i === fullStars && hasHalfStar) {
+                            return <AiTwotoneStar key={i} />;
+                          } else {
+                            return <AiOutlineStar key={i} />;
+                          }
+                        })}
+                      </div>
+                    </div>
+
                   </div>
                   <button
                     onClick={() => handleRemove(product._id)}

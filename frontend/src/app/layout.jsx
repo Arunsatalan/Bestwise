@@ -1,6 +1,10 @@
 import './globals.css';
 import ReduxProvider from './ReduxProvider';
+<<<<<<< HEAD
 import { Toaster } from 'react-hot-toast';
+=======
+import { Toaster } from 'sonner';
+>>>>>>> b72d6a6e57ab8402290872919715d1d3ec70ee5a
 
 export const metadata = {
   title: 'Best Wishes',
@@ -13,7 +17,11 @@ export default function RootLayout({ children }) {
       <body className="antialiased">
         <ReduxProvider>
           {children}
+<<<<<<< HEAD
           <Toaster position="top-center" />
+=======
+          <Toaster position="top-center" richColors />
+>>>>>>> b72d6a6e57ab8402290872919715d1d3ec70ee5a
         </ReduxProvider>
       </body>
     </html>
