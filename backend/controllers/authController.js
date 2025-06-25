@@ -110,12 +110,9 @@ exports.loginUser = async (req, res) => {
         phone: user.phone,
         address: user.address,
 <<<<<<< HEAD
-<<<<<<< HEAD
         phone: user.phone,
 =======
 >>>>>>> b72d6a6e57ab8402290872919715d1d3ec70ee5a
-=======
->>>>>>> 32814a79a00b6cdb4c831e39603877559c5b91ba
         zipCode: user.zipCode
       }
     });
