@@ -12,7 +12,10 @@ import ReminderGift from '../../modal/reminder/page';
 import { Heart } from 'lucide-react';
 import { clearCart } from '@/app/slices/cartSlice';
 import { clearWishlist } from '@/app/slices/wishlistSlice';
+
+
 import axios from 'axios';
+
 
 function Navbar() {
   const { user } = useSelector((state) => state.userState);
@@ -27,59 +30,8 @@ function Navbar() {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const searchRef = useRef(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState([]);
-  const [isSearchFocused, setIsSearchFocused] = useState(false);
-  const [isSearching, setIsSearching] = useState(false);
-  const searchRef = useRef(null);
   const dispatch = useDispatch();
   const router = useRouter();
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (searchRef.current && !searchRef.current.contains(event.target)) {
-        setIsSearchFocused(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
-
-  const handleSearch = async (query) => {
-    setSearchQuery(query);
-    if (query.length > 1) {
-      setIsSearching(true);
-      try {
-        const { data } = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/products?search=${encodeURIComponent(query)}`);
-        console.log('Search results:', data);
-        setSearchResults(data.data || []);
-      } catch (error) {
-        console.error('Error fetching search results:', error);
-        setSearchResults([]);
-      } finally {
-        setIsSearching(false);
-      }
-    } else {
-      setSearchResults([]);
-    }
-  };
-
-  const handleSearchSubmit = (e) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      router.push(`/allProducts?search=${encodeURIComponent(searchQuery)}`);
-      setIsSearchFocused(false);
-    }
-  };
-
-  const handleProductClick = (id) => {
-    setSearchQuery('');
-    setSearchResults([]);
-    setIsSearchFocused(false);
-    router.push(`/productDetail/${id}`);
-  };
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -275,12 +227,9 @@ function Navbar() {
               </button>
             </div>
           </div>
-        </div>
-
-        {/* Mobile Menu */}
-        {isMenuOpen && (
-          <div className="md:hidden px-4 py-4 space-y-4 text-sm bg-white border-t border-gray-200">
-            <div className="border border-gray-200 rounded-md flex items-center px-4 h-[50px] bg-gray-50">
+          {/* Mobile Search Bar */}
+          <div className="md:hidden pb-4 relative" ref={searchRef}>
+            <div className="flex items-center border border-gray-200 rounded-md px-4 h-[50px] w-full bg-gray-50">
               <input
                 type="text"
                 placeholder="Search..."

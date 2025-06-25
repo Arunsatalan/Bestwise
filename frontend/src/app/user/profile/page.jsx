@@ -6,9 +6,16 @@ import { useRouter } from "next/navigation";
 import { FiMail, FiPhone, FiMapPin, FiShoppingBag, FiLogOut, FiEdit2, FiUser, FiEye, FiEyeOff } from "react-icons/fi";
 import Navbar from "@/app/components/navbar/page";
 import axios from "axios";
+<<<<<<< HEAD
 import toast from "react-hot-toast";
 import { FaUser } from "react-icons/fa";
 import { RiLockPasswordFill } from "react-icons/ri";
+=======
+import { toast, Toaster } from 'sonner';
+import { FaUser } from "react-icons/fa";
+import { RiLockPasswordFill } from "react-icons/ri";
+import { updateUserProfile } from "../../slices/userSlice";
+>>>>>>> b72d6a6e57ab8402290872919715d1d3ec70ee5a
 
 export default function ProfilePage() {
   const { user } = useSelector(state => state.userState);
@@ -166,9 +173,17 @@ export default function ProfilePage() {
                   <div className="flex justify-end">
                     <button
                       type="button"
+<<<<<<< HEAD
                       className="px-8 py-3 bg-purple-600 text-white text-base font-semibold rounded-lg shadow hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-400 transition-colors"
                     >
                       Save Changes
+=======
+                      onClick={handleSaveChanges}
+                      disabled={isSaving}
+                      className="px-8 py-3 bg-purple-600 text-white text-base font-semibold rounded-lg shadow hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-400 transition-colors disabled:opacity-50"
+                    >
+                      {isSaving ? "Saving..." : "Save Changes"}
+>>>>>>> b72d6a6e57ab8402290872919715d1d3ec70ee5a
                     </button>
                   </div>
                 </form>

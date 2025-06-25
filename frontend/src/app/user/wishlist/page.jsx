@@ -7,7 +7,10 @@ import Image from 'next/image';
 import { RiDeleteBin6Line } from 'react-icons/ri';
 import { removeFromWishlist } from '../../slices/wishlistSlice';
 import { toast, Toaster } from 'sonner';
+
+
 import { AiFillStar, AiOutlineStar, AiTwotoneStar } from 'react-icons/ai';
+
 
 export default function WishlistPage() {
   const wishlist = useSelector((state) => state.wishlistState.items);
@@ -46,6 +49,7 @@ export default function WishlistPage() {
                 />
                 <div className="p-4 flex flex-col justify-between flex-grow">
                   <div className="mb-4">
+
 
                     <h2 className="font-semibold text-lg text-gray-800">{product.title}</h2>
                     <p className="text-purple-600 font-bold mt-1">US ${product.price}</p>

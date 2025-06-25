@@ -34,6 +34,7 @@ const productSchema = new mongoose.Schema({
   featured: Boolean,
   seoTitle: String,
   seoDescription: String,
+
   rating: { type: Number, default: 3 },
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
@@ -42,8 +43,6 @@ const productSchema = new mongoose.Schema({
   toJSON: { virtuals: true },
   toObject: { virtuals: true },
 })
-
-productSchema.index({ name: 'text', shortDescription: 'text' });
 
 productSchema.virtual("price").get(function () {
   return this.salePrice > 0 ? this.salePrice : this.retailPrice
@@ -64,5 +63,4 @@ productSchema.pre("save", function (next) {
   next()
 })
 
- 
 module.exports = mongoose.model("Product", productSchema)

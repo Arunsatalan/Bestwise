@@ -1,4 +1,7 @@
+<<<<<<< HEAD
 
+=======
+>>>>>>> b72d6a6e57ab8402290872919715d1d3ec70ee5a
 // // controllers/productController.js
 // const Product = require("../models/Product");
 
@@ -115,6 +118,7 @@ exports.getAllProducts = async (req, res) => {
     } = req.query;
 
     const query = {};
+    if (search) query.$text = { $search: search };
     if (search) {
       // Use regex search for elastic behavior
       query.$or = [
