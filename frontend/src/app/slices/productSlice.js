@@ -9,7 +9,7 @@ const productSlice = createSlice({
         setAllProducts(state, action) {
             return {
                 ...state,
-                allProducts: action.payload
+                allProducts: action.payload.data
             }
         },
     }

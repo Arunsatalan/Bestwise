@@ -107,10 +107,12 @@ exports.loginUser = async (req, res) => {
         lastName: user.lastName,
         email: user.email,
         role: user.role,
-        password: user.password,
         phone: user.phone,
         address: user.address,
+<<<<<<< HEAD
         phone: user.phone,
+=======
+>>>>>>> b72d6a6e57ab8402290872919715d1d3ec70ee5a
         zipCode: user.zipCode
       }
     });
@@ -185,6 +187,43 @@ exports.changePassword = async (req, res) => {
       success: false,
       message: "Something went wrong",
       error: err.message
+    });
+  }
+};
+
+
+// Update-User-Profile  -- {base_url}/api/updateprofile
+exports.updateUserProfile = async (req, res) => {
+  try {
+    const { phone, address } = req.body;
+    const user = await User.findById(req.user.id);
+
+    if (user) {
+      user.phone = phone || user.phone;
+      user.address = address || user.address;
+
+      const updatedUser = await user.save();
+
+      res.status(200).json({
+        success: true,
+        user: {
+          id: updatedUser._id,
+          firstName: updatedUser.firstName,
+          lastName: updatedUser.lastName,
+          email: updatedUser.email,
+          role: updatedUser.role,
+          phone: updatedUser.phone,
+          address: updatedUser.address,
+        },
+      });
+    } else {
+      res.status(404).json({ success: false, message: "User not found" });
+    }
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: "Something went wrong",
+      error: err.message,
     });
   }
 };
