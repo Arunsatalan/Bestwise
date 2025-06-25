@@ -16,14 +16,17 @@ export default function ProductDashboard() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetchProducts()
+    if (typeof window !== "undefined") {
+      fetchProducts()
+    }
   }, [])
 
   const fetchProducts = async () => {
     try {
-      const response = await fetch("/api/products")
-      const data = await response.json()
-      setProducts(data)
+      const response = await fetch("http://localhost:5000/api/products")
+      const result = await response.json()
+      console.log("Fetched data:", result)
+      setProducts(Array.isArray(result.data) ? result.data : [])
     } catch (error) {
       console.error("Error fetching products:", error)
     } finally {
@@ -122,10 +125,13 @@ export default function ProductDashboard() {
         {filteredProducts.map((product) => {
           const stockStatus = getStockStatus(product.stock)
           return (
-            <Card key={product.id} className="overflow-hidden">
+            <Card key={product._id || product.id} className="overflow-hidden">
               <div className="aspect-square relative">
                 <img
-                  src={product.images?.[0] || "/placeholder.svg?height=200&width=200"}
+                  src={
+                    product.images?.[0]?.url ||
+                    "/placeholder.svg?height=200&width=200"
+                  }
                   alt={product.name}
                   className="w-full h-full object-cover"
                 />
@@ -143,17 +149,17 @@ export default function ProductDashboard() {
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600">Stock: {product.stock}</span>
                   <div className="flex gap-2">
-                    <Link href={`/products/${product.id}`}>
+                    <Link href={`/products/${product._id || product.id}`}>
                       <Button size="sm" variant="outline">
                         <Eye className="w-4 h-4" />
                       </Button>
                     </Link>
-                    <Link href={`/products/edit/${product.id}`}>
+                    <Link href={`/products/edit/${product._id || product.id}`}>
                       <Button size="sm" variant="outline">
                         <Edit className="w-4 h-4" />
                       </Button>
                     </Link>
-                    <Button size="sm" variant="outline" onClick={() => deleteProduct(product.id)}>
+                    <Button size="sm" variant="outline" onClick={() => deleteProduct(product._id || product.id)}>
                       <Trash2 className="w-4 h-4" />
                     </Button>
                   </div>
