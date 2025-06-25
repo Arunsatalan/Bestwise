@@ -109,10 +109,6 @@ exports.loginUser = async (req, res) => {
         role: user.role,
         phone: user.phone,
         address: user.address,
-<<<<<<< HEAD
-        phone: user.phone,
-=======
->>>>>>> b72d6a6e57ab8402290872919715d1d3ec70ee5a
         zipCode: user.zipCode
       }
     });
