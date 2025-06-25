@@ -64,13 +64,14 @@ export default function FancyCarousel() {
   ]
 
   const categories = [
-    { name: "Electronics", image: "/placeholder.svg?height=80&width=80" },
-    { name: "Fashion", image: "/placeholder.svg?height=80&width=80" },
-    { name: "Home & Garden", image: "/placeholder.svg?height=80&width=80" },
-    { name: "Sports", image: "/placeholder.svg?height=80&width=80" },
-    { name: "Books", image: "/placeholder.svg?height=80&width=80" },
-    { name: "Toys", image: "/placeholder.svg?height=80&width=80" },
-    { name: "Beauty", image: "/placeholder.svg?height=80&width=80" },
+    { name: "Balloons", image: "/balloon.svg?height=80&width=80" },
+    { name: "Mugs", image: "/mug.svg?height=80&width=80" },
+    { name: "Birthday Cards", image: "/birthday-invitation.svg?height=80&width=80" },
+    { name: "Home & Living", image: "/home.svg?height=80&width=80" },
+      // { name: "Sports", image: "/placeholder.svg?height=80&width=80" },
+      // { name: "Books", image: "/placeholder.svg?height=80&width=80" },
+      // { name: "Toys", image: "/placeholder.svg?height=80&width=80" },
+      // { name: "Beauty", image: "/placeholder.svg?height=80&width=80" },
   ]
 
 
@@ -223,7 +224,7 @@ export default function FancyCarousel() {
                     <div className="relative">
                       <Image
                         src="/mug.jpg"
-                        alt={product.title}
+                        alt={product.name}
                         width={200}
                         height={200}
                         className="w-full aspect-square object-cover rounded-t-lg"
@@ -243,7 +244,7 @@ export default function FancyCarousel() {
                       </div>
                     </div>
                     <div className="p-3">
-                      <h3 className="font-medium text-sm sm:text-base truncate">{product.title}</h3>
+                      <h3 className="font-medium text-sm sm:text-base truncate">{product.name}</h3>
                       <p className="font-semibold text-purple-600 text-sm sm:text-base">US ${product.price}</p>
                       <div className="flex text-yellow-400 text-xs sm:text-sm mt-1">
                         <div className="flex text-yellow-400 text-xs sm:text-sm mt-1">

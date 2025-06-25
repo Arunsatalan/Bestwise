@@ -6,13 +6,14 @@ require("dotenv").config();
 
 const authRoutes = require('./routes/authRoutes');
 const productRoutes = require('./routes/productRoutes');
+const orderRoutes = require('./routes/orderRoutes');
 
 const app = express();
 
 connectDB();
 
 app.use(cors({
-  origin: process.env.FROND_URL || 'http://localhost:3000', // frontend URL
+  origin: process.env.FRONT_URL || 'http://localhost:3000', // frontend URL
   credentials: true
 }));
 app.use(express.json());
@@ -21,6 +22,7 @@ app.use(cookieParser());
 //  Routes
 app.use('/api', authRoutes);
 app.use('/api/products', productRoutes);
+app.use('/api/orders', orderRoutes);
 
 module.exports = app;
 

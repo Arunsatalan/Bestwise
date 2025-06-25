@@ -1,4 +1,3 @@
-
 // // controllers/productController.js
 // const Product = require("../models/Product");
 
@@ -115,7 +114,16 @@ exports.getAllProducts = async (req, res) => {
     } = req.query;
 
     const query = {};
-    if (search) query.$text = { $search: search };
+    if (search) {
+      // Use regex search for elastic behavior
+      query.$or = [
+        { name: { $regex: search, $options: "i" } },
+        { shortDescription: { $regex: search, $options: "i" } },
+        { detailedDescription: { $regex: search, $options: "i" } },
+        { mainCategory: { $regex: search, $options: "i" } },
+        { tags: { $regex: search, $options: "i" } },
+      ];
+    }
     if (category) query.mainCategory = category;
     if (status) query.status = status;
 

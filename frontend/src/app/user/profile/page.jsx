@@ -1,27 +1,53 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { useRouter } from "next/navigation";
 import { FiMail, FiPhone, FiMapPin, FiShoppingBag, FiLogOut, FiEdit2, FiUser, FiEye, FiEyeOff } from "react-icons/fi";
 import Navbar from "@/app/components/navbar/page";
 import axios from "axios";
-import toast from "react-hot-toast";
+import { toast, Toaster } from 'sonner';
 import { FaUser } from "react-icons/fa";
 import { RiLockPasswordFill } from "react-icons/ri";
+import { updateUserProfile } from "../../slices/userSlice";
 
 export default function ProfilePage() {
   const { user } = useSelector(state => state.userState);
   const router = useRouter();
+  const dispatch = useDispatch();
   const [isLoading, setIsLoading] = useState(true);
+
+  const [phone, setPhone] = useState('');
+  const [address, setAddress] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (!user) {
       router.push("/login");
     } else {
+      setPhone(user.phone || '');
+      setAddress(user.address || '');
       setTimeout(() => setIsLoading(false), 800);
     }
   }, [user, router]);
+
+  const handleSaveChanges = async () => {
+    setIsSaving(true);
+    try {
+      const res = await axios.put(
+        `${process.env.NEXT_PUBLIC_API_URL}/updateprofile`,
+            { phone, address },
+            { withCredentials: true }
+      );
+      dispatch(updateUserProfile(res.data.user));
+      toast.success("Profile updated successfully!");
+    } catch (err) {
+      const msg = err.response?.data?.message || "Failed to update profile.";
+      toast.error(msg);
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   if (!user) return null;
 
@@ -115,7 +141,8 @@ export default function ProfilePage() {
                         </span>
                         <input
                           type="text"
-                          defaultValue={user.phone || ""}
+                          value={phone}
+                          onChange={(e) => setPhone(e.target.value)}
                           placeholder="Add phone number"
                           className="pl-10 w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-transparent transition text-gray-900 bg-gray-50"
                         />
@@ -129,7 +156,8 @@ export default function ProfilePage() {
                         </span>
                         <input
                           type="text"
-                          defaultValue={user.address || ""}
+                          value={address}
+                          onChange={(e) => setAddress(e.target.value)}
                           placeholder="Add address"
                           className="pl-10 w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-transparent transition text-gray-900 bg-gray-50"
                         />
@@ -139,9 +167,11 @@ export default function ProfilePage() {
                   <div className="flex justify-end">
                     <button
                       type="button"
-                      className="px-8 py-3 bg-purple-600 text-white text-base font-semibold rounded-lg shadow hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-400 transition-colors"
+                      onClick={handleSaveChanges}
+                      disabled={isSaving}
+                      className="px-8 py-3 bg-purple-600 text-white text-base font-semibold rounded-lg shadow hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-400 transition-colors disabled:opacity-50"
                     >
-                      Save Changes
+                      {isSaving ? "Saving..." : "Save Changes"}
                     </button>
                   </div>
                 </form>
@@ -192,6 +222,7 @@ export default function ProfilePage() {
             </section>
           </div>
         </main>
+        <Toaster position="top-center" richColors closeButton />
       </div>
     </>
   );

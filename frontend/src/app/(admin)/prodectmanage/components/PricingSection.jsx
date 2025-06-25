@@ -45,6 +45,14 @@ export default function PricingSection({ pricing, onChange }) {
   }
 
   const handlePricingChange = (field, value) => {
+    if (field === "taxClass") {
+      onChange({
+        ...pricing,
+        [field]: value,
+      });
+      return;
+    }
+    
     const numValue = Number.parseFloat(value) || 0
     onChange({
       ...pricing,
