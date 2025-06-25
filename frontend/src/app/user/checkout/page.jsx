@@ -10,12 +10,10 @@ import { FiShoppingCart } from "react-icons/fi";
 import Footer from '../../components/footer/page'
 import { useSelector, useDispatch } from 'react-redux';
 import { removeFromCart, increaseQuantity, decreaseQuantity } from '../../slices/cartSlice';
-import { AiFillStar, AiOutlineStar, AiTwotoneStar } from 'react-icons/ai';
 import { toast, Toaster } from 'sonner';
 
 export default function CheckoutPage() {
     const cart = useSelector((state) => state.cartState.items);
-    const {user} = useSelector((state) => state.userState);
     const dispatch = useDispatch();
 
     const handleRemove = (id) => {
@@ -35,9 +33,9 @@ export default function CheckoutPage() {
 
     return (
         <>
-            <div className='pl-[80px] pr-[80px] flex-col items-center'>
-                <Navbar />
-                <div className='font-extra-large font-semibold mt-[15px]'>Cart ({cart.length})</div>
+        <div className='pl-[80px] pr-[80px] flex-col items-center'>
+            <Navbar />
+            <div className='font-extra-large font-semibold mt-[15px]'>Cart ({cart.length})</div>
 
                 <div className='flex w-full mt-[15px]'>
                     {cart.length === 0 ? (
@@ -59,22 +57,20 @@ export default function CheckoutPage() {
                                         <div className="relative w-[15%] ">
                                             <Image
                                                 src={item.product.image || "/mug.jpg"}
-<<<<<<< HEAD
+
                                                 alt={item.product.title}
-=======
+
                                                 alt={item.product.name}
->>>>>>> b72d6a6e57ab8402290872919715d1d3ec70ee5a
+
                                                 width={130}
                                                 height={120}
                                                 className="rounded-lg object-cover"
                                             />
                                         </div>
                                         <div className='w-[40%] flex-col pl-[20px]'>
-<<<<<<< HEAD
                                             <p className='font-large'>{item.product.title}</p>
-=======
+
                                             <p className='font-large'>{item.product.name}</p>
->>>>>>> b72d6a6e57ab8402290872919715d1d3ec70ee5a
                                             <p className='font-large font-semibold'>US ${item.product.price}</p>
                                             <div className="flex text-yellow-400 text-xs sm:text-sm mt-1">
                                                 <div className="flex text-yellow-400 text-xs sm:text-sm mt-1">
@@ -168,27 +164,27 @@ export default function CheckoutPage() {
                                             </div>
                                         </div>
 
-                                        <div className='flex w-full  pl-5 pr-5 items-center justify-center'>
-                                            <button className='w-full flex justify-center items-center bg-[#822BE2] font-semibold h-[50px] rounded-[5px] text-white  hover:bg-purple-200 hover:border-2 hover:border-[#822BE2] hover:text-[#822BE2] hover:cursor-pointer'>Save Changes</button>
-                                        </div>
-                                        <h2 className="text-xl font-semibold text-gray-800 mb-4 mt-4">Payment Information</h2>
-                                        <p className='px-5 py-[2px]'>Shipping fee will be add based on your buying product and product will be delivered with in 7 daysReturnable with <a href='#'>Terms & Conditions</a></p>
-                                        <h2 className="text-xl font-semibold text-gray-800 mb-4 mt-4">Payment Option</h2>
-                                        <div className='flex gap-[10px] items-center px-5 py-[2px]'>
-                                            <FaCcVisa className='text-[50px] text-[#5C5C5C]' />
-                                            <FaCcPaypal className='text-[50px] text-[#5C5C5C]' />
-                                            <SiMastercard className='text-[50px] text-[#5C5C5C]' />
-                                        </div>
-                                    </div>
+                                <div className='flex w-full  pl-5 pr-5 items-center justify-center'>
+                                    <button className='w-full flex justify-center items-center bg-[#822BE2] font-semibold h-[50px] rounded-[5px] text-white  hover:bg-purple-200 hover:border-2 hover:border-[#822BE2] hover:text-[#822BE2] hover:cursor-pointer'>Save Changes</button>
                                 </div>
-                            )}
-                        </>
-                    )}
-                </div>
-
+                                <h2 className="text-xl font-semibold text-gray-800 mb-4 mt-4">Payment Information</h2>
+                                <p className='px-5 py-[2px]'>Shipping fee will be add based on your buying product and product will be delivered with in 7 daysReturnable with <a href='#'>Terms & Conditions</a></p>
+                                <h2 className="text-xl font-semibold text-gray-800 mb-4 mt-4">Payment Option</h2>
+                                <div className='flex gap-[10px] items-center px-5 py-[2px]'>
+                                    <FaCcVisa className='text-[50px] text-[#5C5C5C]' />
+                                    <FaCcPaypal className='text-[50px] text-[#5C5C5C]' />
+                                    <SiMastercard className='text-[50px] text-[#5C5C5C]' />
+                                </div>
+                            </div>
+                        </div>
+                        )}
+                    </>
+                )}
             </div>
-            <Footer />
-            <Toaster position="top-center" richColors closeButton />
+            
+        </div>
+        <Footer />
+        <Toaster position="top-center" richColors closeButton />
         </>
     )
 }

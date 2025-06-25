@@ -34,10 +34,8 @@ const productSchema = new mongoose.Schema({
   featured: Boolean,
   seoTitle: String,
   seoDescription: String,
-<<<<<<< HEAD
-=======
+
   rating: { type: Number, default: 3 },
->>>>>>> b72d6a6e57ab8402290872919715d1d3ec70ee5a
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
 }, {
@@ -46,7 +44,6 @@ const productSchema = new mongoose.Schema({
   toObject: { virtuals: true },
 })
 
-<<<<<<< HEAD
 productSchema.virtual("price").get(function () {
   return this.salePrice > 0 ? this.salePrice : this.retailPrice
 })
@@ -66,27 +63,4 @@ productSchema.pre("save", function (next) {
   next()
 })
 
-=======
-productSchema.index({ name: 'text', shortDescription: 'text' });
-
-productSchema.virtual("price").get(function () {
-  return this.salePrice > 0 ? this.salePrice : this.retailPrice
-})
-
-productSchema.virtual("profitMargin").get(function () {
-  const sellingPrice = this.salePrice > 0 ? this.salePrice : this.retailPrice
-  return this.costPrice > 0 ? (((sellingPrice - this.costPrice) / this.costPrice) * 100).toFixed(2) : 0
-})
-
-productSchema.pre("save", function (next) {
-  if (this.stock === 0) this.stockStatus = "out-of-stock"
-  else if (this.stock <= 10) this.stockStatus = "low-stock"
-  else this.stockStatus = "in-stock"
-
-  if (!this.seoTitle) this.seoTitle = this.name.substring(0, 60)
-  if (!this.seoDescription) this.seoDescription = this.shortDescription
-  next()
-})
-
->>>>>>> b72d6a6e57ab8402290872919715d1d3ec70ee5a
 module.exports = mongoose.model("Product", productSchema)
