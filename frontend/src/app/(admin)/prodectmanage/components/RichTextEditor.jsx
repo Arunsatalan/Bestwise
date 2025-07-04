@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef } from "react"
+import React, { useState, useRef, useEffect } from "react"
 import { Button } from "../../../../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../../../../components/ui/card"
 import {
@@ -21,6 +21,17 @@ export default function RichTextEditor({ value = "", onChange }) {
   const [showSource, setShowSource] = useState(false)
   const [selectedText, setSelectedText] = useState("")
   const editorRef = useRef(null)
+
+  // Only update innerHTML if value prop changes from outside and is different from current content
+  useEffect(() => {
+    if (editorRef.current && !showSource) {
+      // Only update if value is different from current content
+      if (editorRef.current.innerHTML !== value) {
+        editorRef.current.innerHTML = value
+      }
+    }
+    // eslint-disable-next-line
+  }, [value, showSource])
 
   const execCommand = (command, value = null) => {
     document.execCommand(command, false, value)
@@ -147,7 +158,6 @@ export default function RichTextEditor({ value = "", onChange }) {
               ref={editorRef}
               contentEditable
               className="min-h-48 p-4 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              dangerouslySetInnerHTML={{ __html: value }}
               onInput={handleContentChange}
               onKeyDown={handleKeyDown}
               style={{ minHeight: "200px" }}
