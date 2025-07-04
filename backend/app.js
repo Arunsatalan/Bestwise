@@ -7,6 +7,7 @@ require("dotenv").config();
 const authRoutes = require('./routes/authRoutes');
 const productRoutes = require('./routes/productRoutes');
 const orderRoutes = require('./routes/orderRoutes');
+const categoryRoutes = require('./routes/categoryRoutes');
 
 const app = express();
 
@@ -23,6 +24,7 @@ app.use(cookieParser());
 app.use('/api', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/categories', categoryRoutes);
 
 module.exports = app;
 

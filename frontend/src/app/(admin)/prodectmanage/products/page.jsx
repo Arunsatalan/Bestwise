@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, Edit, Trash2, Package, DollarSign, Tag, Eye } from "lucide-react"
+import { ArrowLeft, Edit, Trash2, Package, DollarSign, Tag } from "lucide-react"
 import Link from "next/link"
 
 export default function ProductDetail() {
@@ -20,7 +20,7 @@ export default function ProductDetail() {
 
   const fetchProduct = async () => {
     try {
-      const response = await fetch(`/api/products/${params.id}`)
+const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products/${params.id}`);
       const data = await response.json()
       setProduct(data)
     } catch (error) {
@@ -33,17 +33,10 @@ export default function ProductDetail() {
   const deleteProduct = async () => {
     if (confirm("Are you sure you want to delete this product?")) {
       try {
-        const response = await fetch(`/api/products/${params.id}`, { 
-          method: "DELETE" 
-        })
-        if (response.ok) {
-          router.push("/prodectmanage")
-        } else {
-          alert("Failed to delete product")
-        }
+        await fetch(`/api/products/${params.id}`, { method: "DELETE" })
+        router.push("/")
       } catch (error) {
         console.error("Error deleting product:", error)
-        alert("Error deleting product")
       }
     }
   }
@@ -61,7 +54,7 @@ export default function ProductDetail() {
       <div className="container mx-auto p-6">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">Product Not Found</h1>
-          <Link href="/prodectmanage">
+          <Link href="/">
             <Button>Back to Products</Button>
           </Link>
         </div>
@@ -74,24 +67,24 @@ export default function ProductDetail() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">
-          <Link href="/prodectmanage">
+          <Link href="/">
             <Button variant="outline" size="sm">
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Products
+              Back
             </Button>
           </Link>
           <h1 className="text-3xl font-bold">{product.name}</h1>
         </div>
         <div className="flex gap-2">
-          <Link href={`/prodectmanage/products/edit/${product._id || product.id}`}>
+          <Link href={`/products/edit/${product.id}`}>
             <Button>
               <Edit className="w-4 h-4 mr-2" />
-              Edit Product
+              Edit
             </Button>
           </Link>
           <Button variant="destructive" onClick={deleteProduct}>
             <Trash2 className="w-4 h-4 mr-2" />
-            Delete Product
+            Delete
           </Button>
         </div>
       </div>
@@ -103,7 +96,7 @@ export default function ProductDetail() {
             <CardContent className="p-6">
               <div className="aspect-square mb-4">
                 <img
-                  src={product.images?.[0]?.url || "/placeholder.svg?height=400&width=400"}
+                  src={product.images?.[0] || "/placeholder.svg?height=400&width=400"}
                   alt={product.name}
                   className="w-full h-full object-cover rounded-lg"
                 />
@@ -113,7 +106,7 @@ export default function ProductDetail() {
                   {product.images.slice(1).map((image, index) => (
                     <img
                       key={index}
-                      src={image.url || "/placeholder.svg"}
+                      src={image || "/placeholder.svg"}
                       alt={`${product.name} ${index + 2}`}
                       className="aspect-square object-cover rounded"
                     />
@@ -138,24 +131,16 @@ export default function ProductDetail() {
               </div>
               <div>
                 <p className="text-sm text-gray-600">Category</p>
-                <Badge variant="outline">{product.mainCategory || product.category}</Badge>
+                <Badge variant="outline">{product.category}</Badge>
               </div>
               <div>
                 <p className="text-sm text-gray-600">Status</p>
-                <Badge variant={product.status === "active" ? "default" : "secondary"}>
-                  {product.status}
-                </Badge>
+                <Badge variant={product.status === "active" ? "default" : "secondary"}>{product.status}</Badge>
               </div>
               <div>
                 <p className="text-sm text-gray-600">Short Description</p>
                 <p>{product.shortDescription}</p>
               </div>
-              {product.detailedDescription && (
-                <div>
-                  <p className="text-sm text-gray-600">Detailed Description</p>
-                  <div dangerouslySetInnerHTML={{ __html: product.detailedDescription }} />
-                </div>
-              )}
             </CardContent>
           </Card>
 
@@ -164,7 +149,7 @@ export default function ProductDetail() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <DollarSign className="w-5 h-5" />
-                Pricing Information
+                Pricing
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
@@ -183,7 +168,7 @@ export default function ProductDetail() {
                 </div>
               )}
               <div className="flex justify-between font-medium border-t pt-2">
-                <span>Current Price:</span>
+                <span>Selling Price:</span>
                 <span>${product.salePrice > 0 ? product.salePrice : product.retailPrice}</span>
               </div>
             </CardContent>
@@ -194,7 +179,7 @@ export default function ProductDetail() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Package className="w-5 h-5" />
-                Inventory Information
+                Inventory
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
@@ -203,48 +188,21 @@ export default function ProductDetail() {
                 <span>{product.stock} units</span>
               </div>
               <div className="flex justify-between">
-                <span>Stock Status:</span>
-                <Badge variant={product.stock > 0 ? "default" : "destructive"}>
-                  {product.stockStatus}
-                </Badge>
+                <span>Status:</span>
+                <Badge variant={product.stock > 0 ? "default" : "destructive"}>{product.stockStatus}</Badge>
               </div>
-              {product.weight && (
-                <div className="flex justify-between">
-                  <span>Weight:</span>
-                  <span>{product.weight} kg</span>
-                </div>
-              )}
-              {product.dimensions && (
-                <div className="flex justify-between">
-                  <span>Dimensions:</span>
-                  <span>
-                    {product.dimensions.length} × {product.dimensions.width} × {product.dimensions.height} cm
-                  </span>
-                </div>
-              )}
+              <div className="flex justify-between">
+                <span>Weight:</span>
+                <span>{product.weight} kg</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Dimensions:</span>
+                <span>
+                  {product.dimensions?.length} × {product.dimensions?.width} × {product.dimensions?.height} cm
+                </span>
+              </div>
             </CardContent>
           </Card>
-
-          {/* Additional Info */}
-          {product.tags && product.tags.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Tag className="w-5 h-5" />
-                  Tags
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-wrap gap-2">
-                  {product.tags.map((tag, index) => (
-                    <Badge key={index} variant="outline">
-                      {tag}
-                    </Badge>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
         </div>
       </div>
     </div>

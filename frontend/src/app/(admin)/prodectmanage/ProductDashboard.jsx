@@ -10,6 +10,7 @@ import Link from "next/link"
 
 export default function ProductDashboard() {
   const [products, setProducts] = useState([])
+  const [categories, setCategories] = useState([])
   const [searchTerm, setSearchTerm] = useState("")
   const [filterCategory, setFilterCategory] = useState("")
   const [filterStatus, setFilterStatus] = useState("")
@@ -18,6 +19,7 @@ export default function ProductDashboard() {
   useEffect(() => {
     if (typeof window !== "undefined") {
       fetchProducts()
+      fetchCategories()
     }
   }, [])
 
@@ -31,6 +33,17 @@ export default function ProductDashboard() {
       console.error("Error fetching products:", error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchCategories = async () => {
+    try {
+      const response = await fetch("http://localhost:5000/api/categories")
+      const result = await response.json()
+      console.log("Fetched categories:", result)
+      setCategories(Array.isArray(result.data) ? result.data : [])
+    } catch (error) {
+      console.error("Error fetching categories:", error)
     }
   }
 
@@ -49,7 +62,7 @@ export default function ProductDashboard() {
     const matchesSearch =
       product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.sku.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesCategory = !filterCategory || product.category === filterCategory
+    const matchesCategory = !filterCategory || product.mainCategory === filterCategory || product.category === filterCategory
     const matchesStatus = !filterStatus || product.status === filterStatus
     return matchesSearch && matchesCategory && matchesStatus
   })
@@ -101,10 +114,11 @@ export default function ProductDashboard() {
               className="px-3 py-2 border rounded-md"
             >
               <option value="">All Categories</option>
-              <option value="electronics">Electronics</option>
-              <option value="clothing">Clothing</option>
-              <option value="home">Home & Garden</option>
-              <option value="books">Books</option>
+              {categories.map((category) => (
+                <option key={category._id || category.id} value={category.name}>
+                  {category.name}
+                </option>
+              ))}
             </select>
             <select
               value={filterStatus}
@@ -144,22 +158,30 @@ export default function ProductDashboard() {
                 <p className="text-sm text-gray-600 mb-2">SKU: {product.sku}</p>
                 <div className="flex justify-between items-center mb-3">
                   <span className="text-lg font-bold">${product.price}</span>
-                  <Badge variant="outline">{product.category}</Badge>
+                  <Badge variant="outline">{product.mainCategory || product.category}</Badge>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600">Stock: {product.stock}</span>
                   <div className="flex gap-2">
-                    <Link href={`/products/${product._id || product.id}`}>
-                      <Button size="sm" variant="outline">
+                    <Link href={`/prodectmanage/products/${product._id || product.id}`}>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => console.log("View product:", product._id || product.id)}
+                      >
                         <Eye className="w-4 h-4" />
                       </Button>
                     </Link>
-                    <Link href={`/products/edit/${product._id || product.id}`}>
+                    <Link href={`/prodectmanage/products/edit/${product._id || product.id}`}>
                       <Button size="sm" variant="outline">
                         <Edit className="w-4 h-4" />
                       </Button>
                     </Link>
-                    <Button size="sm" variant="outline" onClick={() => deleteProduct(product._id || product.id)}>
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      onClick={() => deleteProduct(product._id || product.id)}
+                    >
                       <Trash2 className="w-4 h-4" />
                     </Button>
                   </div>
