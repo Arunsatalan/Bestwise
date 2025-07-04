@@ -1,9 +1,10 @@
 const Category = require("../models/Category")
+const cors = require('cors');
 
 // Get all categories
 exports.getAllCategories = async (req, res) => {
   try {
-    const categories = await Category.find({ isActive: true }).sort({ sortOrder: 1, name: 1 })
+    const categories = await Category.find().sort({ sortOrder: 1, name: 1 })
     
     res.json({
       success: true,
@@ -60,7 +61,7 @@ exports.createCategory = async (req, res) => {
     })
   } catch (error) {
     console.error("Error creating category:", error)
-    res.status(500).json({
+    res.status(400).json({
       success: false,
       message: "Error creating category",
       error: error.message
@@ -91,7 +92,7 @@ exports.updateCategory = async (req, res) => {
     })
   } catch (error) {
     console.error("Error updating category:", error)
-    res.status(500).json({
+    res.status(400).json({
       success: false,
       message: "Error updating category",
       error: error.message

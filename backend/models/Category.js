@@ -1,5 +1,11 @@
 const mongoose = require("mongoose")
 
+const attributeSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  displayName: { type: String, required: true },
+  items: { type: [String], default: [] }
+}, { _id: false })
+
 const categorySchema = new mongoose.Schema(
   {
     key: {
@@ -19,9 +25,8 @@ const categorySchema = new mongoose.Schema(
       trim: true,
     },
     attributes: {
-      type: Map,
-      of: [String],
-      default: {},
+      type: [attributeSchema],
+      default: [],
     },
     icon: {
       type: String,

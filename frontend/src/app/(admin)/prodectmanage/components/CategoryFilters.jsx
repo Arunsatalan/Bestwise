@@ -9,16 +9,20 @@ import { Badge } from "../../../../components/ui/badge"
 import { Textarea } from "../../../../components/ui/textarea"
 import { Plus, X, Folder, Edit2, Save, Settings, Trash2, Eye, Package, Search } from "lucide-react"
 import Link from "next/link"
+import { useParams } from "next/navigation"
 
 export default function CategoryFilters({
   category = "",
   tags = [],
   onCategoryChange = () => {},
   onTagsChange = () => {},
-  onFiltersChange = null,
+  onFiltersChange = () => {},
   selectedFilters = {},
   isProductForm = false,
 }) {
+  const params = useParams();
+  const productId = params?.id; // Now productId is defined
+
   const [categorySystem, setCategorySystem] = useState({})
   const [selectedMainCategory, setSelectedMainCategory] = useState(category || "")
   const [currentSelectedFilters, setCurrentSelectedFilters] = useState(selectedFilters || {})
@@ -30,13 +34,17 @@ export default function CategoryFilters({
   const [products, setProducts] = useState([])
   const [filteredProducts, setFilteredProducts] = useState([])
   const [showProducts, setShowProducts] = useState(false)
+  const [editingMainCategory, setEditingMainCategory] = useState(null)
+  const [mainCategoryEditForm, setMainCategoryEditForm] = useState({ name: "", key: "", description: "" })
+  const [product, setProduct] = useState(null)
+  const [attributes, setAttributes] = useState([])
 
   // New category form state
   const [newCategoryForm, setNewCategoryForm] = useState({
     name: "",
     key: "",
     description: "",
-    attributes: [{ name: "subcategories", displayName: "Subcategories", items: [] }],
+    attributes: [{ name: "subcategories", displayName: "Subcategories", items: [] }]
   })
 
   // Initialize state from props
@@ -67,9 +75,31 @@ export default function CategoryFilters({
     }
   }, [selectedMainCategory, currentSelectedFilters, products, isProductForm])
 
+  useEffect(() => {
+    async function fetchCategories() {
+      try {
+        const res = await fetch("http://localhost:5000/api/categories");
+        const result = await res.json();
+        const data = result.data;
+        if (Array.isArray(data)) {
+          const categoriesByKey = {};
+          data.forEach(cat => {
+            categoriesByKey[cat.key] = cat;
+          });
+          setCategorySystem(categoriesByKey);
+        } else {
+          console.error("Categories API did not return an array:", data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch categories:", err);
+      }
+    }
+    fetchCategories();
+  }, []);
+
   const loadCategories = async () => {
     try {
-      const response = await fetch("/prodectmanage/api/categories")
+      const response = await fetch("http://localhost:5000/api/categories")
       const data = await response.json()
       setCategorySystem(data)
     } catch (error) {
@@ -82,7 +112,7 @@ export default function CategoryFilters({
 
   const loadProducts = async () => {
     try {
-      const response = await fetch("/api/products")
+      const response = await fetch("http://localhost:5000/api/products")
       const data = await response.json()
       setProducts(data)
     } catch (error) {
@@ -119,76 +149,10 @@ export default function CategoryFilters({
     setFilteredProducts(filtered)
   }
 
-  const loadDefaultCategories = () => {
-    const defaultCategories = {
-      balloons: {
-        name: "Balloons",
-        description: "Party and celebration balloons",
-        subcategories: ["Party Balloons", "Wedding Balloons", "Birthday Balloons", "Seasonal Balloons"],
-        occasions: [
-          "Wedding",
-          "Anniversary",
-          "Valentine's Day",
-          "Graduation",
-          "Baby Shower",
-          "Halloween",
-          "Christmas",
-          "Birthday",
-          "New Year",
-        ],
-        types: [
-          "Confetti",
-          "LED",
-          "Helium-filled",
-          "Air-filled",
-          "Biodegradable",
-          "Stuffed",
-          "Mini",
-          "Starred",
-          "Large",
-          "Jumbo",
-          "Custom",
-        ],
-        colors: ["Pink", "Blue", "Gold", "Silver", "Multi-color", "Green", "Red", "Purple", "Orange", "White"],
-        finishes: ["Matte", "Chrome", "Confetti", "Glitter", "Pearlescent", "Transparent", "Metallic"],
-        sizes: ['Mini (6")', 'Standard (11")', 'Large (18")', 'Jumbo (36")', 'Giant (40"+)'],
-      },
-      cards: {
-        name: "Cards",
-        description: "Greeting cards and stationery",
-        subcategories: ["Greeting Cards", "Birthday Cards", "Wedding Cards", "Thank You Cards"],
-        occasions: [
-          "Wedding",
-          "Anniversary",
-          "Sympathy",
-          "Congratulations",
-          "Thank You",
-          "Get Well",
-          "Birthday",
-          "Valentine's Day",
-          "Christmas",
-          "Mother's Day",
-          "Father's Day",
-        ],
-        recipients: ["Friend", "Family", "Partner", "Colleague", "Parent", "Child", "Boss", "Teacher"],
-        styles: ["Artistic", "Photo", "Pop-up", "Musical", "Handmade", "Vintage", "Modern", "Minimalist"],
-        colors: ["Pink", "Blue", "White", "Gold", "Silver", "Red", "Green", "Purple"],
-        formats: ["A4", "A5", "Square", "Postcard", "Folded", "Single Panel"],
-      },
-      "home-living": {
-        name: "Home & Living",
-        description: "Home decor and living accessories",
-        subcategories: ["Wall Decor", "Table Decor", "Garden Items", "Lighting", "Storage"],
-        productTypes: ["Frames", "Candles", "Decor", "Garden items", "Cushions", "Vases", "Mirrors", "Clocks"],
-        colors: ["White", "Black", "Gold", "Silver", "Blue", "Green", "Brown", "Gray", "Beige"],
-        sizes: ["Small", "Medium", "Large", "Extra Large"],
-        materials: ["Wood", "Metal", "Glass", "Ceramic", "Fabric", "Plastic", "Stone"],
-        rooms: ["Living Room", "Bedroom", "Kitchen", "Bathroom", "Garden", "Office", "Dining Room"],
-        styles: ["Modern", "Vintage", "Rustic", "Minimalist", "Industrial", "Scandinavian", "Bohemian"],
-      },
-    }
-    setCategorySystem(defaultCategories)
-  }
+  // const loadDefaultCategories = () => {
+  //   // s
+  //   setCategorySystem(defaultCategories)
+  // }
 
   // Save categories to backend
   const saveCategories = async (updatedCategories) => {
@@ -222,23 +186,13 @@ export default function CategoryFilters({
       return
     }
 
-    const newCategory = {
-      name: newCategoryForm.name,
-      description: newCategoryForm.description,
-    }
+    console.log("Sending category:", newCategoryForm);
 
-    // Add all attributes with their items
-    newCategoryForm.attributes.forEach((attr) => {
-      newCategory[attr.name] = attr.items
-    })
-
-    const updatedCategories = {
-      ...categorySystem,
-      [newCategoryForm.key]: newCategory,
-    }
-
-    setCategorySystem(updatedCategories)
-    await saveCategories(updatedCategories)
+    await fetch("/api/categories", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(newCategoryForm)
+    });
 
     // Auto-select the newly created category
     setSelectedMainCategory(newCategoryForm.key)
@@ -253,11 +207,11 @@ export default function CategoryFilters({
       name: "",
       key: "",
       description: "",
-      attributes: [{ name: "subcategories", displayName: "Subcategories", items: [] }],
+      attributes: [{ name: "subcategories", displayName: "Subcategories", items: [] }]
     })
     setShowCreateCategoryForm(false)
 
-    alert(`Category "${newCategory.name}" created successfully and selected!`)
+    alert(`Category "${newCategoryForm.name}" created successfully and selected!`)
   }
 
   // Add attribute to new category form
@@ -487,11 +441,47 @@ export default function CategoryFilters({
     }
   }
 
+  // Edit main category
+  const startEditMainCategory = (categoryKey) => {
+    setEditingMainCategory(categoryKey)
+    setMainCategoryEditForm({
+      name: categorySystem[categoryKey].name,
+      key: categoryKey,
+      description: categorySystem[categoryKey].description || ""
+    })
+  }
+  const cancelEditMainCategory = () => {
+    setEditingMainCategory(null)
+    setMainCategoryEditForm({ name: "", key: "", description: "" })
+  }
+  const saveEditMainCategory = async (oldKey) => {
+    const updatedCategories = { ...categorySystem }
+    // If key changed, move the category
+    if (mainCategoryEditForm.key !== oldKey) {
+      updatedCategories[mainCategoryEditForm.key] = {
+        ...updatedCategories[oldKey],
+        name: mainCategoryEditForm.name,
+        description: mainCategoryEditForm.description
+      }
+      delete updatedCategories[oldKey]
+    } else {
+      updatedCategories[oldKey] = {
+        ...updatedCategories[oldKey],
+        name: mainCategoryEditForm.name,
+        description: mainCategoryEditForm.description
+      }
+    }
+    setCategorySystem(updatedCategories)
+    await saveCategories(updatedCategories)
+    setEditingMainCategory(null)
+    setMainCategoryEditForm({ name: "", key: "", description: "" })
+  }
+
   // Get available main categories
   const mainCategories = Object.keys(categorySystem)
   const currentCategoryData = selectedMainCategory ? categorySystem[selectedMainCategory] : null
 
-  const FilterSection = ({ title, filterType, items, categoryKey }) => (
+  const FilterSection = ({ title, filterType, items = [], categoryKey }) => (
     <Card className="mb-4">
       <CardContent className="p-4">
         <div className="flex items-center justify-between mb-4">
@@ -532,9 +522,9 @@ export default function CategoryFilters({
                   [`${categoryKey}-${filterType}`]: e.target.value,
                 }))
               }
-              onKeyPress={(e) => {
-                if (e.key === "Enter") {
-                  addItem(categoryKey, filterType, newItemInputs[`${categoryKey}-${filterType}`])
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && e.target.value.trim()) {
+                  addItem(categoryKey, filterType, e.target.value.trim())
                 }
                 if (e.key === "Escape") {
                   setShowAddInput((prev) => ({ ...prev, [`${categoryKey}-${filterType}`]: false }))
@@ -563,9 +553,9 @@ export default function CategoryFilters({
 
         {/* Items as inline tags */}
         <div className="flex flex-wrap gap-2">
-          {items.map((item, index) => (
+          {Array.isArray(items) && items.map((item, index) => (
             <div key={index} className="flex items-center">
-              {!isProductForm && editingItems[`${categoryKey}-${filterType}-${item}`] ? (
+              {editingItems[`${categoryKey}-${filterType}-${item}`] ? (
                 <div className="flex items-center gap-1 bg-white border rounded-md px-2 py-1">
                   <Input
                     value={editingItems[`${categoryKey}-${filterType}-${item}`]}
@@ -576,9 +566,9 @@ export default function CategoryFilters({
                       }))
                     }
                     className="h-6 text-sm border-0 p-0 w-24"
-                    onKeyPress={(e) => {
-                      if (e.key === "Enter") {
-                        editItem(categoryKey, filterType, item, editingItems[`${categoryKey}-${filterType}-${item}`])
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && e.target.value.trim()) {
+                        editItem(categoryKey, filterType, item, e.target.value.trim())
                       }
                       if (e.key === "Escape") {
                         cancelEditing(categoryKey, filterType, item)
@@ -591,8 +581,8 @@ export default function CategoryFilters({
                     size="sm"
                     variant="ghost"
                     className="h-5 w-5 p-0"
-                    onClick={() =>
-                      editItem(categoryKey, filterType, item, editingItems[`${categoryKey}-${filterType}-${item}`])
+                    onClick={(e) =>
+                      editItem(categoryKey, filterType, item, e.target.value.trim())
                     }
                   >
                     <Save className="w-3 h-3" />
@@ -613,7 +603,7 @@ export default function CategoryFilters({
                   className="flex items-center gap-1 px-3 py-1 cursor-pointer hover:bg-gray-100 transition-colors"
                   onClick={() => handleFilterSelection(filterType, item)}
                 >
-                  {item}
+                  {item.name}
                   {!isProductForm && (
                     <>
                       <Button
@@ -621,9 +611,9 @@ export default function CategoryFilters({
                         size="sm"
                         variant="ghost"
                         className="h-4 w-4 p-0 ml-1 hover:text-blue-500"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          startEditing(categoryKey, filterType, item)
+                        onClick={e => {
+                          e.stopPropagation();
+                          startEditing(categoryKey, filterType, item);
                         }}
                       >
                         <Edit2 className="w-3 h-3" />
@@ -633,9 +623,9 @@ export default function CategoryFilters({
                         size="sm"
                         variant="ghost"
                         className="h-4 w-4 p-0 hover:text-red-500"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          deleteItem(categoryKey, filterType, item)
+                        onClick={e => {
+                          e.stopPropagation();
+                          deleteItem(categoryKey, filterType, item);
                         }}
                       >
                         <X className="w-3 h-3" />
@@ -725,6 +715,25 @@ export default function CategoryFilters({
       </CardContent>
     </Card>
   )
+
+  useEffect(() => {
+    if (productId) {
+      fetch(`http://localhost:5000/api/products/${productId}`)
+        .then(res => res.json())
+        .then(data => setProduct(data));
+    }
+  }, [productId]);
+
+  useEffect(() => {
+    if (!selectedMainCategory) return;
+    async function fetchAttributes() {
+      const res = await fetch(`http://localhost:5000/api/categories/${selectedMainCategory}`);
+      const result = await res.json();
+      const category = result.data || result;
+      setAttributes(category.attributes || []);
+    }
+    fetchAttributes();
+  }, [selectedMainCategory]);
 
   if (loading) {
     return (
@@ -838,7 +847,7 @@ export default function CategoryFilters({
                     <div className="flex gap-2 mb-3">
                       <Input
                         placeholder={`Add ${attribute.displayName.toLowerCase()} item (e.g., Red, Large, Cotton)`}
-                        onKeyPress={(e) => {
+                        onKeyDown={(e) => {
                           if (e.key === "Enter" && e.target.value.trim()) {
                             addItemToAttribute(attributeIndex, e.target.value.trim())
                             e.target.value = ""
@@ -862,17 +871,8 @@ export default function CategoryFilters({
 
                     {/* Display items */}
                     <div className="flex flex-wrap gap-2">
-                      {attribute.items.map((item, itemIndex) => (
-                        <Badge key={itemIndex} variant="secondary" className="flex items-center gap-1">
-                          {item}
-                          <button
-                            type="button"
-                            onClick={() => removeItemFromAttribute(attributeIndex, itemIndex)}
-                            className="ml-1 hover:text-red-500"
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
-                        </Badge>
+                      {Array.isArray(attribute.items) && attribute.items.map((item) => (
+                        <Badge key={item}>{item}</Badge>
                       ))}
                     </div>
 
@@ -936,35 +936,70 @@ export default function CategoryFilters({
                 }`}
                 onClick={() => handleMainCategorySelect(categoryKey)}
               >
-                {!isProductForm && (
+                <div className="absolute top-2 right-2 flex gap-1 z-10">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0"
+                    onClick={e => { e.stopPropagation(); startEditMainCategory(categoryKey); }}
+                  >
+                    <Edit2 className="w-3 h-3" />
+                  </Button>
                   <Button
                     type="button"
                     variant="destructive"
                     size="sm"
-                    className="absolute top-2 right-2 h-6 w-6 p-0"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      deleteMainCategory(categoryKey)
-                    }}
+                    className="h-6 w-6 p-0"
+                    onClick={e => { e.stopPropagation(); deleteMainCategory(categoryKey); }}
                   >
                     <Trash2 className="w-3 h-3" />
                   </Button>
-                )}
-
-                <div className={`text-center ${!isProductForm ? "pr-8" : ""}`}>
-                  <h3 className="font-medium text-lg">{categorySystem[categoryKey].name}</h3>
-                  <p className="text-sm text-gray-500 mt-1">
-                    {categorySystem[categoryKey].description || "No description"}
-                  </p>
-                  <p className="text-xs text-gray-400 mt-1">
-                    {Object.keys(categorySystem[categoryKey]).length - 2} attributes
-                  </p>
-                  {selectedMainCategory === categoryKey && (
-                    <Badge variant="default" className="mt-2">
-                      Selected
-                    </Badge>
-                  )}
                 </div>
+                {editingMainCategory === categoryKey ? (
+                  <div className="space-y-2">
+                    <Input value={mainCategoryEditForm.name} onChange={e => setMainCategoryEditForm(f => ({ ...f, name: e.target.value }))} placeholder="Category Name" className="mb-1" />
+                    <Input value={mainCategoryEditForm.key} onChange={e => setMainCategoryEditForm(f => ({ ...f, key: e.target.value }))} placeholder="Category Key" className="mb-1" />
+                    <Input value={mainCategoryEditForm.description} onChange={e => setMainCategoryEditForm(f => ({ ...f, description: e.target.value }))} placeholder="Description" className="mb-1" />
+                    <div className="flex gap-2">
+                      <Button type="button" size="sm" onClick={e => { e.stopPropagation(); saveEditMainCategory(categoryKey) }}>Save</Button>
+                      <Button type="button" size="sm" variant="outline" onClick={e => { e.stopPropagation(); cancelEditMainCategory() }}>Cancel</Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className={`text-center ${!isProductForm ? "pr-8" : ""} flex flex-col items-center relative`}>
+                    <div className="flex items-center gap-2 justify-center w-full mb-1">
+                      <h3 className="font-medium text-lg">{categorySystem[categoryKey].name}</h3>
+                      {!isProductForm && (
+                        <>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 p-0"
+                            onClick={e => { e.stopPropagation(); startEditMainCategory(categoryKey); }}
+                          >
+                            <Edit2 className="w-3 h-3" />
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="sm"
+                            className="h-6 w-6 p-0"
+                            onClick={e => { e.stopPropagation(); deleteMainCategory(categoryKey); }}
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                    <p className="text-sm text-gray-500 mt-1">{categorySystem[categoryKey].description || "No description"}</p>
+                    <p className="text-xs text-gray-400 mt-1">{Object.keys(categorySystem[categoryKey]).length - 2} attributes</p>
+                    {selectedMainCategory === categoryKey && (
+                      <Badge variant="default" className="mt-2">Selected</Badge>
+                    )}
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -997,17 +1032,26 @@ export default function CategoryFilters({
           </Card>
 
           {/* Render all attributes dynamically */}
-          {Object.entries(currentCategoryData)
-            .filter(([key]) => !["name", "description"].includes(key))
-            .map(([filterType, items]) => (
-              <FilterSection
-                key={filterType}
-                title={filterType.charAt(0).toUpperCase() + filterType.slice(1)}
-                filterType={filterType}
-                items={items}
-                categoryKey={selectedMainCategory}
-              />
-            ))}
+          {attributes.map(attr => (
+            <div key={attr.name} style={{ marginBottom: "1.5rem" }}>
+              <h3 style={{ fontWeight: "bold", marginBottom: "0.5rem" }}>{attr.displayName}</h3>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
+                {attr.items.map(item => (
+                  <span
+                    key={item}
+                    style={{
+                      background: "#f3f3f3",
+                      borderRadius: "8px",
+                      padding: "0.25rem 0.75rem",
+                      fontSize: "0.95rem"
+                    }}
+                  >
+                    {item}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
@@ -1101,6 +1145,35 @@ export default function CategoryFilters({
                 )
               })}
             </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {showProducts && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Products</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {products.length === 0 ? (
+              <p>No products found.</p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {products.map(product => (
+                  <div key={product._id} className="border p-4 rounded">
+                    <img
+                      src={product.imageUrl || "/placeholder.svg"}
+                      alt={product.name}
+                      style={{ width: "100%", height: 150, objectFit: "cover" }}
+                    />
+                    <h3 className="font-bold mt-2">{product.name}</h3>
+                    <p>{product.description}</p>
+                    <p className="text-sm text-gray-500">Price: ${product.price}</p>
+                    {/* Add more product details as needed */}
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
