@@ -8,9 +8,31 @@ import { Badge } from "../../../components/ui/badge"
 import { Search, Plus, Edit, Trash2, Eye } from "lucide-react"
 import Link from "next/link"
 
+// Type definitions for JSDoc
+/**
+ * @typedef {Object} Product
+ * @property {string} [_id] - MongoDB ObjectId
+ * @property {string} [id] - Alternative ID
+ * @property {string} name - Product name
+ * @property {string} sku - Product SKU
+ * @property {string} [mainCategory] - Main category
+ * @property {string} [category] - Category
+ * @property {number} price - Product price
+ * @property {number} stock - Stock quantity
+ * @property {string} status - Product status
+ * @property {Array<{url: string}>} [images] - Product images
+ */
+
+/**
+ * @typedef {Object} Category
+ * @property {string} [_id] - MongoDB ObjectId
+ * @property {string} [id] - Alternative ID
+ * @property {string} name - Category name
+ * @property {string} key - Category key
+ */
+
 export default function ProductDashboard() {
   const [products, setProducts] = useState([])
-  const [categories, setCategories] = useState([])
   const [searchTerm, setSearchTerm] = useState("")
   const [filterCategory, setFilterCategory] = useState("")
   const [filterStatus, setFilterStatus] = useState("")
@@ -19,7 +41,6 @@ export default function ProductDashboard() {
   useEffect(() => {
     if (typeof window !== "undefined") {
       fetchProducts()
-      fetchCategories()
     }
   }, [])
 
@@ -36,16 +57,8 @@ export default function ProductDashboard() {
     }
   }
 
-  const fetchCategories = async () => {
-    try {
-      const response = await fetch("http://localhost:5000/api/categories")
-      const result = await response.json()
-      console.log("Fetched categories:", result)
-      setCategories(Array.isArray(result.data) ? result.data : [])
-    } catch (error) {
-      console.error("Error fetching categories:", error)
-    }
-  }
+  // Build unique mainCategory list from products
+  const categoryList = Array.from(new Set(products.map(p => p.mainCategory).filter(Boolean)))
 
   const deleteProduct = async (id) => {
     if (confirm("Are you sure you want to delete this product?")) {
@@ -62,7 +75,7 @@ export default function ProductDashboard() {
     const matchesSearch =
       product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.sku.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesCategory = !filterCategory || product.mainCategory === filterCategory || product.category === filterCategory
+    const matchesCategory = !filterCategory || product.mainCategory === filterCategory
     const matchesStatus = !filterStatus || product.status === filterStatus
     return matchesSearch && matchesCategory && matchesStatus
   })
@@ -114,10 +127,8 @@ export default function ProductDashboard() {
               className="px-3 py-2 border rounded-md"
             >
               <option value="">All Categories</option>
-              {categories.map((category) => (
-                <option key={category._id || category.id} value={category.name}>
-                  {category.name}
-                </option>
+              {categoryList.map((cat) => (
+                <option key={cat} value={cat}>{cat}</option>
               ))}
             </select>
             <select
