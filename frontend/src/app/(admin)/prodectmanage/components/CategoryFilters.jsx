@@ -38,6 +38,8 @@ export default function CategoryFilters({
   const [mainCategoryEditForm, setMainCategoryEditForm] = useState({ name: "", key: "", description: "" })
   const [product, setProduct] = useState(null)
   const [attributes, setAttributes] = useState([])
+  const [selectedAttributeValue, setSelectedAttributeValue] = useState(null)
+  const [selectedAttributeValues, setSelectedAttributeValues] = useState({})
 
   // New category form state
   const [newCategoryForm, setNewCategoryForm] = useState({
@@ -104,7 +106,6 @@ export default function CategoryFilters({
       setCategorySystem(data)
     } catch (error) {
       console.error("Error loading categories:", error)
-      loadDefaultCategories()
     } finally {
       setLoading(false)
     }
@@ -1036,14 +1037,19 @@ export default function CategoryFilters({
             <div key={attr.name} style={{ marginBottom: "1.5rem" }}>
               <h3 style={{ fontWeight: "bold", marginBottom: "0.5rem" }}>{attr.displayName}</h3>
               <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
-                {attr.items.map(item => (
+                {attr.items.map((item) => (
                   <span
                     key={item}
+                    onClick={() => setSelectedAttributeValues((prev) => ({ ...prev, [attr.name]: item }))}
                     style={{
-                      background: "#f3f3f3",
+                      background: selectedAttributeValues[attr.name] === item ? "#a78bfa" : "#f3f3f3",
+                      color: selectedAttributeValues[attr.name] === item ? "#fff" : "#000",
                       borderRadius: "8px",
                       padding: "0.25rem 0.75rem",
-                      fontSize: "0.95rem"
+                      fontSize: "0.95rem",
+                      cursor: "pointer",
+                      border: selectedAttributeValues[attr.name] === item ? "2px solid #7c3aed" : "none",
+                      transition: "all 0.2s"
                     }}
                   >
                     {item}
@@ -1147,6 +1153,74 @@ export default function CategoryFilters({
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* After main category selection UI, show selected category's image and attributes */}
+      {selectedMainCategory && categorySystem[selectedMainCategory] && (
+        <div className="mb-8 p-4 border rounded-lg bg-white flex flex-col items-start">
+          {/* Category Image */}
+          {categorySystem[selectedMainCategory].imageUrl && (
+            <img
+              src={categorySystem[selectedMainCategory].imageUrl}
+              alt={categorySystem[selectedMainCategory].name}
+              style={{ width: "120px", height: "120px", objectFit: "cover", borderRadius: "8px", marginBottom: "1rem" }}
+            />
+          )}
+          <h2 className="text-xl font-bold mb-2">{categorySystem[selectedMainCategory].name}</h2>
+          {Array.isArray(categorySystem[selectedMainCategory].attributes) &&
+            categorySystem[selectedMainCategory].attributes.length > 0 ? (
+              categorySystem[selectedMainCategory].attributes.map((attr) => (
+                <div key={attr.name} style={{ marginBottom: "1.5rem" }}>
+                  <h3 style={{ fontWeight: "bold", marginBottom: "0.5rem" }}>{attr.displayName}</h3>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
+                    {attr.items.map((item) => (
+                      <span
+                        key={item}
+                        onClick={() => setSelectedAttributeValues((prev) => ({ ...prev, [attr.name]: item }))}
+                        style={{
+                          background: selectedAttributeValues[attr.name] === item ? "#a78bfa" : "#f3f3f3",
+                          color: selectedAttributeValues[attr.name] === item ? "#fff" : "#000",
+                          borderRadius: "8px",
+                          padding: "0.25rem 0.75rem",
+                          fontSize: "0.95rem",
+                          cursor: "pointer",
+                          border: selectedAttributeValues[attr.name] === item ? "2px solid #7c3aed" : "none",
+                          transition: "all 0.2s"
+                        }}
+                      >
+                        {item}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="text-gray-500">No attributes for this category.</p>
+            )}
+
+          {/* Show all selected attribute-value pairs and clear button */}
+          {Object.keys(selectedAttributeValues).length > 0 && (
+            <div style={{ marginTop: "1.5rem", width: "100%" }}>
+              <div style={{ marginBottom: "0.5rem" }}>
+                <strong>Selected Values:</strong>
+              </div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem", marginBottom: "0.75rem" }}>
+                {Object.entries(selectedAttributeValues).map(([attr, value]) => (
+                  <span key={attr} style={{ background: "#ede9fe", borderRadius: "8px", padding: "0.25rem 0.75rem", fontWeight: 500 }}>
+                    {categorySystem[selectedMainCategory].attributes.find(a => a.name === attr)?.displayName || attr}: {value}
+                  </span>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedAttributeValues({})}
+                style={{ background: "#a78bfa", color: "#fff", border: "none", borderRadius: "6px", padding: "0.5rem 1.25rem", cursor: "pointer" }}
+              >
+                Clear All
+              </button>
+            </div>
+          )}
+        </div>
       )}
 
       {showProducts && (
