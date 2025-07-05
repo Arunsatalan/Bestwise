@@ -1213,10 +1213,10 @@ export default function CategoryFilters({
       {/* Main Category Selection */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center justify-between">
+          <CardTitle className="flex items-center justify-between flex-col sm:flex-row gap-4">
             <span>{isProductForm ? "Select Main Category" : `Main Category Selection (${mainCategories.length})`}</span>
             {/* ADD THIS: Show Create New Category button for both product form and regular view */}
-            <Button type="button" variant="outline" onClick={() => setShowCreateCategoryForm(true)}>
+            <Button type="button" variant="outline" onClick={() => setShowCreateCategoryForm(true)} className="w-full sm:w-auto">
               <Plus className="w-4 h-4 mr-2" />
               Create New Category
             </Button>

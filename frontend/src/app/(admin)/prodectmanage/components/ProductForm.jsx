@@ -221,19 +221,19 @@ const handleSubmit = async () => {
 
     return (
       <div className="container mx-auto p-6">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-6 flex-col sm:flex-row gap-4">
           <div className="flex items-center gap-4">
             <Button variant="outline" onClick={() => setCurrentStep("form")}>
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Edit
             </Button>
-            <h1 className="text-3xl font-bold">Product Preview</h1>
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">Product Preview</h1>
           </div>
-          <div className="flex gap-4">
-            <Button variant="outline" onClick={() => setCurrentStep("form")}>
+          <div className="flex gap-4 flex-col sm:flex-row w-full sm:w-auto">
+            <Button variant="outline" onClick={() => setCurrentStep("form")} className="w-full sm:w-auto">
               Edit Product
             </Button>
-            <Button onClick={handleSubmit} disabled={loading}>
+            <Button onClick={handleSubmit} disabled={loading} className="w-full sm:w-auto">
               {loading ? "Saving..." : product ? "Update Product" : "Create Product"}
             </Button>
           </div>
@@ -293,22 +293,22 @@ const handleSubmit = async () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <h2 className="text-2xl font-bold">{formData.name}</h2>
-                  <p className="text-gray-600">{formData.shortDescription}</p>
+                  <h2 className="text-lg sm:text-xl md:text-2xl font-bold">{formData.name}</h2>
+                  <p className="text-sm sm:text-base text-gray-600">{formData.shortDescription}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600">SKU</p>
-                  <p className="font-medium">{formData.sku}</p>
+                  <p className="text-xs sm:text-sm text-gray-600">SKU</p>
+                  <p className="text-sm sm:text-base font-medium">{formData.sku}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600">Main Category</p>
-                  <Badge variant="outline">
+                  <p className="text-xs sm:text-sm text-gray-600">Main Category</p>
+                  <Badge variant="outline" className="text-xs">
                     {categorySystem[formData.mainCategory]?.name || formData.mainCategory}
                   </Badge>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600">Status</p>
-                  <Badge variant={formData.status === "active" ? "default" : "secondary"}>{formData.status}</Badge>
+                  <p className="text-xs sm:text-sm text-gray-600">Status</p>
+                  <Badge variant={formData.status === "active" ? "default" : "secondary"} className="text-xs">{formData.status}</Badge>
                 </div>
               </CardContent>
             </Card>
@@ -499,13 +499,13 @@ const handleSubmit = async () => {
   return (
     <form className="space-y-6">
       <Tabs defaultValue="basic" className="w-full">
-        <TabsList className="grid w-full grid-cols-6">
-          <TabsTrigger value="basic">Basic Info</TabsTrigger>
-          <TabsTrigger value="categories">Categories</TabsTrigger>
-          <TabsTrigger value="media">Media</TabsTrigger>
-          <TabsTrigger value="pricing">Pricing</TabsTrigger>
-          <TabsTrigger value="inventory">Inventory</TabsTrigger>
-          {/* <TabsTrigger value="variants">Variants</TabsTrigger> */}
+        <TabsList className="flex w-full overflow-x-auto gap-1 p-1">
+          <TabsTrigger value="basic" className="text-xs px-2 py-2 whitespace-nowrap">Basic Info</TabsTrigger>
+          <TabsTrigger value="categories" className="text-xs px-2 py-2 whitespace-nowrap">Categories</TabsTrigger>
+          <TabsTrigger value="media" className="text-xs px-2 py-2 whitespace-nowrap">Media</TabsTrigger>
+          <TabsTrigger value="pricing" className="text-xs px-2 py-2 whitespace-nowrap">Pricing</TabsTrigger>
+          <TabsTrigger value="inventory" className="text-xs px-2 py-2 whitespace-nowrap">Inventory</TabsTrigger>
+          {/* <TabsTrigger value="variants" className="text-xs px-2 py-2 whitespace-nowrap">Variants</TabsTrigger> */}
         </TabsList>
 
         <TabsContent value="basic">
