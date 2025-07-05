@@ -1,13 +1,13 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "../../../../components/ui/button"
 import { Input } from "../../../../components/ui/input"
 import { Label } from "../../../../components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "../../../../components/ui/card"
 import { Badge } from "../../../../components/ui/badge"
 import { Textarea } from "../../../../components/ui/textarea"
-import { Plus, X, Folder, Edit2, Save, Settings, Trash2, Eye, Package, Search } from "lucide-react"
+import { Plus, X, Folder, Edit2, Save, Settings, Trash2, Eye, Package, Search, Edit, Check } from "lucide-react"
 import Link from "next/link"
 import { useParams } from "next/navigation"
 
@@ -40,6 +40,7 @@ export default function CategoryFilters({
   const [attributes, setAttributes] = useState([])
   const [selectedAttributeValue, setSelectedAttributeValue] = useState(null)
   const [selectedAttributeValues, setSelectedAttributeValues] = useState({})
+  const [editingAttributeValues, setEditingAttributeValues] = useState({})
 
   // New category form state
   const [newCategoryForm, setNewCategoryForm] = useState({
@@ -548,6 +549,124 @@ export default function CategoryFilters({
       alert('Error adding attribute value. Please try again.');
     }
   }
+
+  // Start editing attribute value
+  const startEditingAttributeValue = (attributeName, oldValue) => {
+    setEditingAttributeValues(prev => ({
+      ...prev,
+      [`${attributeName}-${oldValue}`]: oldValue
+    }));
+  };
+
+  // Cancel editing attribute value
+  const cancelEditingAttributeValue = (attributeName, oldValue) => {
+    setEditingAttributeValues(prev => {
+      const newState = { ...prev };
+      delete newState[`${attributeName}-${oldValue}`];
+      return newState;
+    });
+  };
+
+  // Save edited attribute value
+  const saveEditedAttributeValue = async (attributeName, oldValue, newValue) => {
+    console.log('Saving edited value:', { attributeName, oldValue, newValue }); // Debug log
+    
+    if (!newValue || !newValue.trim()) {
+      alert('Value cannot be empty!');
+      return;
+    }
+
+    const trimmedValue = newValue.trim();
+    
+    if (trimmedValue === oldValue) {
+      cancelEditingAttributeValue(attributeName, oldValue);
+      return;
+    }
+
+    try {
+      // Check if new value already exists
+      const category = categorySystem[selectedMainCategory];
+      if (category && category.attributes) {
+        const attribute = category.attributes.find(attr => attr.name === attributeName);
+        if (attribute && attribute.items.includes(trimmedValue) && trimmedValue !== oldValue) {
+          alert(`"${trimmedValue}" already exists in this attribute!`);
+          return;
+        }
+      }
+
+      console.log('Making PUT request to:', `http://localhost:5000/api/categories/${selectedMainCategory}/attributes/${attributeName}/items/${encodeURIComponent(oldValue)}`);
+      console.log('Request body:', { newValue: trimmedValue });
+
+      // Update in database
+      const response = await fetch(`http://localhost:5000/api/categories/${selectedMainCategory}/attributes/${attributeName}/items/${encodeURIComponent(oldValue)}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ newValue: trimmedValue })
+      });
+
+      console.log('Response status:', response.status);
+      console.log('Response ok:', response.ok);
+
+      if (response.ok) {
+        const responseData = await response.json();
+        console.log('Response data:', responseData);
+
+        // Update category system state
+        const updatedCategorySystem = { ...categorySystem };
+        const category = updatedCategorySystem[selectedMainCategory];
+        if (category && category.attributes) {
+          const updatedAttributes = category.attributes.map(attribute => {
+            if (attribute.name === attributeName) {
+              return {
+                ...attribute,
+                items: attribute.items.map(item => item === oldValue ? trimmedValue : item)
+              };
+            }
+            return attribute;
+          });
+          updatedCategorySystem[selectedMainCategory] = {
+            ...category,
+            attributes: updatedAttributes
+          };
+          setCategorySystem(updatedCategorySystem);
+        }
+
+        // Update attributes state for first section
+        const updatedAttributes = attributes.map(attribute => {
+          if (attribute.name === attributeName) {
+            return {
+              ...attribute,
+              items: attribute.items.map(item => item === oldValue ? trimmedValue : item)
+            };
+          }
+          return attribute;
+        });
+        setAttributes(updatedAttributes);
+
+        // Update selected values if the edited value was selected
+        if (selectedAttributeValues[attributeName] === oldValue) {
+          setSelectedAttributeValues(prev => ({
+            ...prev,
+            [attributeName]: trimmedValue
+          }));
+        }
+
+        // Exit edit mode
+        cancelEditingAttributeValue(attributeName, oldValue);
+        
+        alert(`"${oldValue}" updated to "${trimmedValue}" successfully!`);
+      } else {
+        const errorData = await response.json();
+        console.error('Error response:', errorData);
+        alert(`Failed to update value: ${errorData.message || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error updating attribute value:', error);
+      alert('Error updating attribute value. Please try again.');
+    }
+  };
 
   // Edit main category
   const startEditMainCategory = (categoryKey) => {
@@ -1203,83 +1322,177 @@ export default function CategoryFilters({
               </div>
               
               <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
-                {attr.items.map((item) => (
-                  <span
-                    key={item}
-                    onClick={() => setSelectedAttributeValues((prev) => ({ ...prev, [attr.name]: item }))}
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      background: selectedAttributeValues[attr.name] === item ? "#a78bfa" : "#f3f3f3",
-                      color: selectedAttributeValues[attr.name] === item ? "#fff" : "#000",
-                      borderRadius: "8px",
-                      padding: "0.25rem 0.75rem",
-                      fontSize: "0.95rem",
-                      cursor: "pointer",
-                      border: selectedAttributeValues[attr.name] === item ? "2px solid #7c3aed" : "none",
-                      transition: "all 0.2s",
-                      marginRight: "0.5rem"
-                    }}
-                  >
-                    {item}
-                    <button
-                      type="button"
-                      onClick={async (e) => {
-                        e.stopPropagation();
-                        if (confirm(`Delete "${item}" from ${attr.displayName}?`)) {
-                          try {
-                            // Delete from database first
-                            const response = await fetch(`http://localhost:5000/api/categories/${selectedMainCategory}/attributes/${attr.name}/items/${encodeURIComponent(item)}`, {
-                              method: 'DELETE',
-                              headers: {
-                                'Content-Type': 'application/json'
-                              }
-                            });
-
-                            if (response.ok) {
-                              // Remove the item from the attribute
-                              const updatedAttributes = attributes.map(attribute => {
-                                if (attribute.name === attr.name) {
-                                  return {
-                                    ...attribute,
-                                    items: attribute.items.filter(i => i !== item)
-                                  };
-                                }
-                                return attribute;
-                              });
-                              setAttributes(updatedAttributes);
-                              
-                              // Also remove from selected values if it was selected
-                              if (selectedAttributeValues[attr.name] === item) {
-                                setSelectedAttributeValues(prev => {
-                                  const newValues = { ...prev };
-                                  delete newValues[attr.name];
-                                  return newValues;
-                                });
-                              }
-                            } else {
-                              alert('Failed to delete from database. Please try again.');
-                            }
-                          } catch (error) {
-                            console.error('Error deleting attribute value:', error);
-                            alert('Error deleting attribute value. Please try again.');
-                          }
-                        }
-                      }}
+                {attr.items.map((item) => {
+                  const isEditing = editingAttributeValues[`${attr.name}-${item}`];
+                  
+                  return (
+                    <span
+                      key={item}
+                      onClick={() => !isEditing && setSelectedAttributeValues((prev) => ({ ...prev, [attr.name]: item }))}
                       style={{
-                        background: "none",
-                        border: "none",
-                        marginLeft: "0.4rem",
-                        cursor: "pointer",
-                        display: "flex",
-                        alignItems: "center"
+                        display: "inline-flex",
+                        alignItems: "center",
+                        background: selectedAttributeValues[attr.name] === item ? "#a78bfa" : "#f3f3f3",
+                        color: selectedAttributeValues[attr.name] === item ? "#fff" : "#000",
+                        borderRadius: "8px",
+                        padding: "0.25rem 0.75rem",
+                        fontSize: "0.95rem",
+                        cursor: isEditing ? "default" : "pointer",
+                        border: selectedAttributeValues[attr.name] === item ? "2px solid #7c3aed" : "none",
+                        transition: "all 0.2s",
+                        marginRight: "0.5rem"
                       }}
-                      title={`Delete '${item}'`}
                     >
-                      <Trash2 size={14} color={selectedAttributeValues[attr.name] === item ? "#fff" : "#7c3aed"} />
-                    </button>
-                  </span>
-                ))}
+                                                {isEditing ? (
+                            <>
+                              <input
+                                type="text"
+                                defaultValue={item}
+                                style={{
+                                  background: "transparent",
+                                  border: "none",
+                                  color: "inherit",
+                                  fontSize: "inherit",
+                                  outline: "none",
+                                  width: "80px",
+                                  marginRight: "0.5rem"
+                                }}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") {
+                                    saveEditedAttributeValue(attr.name, item, e.target.value);
+                                  } else if (e.key === "Escape") {
+                                    cancelEditingAttributeValue(attr.name, item);
+                                  }
+                                }}
+                                onChange={(e) => {
+                                  // Update the editing state with the new value
+                                  setEditingAttributeValues(prev => ({
+                                    ...prev,
+                                    [`${attr.name}-${item}`]: e.target.value
+                                  }));
+                                }}
+                                autoFocus
+                              />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const currentValue = editingAttributeValues[`${attr.name}-${item}`] || item;
+                                  saveEditedAttributeValue(attr.name, item, currentValue);
+                                }}
+                            style={{
+                              background: "#10b981",
+                              border: "none",
+                              borderRadius: "4px",
+                              padding: "0.2rem 0.4rem",
+                              marginLeft: "0.2rem",
+                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center"
+                            }}
+                            title="Save"
+                          >
+                            <Check size={12} color="white" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => cancelEditingAttributeValue(attr.name, item)}
+                            style={{
+                              background: "#ef4444",
+                              border: "none",
+                              borderRadius: "4px",
+                              padding: "0.2rem 0.4rem",
+                              marginLeft: "0.2rem",
+                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center"
+                            }}
+                            title="Cancel"
+                          >
+                            <X size={12} color="white" />
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          {item}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              startEditingAttributeValue(attr.name, item);
+                            }}
+                            style={{
+                              background: "none",
+                              border: "none",
+                              marginLeft: "0.3rem",
+                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center"
+                            }}
+                            title={`Edit '${item}'`}
+                          >
+                            <Edit size={12} color={selectedAttributeValues[attr.name] === item ? "#fff" : "#7c3aed"} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              if (confirm(`Delete "${item}" from ${attr.displayName}?`)) {
+                                try {
+                                  // Delete from database first
+                                  const response = await fetch(`http://localhost:5000/api/categories/${selectedMainCategory}/attributes/${attr.name}/items/${encodeURIComponent(item)}`, {
+                                    method: 'DELETE',
+                                    headers: {
+                                      'Content-Type': 'application/json'
+                                    }
+                                  });
+
+                                  if (response.ok) {
+                                    // Remove the item from the attribute
+                                    const updatedAttributes = attributes.map(attribute => {
+                                      if (attribute.name === attr.name) {
+                                        return {
+                                          ...attribute,
+                                          items: attribute.items.filter(i => i !== item)
+                                        };
+                                      }
+                                      return attribute;
+                                    });
+                                    setAttributes(updatedAttributes);
+                                    
+                                    // Also remove from selected values if it was selected
+                                    if (selectedAttributeValues[attr.name] === item) {
+                                      setSelectedAttributeValues(prev => {
+                                        const newValues = { ...prev };
+                                        delete newValues[attr.name];
+                                        return newValues;
+                                      });
+                                    }
+                                  } else {
+                                    alert('Failed to delete from database. Please try again.');
+                                  }
+                                } catch (error) {
+                                  console.error('Error deleting attribute value:', error);
+                                  alert('Error deleting attribute value. Please try again.');
+                                }
+                              }
+                            }}
+                            style={{
+                              background: "none",
+                              border: "none",
+                              marginLeft: "0.2rem",
+                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center"
+                            }}
+                            title={`Delete '${item}'`}
+                          >
+                            <Trash2 size={12} color={selectedAttributeValues[attr.name] === item ? "#fff" : "#7c3aed"} />
+                          </button>
+                        </>
+                      )}
+                    </span>
+                  );
+                })}
               </div>
             </div>
           ))}
@@ -1457,91 +1670,185 @@ export default function CategoryFilters({
                   </div>
                   
                   <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
-                    {attr.items.map((item) => (
-                      <span
-                        key={item}
-                        onClick={() => setSelectedAttributeValues((prev) => ({ ...prev, [attr.name]: item }))}
-                        style={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          background: selectedAttributeValues[attr.name] === item ? "#a78bfa" : "#f3f3f3",
-                          color: selectedAttributeValues[attr.name] === item ? "#fff" : "#000",
-                          borderRadius: "8px",
-                          padding: "0.25rem 0.75rem",
-                          fontSize: "0.95rem",
-                          cursor: "pointer",
-                          border: selectedAttributeValues[attr.name] === item ? "2px solid #7c3aed" : "none",
-                          transition: "all 0.2s",
-                          marginRight: "0.5rem"
-                        }}
-                      >
-                        {item}
-                        <button
-                          type="button"
-                          onClick={async (e) => {
-                            e.stopPropagation();
-                            if (confirm(`Delete "${item}" from ${attr.displayName}?`)) {
-                              try {
-                                // Delete from database first
-                                const response = await fetch(`http://localhost:5000/api/categories/${selectedMainCategory}/attributes/${attr.name}/items/${encodeURIComponent(item)}`, {
-                                  method: 'DELETE',
-                                  headers: {
-                                    'Content-Type': 'application/json'
+                    {attr.items.map((item) => {
+                      const isEditing = editingAttributeValues[`${attr.name}-${item}`];
+                      
+                      return (
+                        <span
+                          key={item}
+                          onClick={() => !isEditing && setSelectedAttributeValues((prev) => ({ ...prev, [attr.name]: item }))}
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            background: selectedAttributeValues[attr.name] === item ? "#a78bfa" : "#f3f3f3",
+                            color: selectedAttributeValues[attr.name] === item ? "#fff" : "#000",
+                            borderRadius: "8px",
+                            padding: "0.25rem 0.75rem",
+                            fontSize: "0.95rem",
+                            cursor: isEditing ? "default" : "pointer",
+                            border: selectedAttributeValues[attr.name] === item ? "2px solid #7c3aed" : "none",
+                            transition: "all 0.2s",
+                            marginRight: "0.5rem"
+                          }}
+                        >
+                          {isEditing ? (
+                            <>
+                              <input
+                                type="text"
+                                defaultValue={item}
+                                style={{
+                                  background: "transparent",
+                                  border: "none",
+                                  color: "inherit",
+                                  fontSize: "inherit",
+                                  outline: "none",
+                                  width: "80px",
+                                  marginRight: "0.5rem"
+                                }}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") {
+                                    saveEditedAttributeValue(attr.name, item, e.target.value);
+                                  } else if (e.key === "Escape") {
+                                    cancelEditingAttributeValue(attr.name, item);
                                   }
-                                });
-
-                                if (response.ok) {
-                                  // Remove the item from the category system
-                                  const updatedCategorySystem = { ...categorySystem };
-                                  const category = updatedCategorySystem[selectedMainCategory];
-                                  if (category && category.attributes) {
-                                    const updatedAttributes = category.attributes.map(attribute => {
-                                      if (attribute.name === attr.name) {
-                                        return {
-                                          ...attribute,
-                                          items: attribute.items.filter(i => i !== item)
-                                        };
-                                      }
-                                      return attribute;
-                                    });
-                                    updatedCategorySystem[selectedMainCategory] = {
-                                      ...category,
-                                      attributes: updatedAttributes
-                                    };
-                                    setCategorySystem(updatedCategorySystem);
-                                    
-                                    // Also remove from selected values if it was selected
-                                    if (selectedAttributeValues[attr.name] === item) {
-                                      setSelectedAttributeValues(prev => {
-                                        const newValues = { ...prev };
-                                        delete newValues[attr.name];
-                                        return newValues;
+                                }}
+                                onChange={(e) => {
+                                  // Update the editing state with the new value
+                                  setEditingAttributeValues(prev => ({
+                                    ...prev,
+                                    [`${attr.name}-${item}`]: e.target.value
+                                  }));
+                                }}
+                                autoFocus
+                              />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const currentValue = editingAttributeValues[`${attr.name}-${item}`] || item;
+                                  saveEditedAttributeValue(attr.name, item, currentValue);
+                                }}
+                                style={{
+                                  background: "#10b981",
+                                  border: "none",
+                                  borderRadius: "4px",
+                                  padding: "0.2rem 0.4rem",
+                                  marginLeft: "0.2rem",
+                                  cursor: "pointer",
+                                  display: "flex",
+                                  alignItems: "center"
+                                }}
+                                title="Save"
+                              >
+                                <Check size={12} color="white" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => cancelEditingAttributeValue(attr.name, item)}
+                                style={{
+                                  background: "#ef4444",
+                                  border: "none",
+                                  borderRadius: "4px",
+                                  padding: "0.2rem 0.4rem",
+                                  marginLeft: "0.2rem",
+                                  cursor: "pointer",
+                                  display: "flex",
+                                  alignItems: "center"
+                                }}
+                                title="Cancel"
+                              >
+                                <X size={12} color="white" />
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              {item}
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  startEditingAttributeValue(attr.name, item);
+                                }}
+                                style={{
+                                  background: "none",
+                                  border: "none",
+                                  marginLeft: "0.3rem",
+                                  cursor: "pointer",
+                                  display: "flex",
+                                  alignItems: "center"
+                                }}
+                                title={`Edit '${item}'`}
+                              >
+                                <Edit size={12} color={selectedAttributeValues[attr.name] === item ? "#fff" : "#7c3aed"} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={async (e) => {
+                                  e.stopPropagation();
+                                  if (confirm(`Delete "${item}" from ${attr.displayName}?`)) {
+                                    try {
+                                      // Delete from database first
+                                      const response = await fetch(`http://localhost:5000/api/categories/${selectedMainCategory}/attributes/${attr.name}/items/${encodeURIComponent(item)}`, {
+                                        method: 'DELETE',
+                                        headers: {
+                                          'Content-Type': 'application/json'
+                                        }
                                       });
+
+                                      if (response.ok) {
+                                        // Remove the item from the category system
+                                        const updatedCategorySystem = { ...categorySystem };
+                                        const category = updatedCategorySystem[selectedMainCategory];
+                                        if (category && category.attributes) {
+                                          const updatedAttributes = category.attributes.map(attribute => {
+                                            if (attribute.name === attr.name) {
+                                              return {
+                                                ...attribute,
+                                                items: attribute.items.filter(i => i !== item)
+                                              };
+                                            }
+                                            return attribute;
+                                          });
+                                          updatedCategorySystem[selectedMainCategory] = {
+                                            ...category,
+                                            attributes: updatedAttributes
+                                          };
+                                          setCategorySystem(updatedCategorySystem);
+                                          
+                                          // Also remove from selected values if it was selected
+                                          if (selectedAttributeValues[attr.name] === item) {
+                                            setSelectedAttributeValues(prev => {
+                                              const newValues = { ...prev };
+                                              delete newValues[attr.name];
+                                              return newValues;
+                                            });
+                                          }
+                                        }
+                                      } else {
+                                        alert('Failed to delete from database. Please try again.');
+                                      }
+                                    } catch (error) {
+                                      console.error('Error deleting attribute value:', error);
+                                      alert('Error deleting attribute value. Please try again.');
                                     }
                                   }
-                                } else {
-                                  alert('Failed to delete from database. Please try again.');
-                                }
-                              } catch (error) {
-                                console.error('Error deleting attribute value:', error);
-                                alert('Error deleting attribute value. Please try again.');
-                              }
-                            }
-                          }}
-                          style={{
-                            background: "none",
-                            border: "none",
-                            marginLeft: "0.4rem",
-                            cursor: "pointer",
-                            display: "flex",
-                            alignItems: "center"
-                          }}
-                          title={`Delete '${item}'`}
-                        >
-                          <Trash2 size={14} color={selectedAttributeValues[attr.name] === item ? "#fff" : "#7c3aed"} />
-                        </button>
-                      </span>
-                    ))}
+                                }}
+                                style={{
+                                  background: "none",
+                                  border: "none",
+                                  marginLeft: "0.2rem",
+                                  cursor: "pointer",
+                                  display: "flex",
+                                  alignItems: "center"
+                                }}
+                                title={`Delete '${item}'`}
+                              >
+                                <Trash2 size={12} color={selectedAttributeValues[attr.name] === item ? "#fff" : "#7c3aed"} />
+                              </button>
+                            </>
+                          )}
+                        </span>
+                      );
+                    })}
                   </div>
                 </div>
               ))

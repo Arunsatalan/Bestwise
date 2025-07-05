@@ -100,6 +100,58 @@ router.post("/:categoryKey/attributes/:attributeName/items", async (req, res) =>
     }
 });
 
+// Update an existing value in a category's attribute
+router.put("/:categoryKey/attributes/:attributeName/items/:itemValue", async (req, res) => {
+    const { categoryKey, attributeName, itemValue } = req.params;
+    const { newValue } = req.body;
+    const Category = require("../models/Category");
+
+    try {
+        if (!newValue || !newValue.trim()) {
+            return res.status(400).json({ success: false, message: "New value is required" });
+        }
+
+        const category = await Category.findOne({ key: categoryKey });
+        if (!category) {
+            return res.status(404).json({ success: false, message: "Category not found" });
+        }
+
+        const attribute = category.attributes.find(attr => attr.name === attributeName);
+        if (!attribute) {
+            return res.status(404).json({ success: false, message: "Attribute not found in this category" });
+        }
+
+        // Check if old value exists
+        const itemIndex = attribute.items.indexOf(itemValue);
+        if (itemIndex === -1) {
+            return res.status(404).json({ success: false, message: "Item not found under this attribute" });
+        }
+
+        // Check if new value already exists (excluding the current item)
+        if (attribute.items.includes(newValue.trim()) && newValue.trim() !== itemValue) {
+            return res.status(400).json({ success: false, message: "New value already exists in this attribute" });
+        }
+
+        // Update the value
+        attribute.items[itemIndex] = newValue.trim();
+
+        await category.save();
+
+        res.json({
+            success: true,
+            message: "Value updated successfully",
+            data: {
+                category: categoryKey,
+                attribute: attributeName,
+                oldValue: itemValue,
+                newValue: newValue.trim()
+            }
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: "Error updating value", error: error.message });
+    }
+});
+
 // Delete a value from a category's attribute
 router.delete("/:categoryKey/attributes/:attributeName/items/:itemValue", async (req, res) => {
     const { categoryKey, attributeName, itemValue } = req.params;
