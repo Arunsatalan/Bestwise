@@ -54,6 +54,8 @@ export default function ProductForm({ product = null }) {
   const [formData, setFormData] = useState(defaultProduct)
   const [isClient, setIsClient] = useState(false)
   const [previewErrors, setPreviewErrors] = useState([])
+  const [editingField, setEditingField] = useState(null)
+  const [editValue, setEditValue] = useState("")
 
   useEffect(() => {
     setIsClient(true)
@@ -314,6 +316,30 @@ const handleSubmit = async () => {
     return { label: "In Stock", color: "default" }
   }
 
+  const handleEditStart = (field, value) => {
+    setEditingField(field)
+    setEditValue(value?.toString() || "")
+  }
+
+  const handleEditSave = (field) => {
+    if (field === "stock") {
+      handleInputChange(field, Number(editValue) || 0)
+    } else if (field === "retailPrice" || field === "costPrice" || field === "salePrice") {
+      handleInputChange(field, Number(editValue) || 0)
+    } else if (field === "weight") {
+      handleInputChange(field, Number(editValue) || 0)
+    } else {
+      handleInputChange(field, editValue)
+    }
+    setEditingField(null)
+    setEditValue("")
+  }
+
+  const handleEditCancel = () => {
+    setEditingField(null)
+    setEditValue("")
+  }
+
   // Confirmation Step
   if (currentStep === "confirm") {
     return (
@@ -507,27 +533,126 @@ const handleSubmit = async () => {
                 <CardTitle>Pricing & Profit</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <div className="flex justify-between">
+                <div className="flex justify-between items-center">
                   <span>Cost Price:</span>
-                  <span>${formData.costPrice.toFixed(2)}</span>
+                  <div className="flex items-center gap-2">
+                    {editingField === "costPrice" ? (
+                      <div className="flex items-center gap-1">
+                        <span className="text-xs">£</span>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={editValue}
+                          onChange={(e) => setEditValue(e.target.value)}
+                          className="w-20 h-8 text-sm"
+                          autoFocus
+                        />
+                        <Button size="sm" onClick={() => handleEditSave("costPrice")} className="h-8 px-2">
+                          ✓
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={handleEditCancel} className="h-8 px-2">
+                          ✕
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <span>£{formData.costPrice.toFixed(2)}</span>
+                        <Button 
+                          size="sm" 
+                          variant="ghost" 
+                          onClick={() => handleEditStart("costPrice", formData.costPrice)}
+                          className="h-6 w-6 p-0 text-xs"
+                        >
+                          ✏️
+                        </Button>
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex justify-between items-center">
                   <span>Retail Price:</span>
-                  <span>${formData.retailPrice.toFixed(2)}</span>
+                  <div className="flex items-center gap-2">
+                    {editingField === "retailPrice" ? (
+                      <div className="flex items-center gap-1">
+                        <span className="text-xs">£</span>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={editValue}
+                          onChange={(e) => setEditValue(e.target.value)}
+                          className="w-20 h-8 text-sm"
+                          autoFocus
+                        />
+                        <Button size="sm" onClick={() => handleEditSave("retailPrice")} className="h-8 px-2">
+                          ✓
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={handleEditCancel} className="h-8 px-2">
+                          ✕
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <span>£{formData.retailPrice.toFixed(2)}</span>
+                        <Button 
+                          size="sm" 
+                          variant="ghost" 
+                          onClick={() => handleEditStart("retailPrice", formData.retailPrice)}
+                          className="h-6 w-6 p-0 text-xs"
+                        >
+                          ✏️
+                        </Button>
+                      </div>
+                    )}
+                  </div>
                 </div>
                 {formData.salePrice > 0 && (
-                  <div className="flex justify-between text-green-600">
+                  <div className="flex justify-between items-center text-green-600">
                     <span>Sale Price:</span>
-                    <span>${formData.salePrice.toFixed(2)}</span>
+                    <div className="flex items-center gap-2">
+                      {editingField === "salePrice" ? (
+                        <div className="flex items-center gap-1">
+                          <span className="text-xs">£</span>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={editValue}
+                            onChange={(e) => setEditValue(e.target.value)}
+                            className="w-20 h-8 text-sm"
+                            autoFocus
+                          />
+                          <Button size="sm" onClick={() => handleEditSave("salePrice")} className="h-8 px-2">
+                            ✓
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={handleEditCancel} className="h-8 px-2">
+                            ✕
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <span>£{formData.salePrice.toFixed(2)}</span>
+                          <Button 
+                            size="sm" 
+                            variant="ghost" 
+                            onClick={() => handleEditStart("salePrice", formData.salePrice)}
+                            className="h-6 w-6 p-0 text-xs"
+                          >
+                            ✏️
+                          </Button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
                 <div className="flex justify-between font-medium border-t pt-2">
                   <span>Selling Price:</span>
-                  <span>${(formData.salePrice > 0 ? formData.salePrice : formData.retailPrice).toFixed(2)}</span>
+                  <span>£{(formData.salePrice > 0 ? formData.salePrice : formData.retailPrice).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Profit Margin:</span>
-                  <Badge variant={profitMargin < 10 ? "destructive" : profitMargin < 25 ? "secondary" : "default"}>
+                  <Badge variant={Number(profitMargin) < 10 ? "destructive" : Number(profitMargin) < 25 ? "secondary" : "default"}>
                     {profitMargin}%
                   </Badge>
                 </div>
@@ -540,17 +665,81 @@ const handleSubmit = async () => {
                 <CardTitle>Inventory & Shipping</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <div className="flex justify-between">
+                <div className="flex justify-between items-center">
                   <span>Stock:</span>
-                  <span>{formData.stock} units</span>
+                  <div className="flex items-center gap-2">
+                    {editingField === "stock" ? (
+                      <div className="flex items-center gap-1">
+                        <Input
+                          type="number"
+                          min="0"
+                          value={editValue}
+                          onChange={(e) => setEditValue(e.target.value)}
+                          className="w-20 h-8 text-sm"
+                          autoFocus
+                        />
+                        <Button size="sm" onClick={() => handleEditSave("stock")} className="h-8 px-2">
+                          ✓
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={handleEditCancel} className="h-8 px-2">
+                          ✕
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <span>{formData.stock} units</span>
+                        <Button 
+                          size="sm" 
+                          variant="ghost" 
+                          onClick={() => handleEditStart("stock", formData.stock)}
+                          className="h-6 w-6 p-0 text-xs"
+                        >
+                          ✏️
+                        </Button>
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div className="flex justify-between">
                   <span>Status:</span>
                   <Badge variant={stockStatus.color}>{stockStatus.label}</Badge>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex justify-between items-center">
                   <span>Weight:</span>
-                  <span>{formData.weight} kg</span>
+                  <div className="flex items-center gap-2">
+                    {editingField === "weight" ? (
+                      <div className="flex items-center gap-1">
+                        <Input
+                          type="number"
+                          step="0.1"
+                          min="0"
+                          value={editValue}
+                          onChange={(e) => setEditValue(e.target.value)}
+                          className="w-20 h-8 text-sm"
+                          autoFocus
+                        />
+                        <span className="text-xs">kg</span>
+                        <Button size="sm" onClick={() => handleEditSave("weight")} className="h-8 px-2">
+                          ✓
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={handleEditCancel} className="h-8 px-2">
+                          ✕
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <span>{formData.weight} kg</span>
+                        <Button 
+                          size="sm" 
+                          variant="ghost" 
+                          onClick={() => handleEditStart("weight", formData.weight)}
+                          className="h-6 w-6 p-0 text-xs"
+                        >
+                          ✏️
+                        </Button>
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div className="flex justify-between">
                   <span>Dimensions:</span>
