@@ -14,9 +14,9 @@ import { useParams } from "next/navigation"
 export default function CategoryFilters({
   category = "",
   tags = [],
-  onCategoryChange = () => {},
-  onTagsChange = () => {},
-  onFiltersChange = () => {},
+  onCategoryChange = (categoryKey) => {},
+  onTagsChange = (tags) => {},
+  onFiltersChange = (filters) => {},
   selectedFilters = {},
   isProductForm = false,
 }) {
@@ -343,19 +343,44 @@ export default function CategoryFilters({
   // Delete main category
   const deleteMainCategory = async (categoryKey) => {
     if (confirm(`Delete the entire "${categorySystem[categoryKey].name}" category? This cannot be undone.`)) {
-      const updatedCategories = { ...categorySystem }
-      delete updatedCategories[categoryKey]
+      try {
+        // Delete from database
+        const response = await fetch(`http://localhost:5000/api/categories/${categoryKey}`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
 
-      setCategorySystem(updatedCategories)
-      await saveCategories(updatedCategories)
+        if (response.ok) {
+          // Update local state immediately
+          const updatedCategories = { ...categorySystem };
+          const deletedCategoryName = categorySystem[categoryKey].name;
+          delete updatedCategories[categoryKey];
+          setCategorySystem(updatedCategories);
 
-      if (selectedMainCategory === categoryKey) {
-        setSelectedMainCategory("")
-        setCurrentSelectedFilters({})
-        onCategoryChange("")
-        if (onFiltersChange) {
-          onFiltersChange({})
+          // Clear selected category if it was the deleted one
+          if (selectedMainCategory === categoryKey) {
+            setSelectedMainCategory("");
+            setCurrentSelectedFilters({});
+            onCategoryChange("");
+            if (onFiltersChange) {
+              onFiltersChange({});
+            }
+          }
+
+          // Clear any editing states
+          setEditingMainCategory(null);
+          setMainCategoryEditForm({ name: "", key: "", description: "" });
+
+          alert(`Category "${deletedCategoryName}" deleted successfully!`);
+        } else {
+          const errorData = await response.json();
+          alert(`Failed to delete category: ${errorData.message || 'Unknown error'}`);
         }
+      } catch (error) {
+        console.error("Error deleting category:", error);
+        alert("Error deleting category. Please try again.");
       }
     }
   }
@@ -682,26 +707,71 @@ export default function CategoryFilters({
     setMainCategoryEditForm({ name: "", key: "", description: "" })
   }
   const saveEditMainCategory = async (oldKey) => {
-    const updatedCategories = { ...categorySystem }
-    // If key changed, move the category
-    if (mainCategoryEditForm.key !== oldKey) {
-      updatedCategories[mainCategoryEditForm.key] = {
-        ...updatedCategories[oldKey],
-        name: mainCategoryEditForm.name,
-        description: mainCategoryEditForm.description
+    try {
+      // Validate form data
+      if (!mainCategoryEditForm.name || !mainCategoryEditForm.key) {
+        alert("Please fill in category name and key");
+        return;
       }
-      delete updatedCategories[oldKey]
-    } else {
-      updatedCategories[oldKey] = {
-        ...updatedCategories[oldKey],
-        name: mainCategoryEditForm.name,
-        description: mainCategoryEditForm.description
+
+      // Check if new key already exists (if key changed)
+      if (mainCategoryEditForm.key !== oldKey && categorySystem[mainCategoryEditForm.key]) {
+        alert("Category key already exists");
+        return;
       }
+
+      // Prepare the updated category data
+      const updatedCategoryData = {
+        name: mainCategoryEditForm.name,
+        key: mainCategoryEditForm.key,
+        description: mainCategoryEditForm.description,
+        attributes: categorySystem[oldKey].attributes || []
+      };
+
+      // Update in database
+      const response = await fetch(`http://localhost:5000/api/categories/${oldKey}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(updatedCategoryData)
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        
+        // Update local state immediately
+        const updatedCategories = { ...categorySystem };
+        
+        // If key changed, move the category to new key
+        if (mainCategoryEditForm.key !== oldKey) {
+          updatedCategories[mainCategoryEditForm.key] = result.data;
+          delete updatedCategories[oldKey];
+          
+          // Update selected category if it was the edited one
+          if (selectedMainCategory === oldKey) {
+            setSelectedMainCategory(mainCategoryEditForm.key);
+            onCategoryChange(mainCategoryEditForm.key);
+          }
+        } else {
+          updatedCategories[oldKey] = result.data;
+        }
+        
+        setCategorySystem(updatedCategories);
+        
+        // Clear editing state
+        setEditingMainCategory(null);
+        setMainCategoryEditForm({ name: "", key: "", description: "" });
+        
+        alert(`Category "${mainCategoryEditForm.name}" updated successfully!`);
+      } else {
+        const errorData = await response.json();
+        alert(`Failed to update category: ${errorData.message || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error("Error updating category:", error);
+      alert("Error updating category. Please try again.");
     }
-    setCategorySystem(updatedCategories)
-    await saveCategories(updatedCategories)
-    setEditingMainCategory(null)
-    setMainCategoryEditForm({ name: "", key: "", description: "" })
   }
 
   // Get available main categories

@@ -46,6 +46,80 @@ router.get("/:categoryKey/attributes/:attributeName/items/:itemValue", async (re
 // Get category by ID
 router.get("/:id", getCategoryById);
 
+// ✅ Add categoryKey-based routes before ID-based routes
+// Update category by key
+router.put("/:categoryKey", async (req, res) => {
+    const { categoryKey } = req.params;
+    const updateData = req.body;
+    
+    try {
+        // Check if new key already exists (if key is being changed)
+        if (updateData.key && updateData.key !== categoryKey) {
+            const existingCategory = await Category.findOne({ key: updateData.key });
+            if (existingCategory) {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: "Category key already exists" 
+                });
+            }
+        }
+        
+        const category = await Category.findOneAndUpdate(
+            { key: categoryKey },
+            updateData,
+            { new: true, runValidators: true }
+        );
+        
+        if (!category) {
+            return res.status(404).json({
+                success: false,
+                message: "Category not found"
+            });
+        }
+        
+        res.json({
+            success: true,
+            data: category,
+            message: "Category updated successfully"
+        });
+    } catch (error) {
+        console.error("Error updating category:", error);
+        res.status(400).json({
+            success: false,
+            message: "Error updating category",
+            error: error.message
+        });
+    }
+});
+
+// Delete category by key
+router.delete("/:categoryKey", async (req, res) => {
+    const { categoryKey } = req.params;
+    
+    try {
+        const category = await Category.findOneAndDelete({ key: categoryKey });
+        
+        if (!category) {
+            return res.status(404).json({
+                success: false,
+                message: "Category not found"
+            });
+        }
+        
+        res.json({
+            success: true,
+            message: "Category deleted successfully"
+        });
+    } catch (error) {
+        console.error("Error deleting category:", error);
+        res.status(500).json({
+            success: false,
+            message: "Error deleting category",
+            error: error.message
+        });
+    }
+});
+
 // Create new category
 router.post("/", createCategory);
 
