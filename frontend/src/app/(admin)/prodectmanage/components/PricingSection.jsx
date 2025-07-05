@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import React, { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "../../../../components/ui/card"
 import { Input } from "../../../../components/ui/input"
 import { Label } from "../../../../components/ui/label"
@@ -37,10 +37,10 @@ export default function PricingSection({ pricing, onChange }) {
     const finalPrice = sellingPrice + taxAmount
 
     setCalculations({
-      profitMargin: profitMargin.toFixed(2),
-      profitAmount: profitAmount.toFixed(2),
-      taxAmount: taxAmount.toFixed(2),
-      finalPrice: finalPrice.toFixed(2),
+      profitMargin: Number(profitMargin.toFixed(2)),
+      profitAmount: Number(profitAmount.toFixed(2)),
+      taxAmount: Number(taxAmount.toFixed(2)),
+      finalPrice: Number(finalPrice.toFixed(2)),
     })
   }
 
@@ -66,6 +66,24 @@ export default function PricingSection({ pricing, onChange }) {
     return "default"
   }
 
+  // Helper function to safely format numbers
+  const formatNumber = (value) => {
+    const num = Number(value) || 0
+    return num.toFixed(2)
+  }
+
+  // Helper function to format display value (show empty if 0)
+  const getDisplayValue = (value) => {
+    return value === 0 ? "" : value.toString()
+  }
+
+  // Helper function to safely select input text
+  const selectInputText = (e) => {
+    if (e.target && e.target.tagName === 'INPUT') {
+      e.target.select()
+    }
+  }
+
   return (
     <div className="space-y-6">
       <Card>
@@ -84,8 +102,10 @@ export default function PricingSection({ pricing, onChange }) {
                 type="number"
                 step="0.01"
                 min="0"
-                value={pricing.costPrice}
+                value={getDisplayValue(pricing.costPrice)}
                 onChange={(e) => handlePricingChange("costPrice", e.target.value)}
+                onClick={selectInputText}
+                onFocus={selectInputText}
                 placeholder="0.00"
               />
               <p className="text-xs text-gray-500 mt-1">Your cost to acquire/make this product</p>
@@ -98,8 +118,10 @@ export default function PricingSection({ pricing, onChange }) {
                 type="number"
                 step="0.01"
                 min="0"
-                value={pricing.retailPrice}
+                value={getDisplayValue(pricing.retailPrice)}
                 onChange={(e) => handlePricingChange("retailPrice", e.target.value)}
+                onClick={selectInputText}
+                onFocus={selectInputText}
                 placeholder="0.00"
               />
               <p className="text-xs text-gray-500 mt-1">Regular selling price</p>
@@ -112,8 +134,10 @@ export default function PricingSection({ pricing, onChange }) {
                 type="number"
                 step="0.01"
                 min="0"
-                value={pricing.salePrice}
+                value={getDisplayValue(pricing.salePrice)}
                 onChange={(e) => handlePricingChange("salePrice", e.target.value)}
+                onClick={selectInputText}
+                onFocus={selectInputText}
                 placeholder="0.00"
               />
               <p className="text-xs text-gray-500 mt-1">Discounted price (optional)</p>
@@ -153,23 +177,23 @@ export default function PricingSection({ pricing, onChange }) {
                 <span className="text-sm font-medium">Profit Margin</span>
               </div>
               <Badge variant={getProfitColor(calculations.profitMargin)} className="text-lg">
-                {calculations.profitMargin}%
+                {formatNumber(calculations.profitMargin)}%
               </Badge>
             </div>
 
             <div className="text-center p-4 bg-gray-50 rounded-lg">
               <div className="text-sm font-medium mb-2">Profit Amount</div>
-              <div className="text-lg font-bold text-green-600">${calculations.profitAmount}</div>
+              <div className="text-lg font-bold text-green-600">£{formatNumber(calculations.profitAmount)}</div>
             </div>
 
             <div className="text-center p-4 bg-gray-50 rounded-lg">
               <div className="text-sm font-medium mb-2">Tax Amount</div>
-              <div className="text-lg font-bold text-blue-600">${calculations.taxAmount}</div>
+              <div className="text-lg font-bold text-blue-600">£{formatNumber(calculations.taxAmount)}</div>
             </div>
 
             <div className="text-center p-4 bg-gray-50 rounded-lg">
               <div className="text-sm font-medium mb-2">Final Price</div>
-              <div className="text-lg font-bold text-purple-600">${calculations.finalPrice}</div>
+              <div className="text-lg font-bold text-purple-600">£{formatNumber(calculations.finalPrice)}</div>
             </div>
           </div>
 
@@ -178,7 +202,7 @@ export default function PricingSection({ pricing, onChange }) {
               <div className="flex items-center gap-2 mb-2">
                 <Badge variant="secondary">Sale Active</Badge>
                 <span className="text-sm">
-                  Discount: ${(pricing.retailPrice - pricing.salePrice).toFixed(2)}(
+                  Discount: £{(pricing.retailPrice - pricing.salePrice).toFixed(2)}(
                   {(((pricing.retailPrice - pricing.salePrice) / pricing.retailPrice) * 100).toFixed(1)}% off)
                 </span>
               </div>

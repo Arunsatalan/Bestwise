@@ -248,7 +248,7 @@ const handleSubmit = async () => {
                   <img
                     src={formData.images?.[0] || "/placeholder.svg"}
                     alt={formData.name || "Product image"}
-                    className="w-full h-full object-cover rounded-lg"
+                    className="w-full h-full object-co rounded-lg"
                   />
                 </div>
                 {formData.images?.length > 1 && (
@@ -505,7 +505,7 @@ const handleSubmit = async () => {
           <TabsTrigger value="media">Media</TabsTrigger>
           <TabsTrigger value="pricing">Pricing</TabsTrigger>
           <TabsTrigger value="inventory">Inventory</TabsTrigger>
-          <TabsTrigger value="variants">Variants</TabsTrigger>
+          {/* <TabsTrigger value="variants">Variants</TabsTrigger> */}
         </TabsList>
 
         <TabsContent value="basic">

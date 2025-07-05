@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef } from "react"
+import React, { useState, useRef, useEffect } from "react"
 import { Button } from "../../../../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../../../../components/ui/card"
 import {
@@ -22,9 +22,25 @@ export default function RichTextEditor({ value = "", onChange }) {
   const [selectedText, setSelectedText] = useState("")
   const editorRef = useRef(null)
 
+  // Keep cursor at end when content changes externally
+  useEffect(() => {
+    if (editorRef.current && !showSource) {
+      const selection = window.getSelection()
+      if (selection) {
+        const range = document.createRange()
+        range.selectNodeContents(editorRef.current)
+        range.collapse(false) // false means collapse to end
+        selection.removeAllRanges()
+        selection.addRange(range)
+      }
+    }
+  }, [value, showSource])
+
   const execCommand = (command, value = null) => {
-    document.execCommand(command, false, value)
-    editorRef.current?.focus()
+    document.execCommand(command, false, value || undefined)
+    if (editorRef.current) {
+      editorRef.current.focus()
+    }
     handleContentChange()
   }
 
@@ -71,6 +87,26 @@ export default function RichTextEditor({ value = "", onChange }) {
 
   const formatBlock = (tag) => {
     execCommand("formatBlock", tag)
+  }
+
+  // Function to move cursor to end
+  const moveCursorToEnd = () => {
+    if (editorRef.current) {
+      const selection = window.getSelection()
+      if (selection) {
+        const range = document.createRange()
+        range.selectNodeContents(editorRef.current)
+        range.collapse(false) // false means collapse to end
+        selection.removeAllRanges()
+        selection.addRange(range)
+        editorRef.current.focus()
+      }
+    }
+  }
+
+  // Handle focus to ensure cursor is at end
+  const handleFocus = () => {
+    setTimeout(moveCursorToEnd, 0)
   }
 
   const toolbarButtons = [
@@ -150,6 +186,8 @@ export default function RichTextEditor({ value = "", onChange }) {
               dangerouslySetInnerHTML={{ __html: value }}
               onInput={handleContentChange}
               onKeyDown={handleKeyDown}
+              onFocus={handleFocus}
+              onBlur={handleContentChange}
               style={{ minHeight: "200px" }}
             />
           </>
