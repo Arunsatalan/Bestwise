@@ -67,6 +67,19 @@ export default function CategoryFilters({
     if (selectedFilters && Object.keys(selectedFilters).length > 0) {
       console.log("🔍 Setting currentSelectedFilters to:", selectedFilters);
       setCurrentSelectedFilters(selectedFilters)
+      
+      // Also initialize selectedAttributeValues for editing products
+      const attributeValues = {};
+      Object.entries(selectedFilters).forEach(([key, values]) => {
+        if (Array.isArray(values) && values.length > 0) {
+          // For editing, we want to show the first selected value
+          attributeValues[key] = values[0];
+        } else if (typeof values === 'string') {
+          attributeValues[key] = values;
+        }
+      });
+      console.log("🔍 Initializing selectedAttributeValues for editing:", attributeValues);
+      setSelectedAttributeValues(attributeValues);
     }
   }, [selectedFilters])
 
@@ -100,6 +113,23 @@ export default function CategoryFilters({
       loadProducts()
     }
   }, [isProductForm])
+
+  // Initialize selectedAttributeValues when category system loads and we have selectedFilters
+  useEffect(() => {
+    if (Object.keys(categorySystem).length > 0 && selectedFilters && Object.keys(selectedFilters).length > 0 && isProductForm) {
+      console.log("🔍 Category system loaded, initializing selectedAttributeValues from selectedFilters:", selectedFilters);
+      const attributeValues = {};
+      Object.entries(selectedFilters).forEach(([key, values]) => {
+        if (Array.isArray(values) && values.length > 0) {
+          attributeValues[key] = values[0];
+        } else if (typeof values === 'string') {
+          attributeValues[key] = values;
+        }
+      });
+      console.log("🔍 Setting selectedAttributeValues:", attributeValues);
+      setSelectedAttributeValues(attributeValues);
+    }
+  }, [categorySystem, selectedFilters, isProductForm])
 
   // Filter products when category or filters change
   useEffect(() => {
@@ -338,11 +368,18 @@ export default function CategoryFilters({
     setSelectedMainCategory(categoryKey)
     const emptyFilters = {}
     setCurrentSelectedFilters(emptyFilters)
+    setSelectedAttributeValues({})
 
     // Notify parent components
     onCategoryChange(categoryKey)
     if (onFiltersChange) {
       onFiltersChange(emptyFilters)
+    }
+    
+    // If we're editing a product and have selectedFilters, try to match them to the new category
+    if (isProductForm && selectedFilters && Object.keys(selectedFilters).length > 0) {
+      console.log("🔍 Category changed, checking if selectedFilters match new category:", categoryKey);
+      // The selectedFilters will be re-processed by the useEffect above
     }
   }
 
