@@ -452,6 +452,7 @@ export default function CategoryFilters({
 
   const clearAllFilters = () => {
     setCurrentSelectedFilters({})
+    setSelectedAttributeValues({})
     if (onFiltersChange) {
       onFiltersChange({})
     }
@@ -1312,11 +1313,13 @@ export default function CategoryFilters({
                 <span>{isProductForm ? "Select Product Filters" : `Filters for ${currentCategoryData.name}`}</span>
                 <div className="flex gap-2">
                   <Badge variant="outline">
-                    {Object.values(currentSelectedFilters).flat().length} total selections
+                    {Object.values(currentSelectedFilters).flat().length + Object.keys(selectedAttributeValues).length} total selections
                   </Badge>
-                  <Button type="button" variant="outline" size="sm" onClick={clearAllFilters}>
-                    Clear All
-                  </Button>
+                  {(Object.values(currentSelectedFilters).flat().length > 0 || Object.keys(selectedAttributeValues).length > 0) && (
+                    <Button type="button" variant="outline" size="sm" onClick={clearAllFilters}>
+                      Clear All
+                    </Button>
+                  )}
                   {!isProductForm && (
                     <Button type="button" variant="default" size="sm" onClick={() => setShowProducts(!showProducts)}>
                       <Search className="w-4 h-4 mr-2" />
