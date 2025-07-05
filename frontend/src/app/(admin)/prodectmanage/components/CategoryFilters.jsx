@@ -9,6 +9,7 @@ import { Badge } from "../../../../components/ui/badge"
 import { Textarea } from "../../../../components/ui/textarea"
 import { Plus, X, Folder, Edit2, Save, Settings, Trash2, Eye, Package, Search, Edit, Check } from "lucide-react"
 import Link from "next/link"
+import { Modal, useConfirmModal } from "../../../../components/ui/modal"
 import { useParams } from "next/navigation"
 
 export default function CategoryFilters({
@@ -41,6 +42,7 @@ export default function CategoryFilters({
   const [showProducts, setShowProducts] = useState(false)
   const [editingMainCategory, setEditingMainCategory] = useState(null)
   const [mainCategoryEditForm, setMainCategoryEditForm] = useState({ name: "", key: "", description: "" })
+  const { isOpen, config, showDelete, showSuccess, showError, closeModal } = useConfirmModal()
   const [product, setProduct] = useState(null)
   const [attributes, setAttributes] = useState([])
   const [selectedAttributeValue, setSelectedAttributeValue] = useState(null)
@@ -232,19 +234,19 @@ export default function CategoryFilters({
   // Create new main category
   const createNewCategory = async () => {
     if (!newCategoryForm.name || !newCategoryForm.key) {
-      alert("Please fill in category name and key")
+      showError("Validation Error", "Please fill in category name and key")
       return
     }
 
     if (categorySystem[newCategoryForm.key]) {
-      alert("Category key already exists")
+      showError("Validation Error", "Category key already exists")
       return
     }
 
     // Validate that at least one attribute has items
     const hasValidAttributes = newCategoryForm.attributes.some((attr) => attr.items.length > 0)
     if (!hasValidAttributes) {
-      alert("Please add at least one item to your category attributes")
+      showError("Validation Error", "Please add at least one item to your category attributes")
       return
     }
 
@@ -273,7 +275,7 @@ export default function CategoryFilters({
     })
     setShowCreateCategoryForm(false)
 
-    alert(`Category "${newCategoryForm.name}" created successfully and selected!`)
+            showSuccess("Success", `Category "${newCategoryForm.name}" created successfully and selected!`)
   }
 
   // Add attribute to new category form
@@ -288,7 +290,7 @@ export default function CategoryFilters({
     const exists = newCategoryForm.attributes.some((attr) => attr.name.toLowerCase() === attributeName.toLowerCase())
 
     if (exists) {
-      alert("An attribute with this name already exists!")
+      showError("Validation Error", "An attribute with this name already exists!")
       return
     }
 
@@ -314,7 +316,7 @@ export default function CategoryFilters({
 
     // Check for duplicates
     if (currentAttribute.items.includes(trimmedItem)) {
-      alert("This item already exists in this attribute!")
+      showError("Validation Error", "This item already exists in this attribute!")
       return
     }
 
@@ -409,7 +411,10 @@ export default function CategoryFilters({
 
   // Delete main category
   const deleteMainCategory = async (categoryKey) => {
-    if (confirm(`Delete the entire "${categorySystem[categoryKey].name}" category? This cannot be undone.`)) {
+    showDelete(
+      "Delete Category",
+      `Delete the entire "${categorySystem[categoryKey].name}" category? This cannot be undone.`,
+      async () => {
       try {
         // Delete from database
         const response = await fetch(`http://localhost:5000/api/categories/${categoryKey}`, {
@@ -440,16 +445,16 @@ export default function CategoryFilters({
           setEditingMainCategory(null);
           setMainCategoryEditForm({ name: "", key: "", description: "" });
 
-          alert(`Category "${deletedCategoryName}" deleted successfully!`);
+          showSuccess("Success", `Category "${deletedCategoryName}" deleted successfully!`);
         } else {
           const errorData = await response.json();
-          alert(`Failed to delete category: ${errorData.message || 'Unknown error'}`);
+          showError("Error", `Failed to delete category: ${errorData.message || 'Unknown error'}`);
         }
       } catch (error) {
         console.error("Error deleting category:", error);
-        alert("Error deleting category. Please try again.");
+        showError("Error", "Error deleting category. Please try again.");
       }
-    }
+    })
   }
 
   // CRUD Operations for existing categories
@@ -489,7 +494,10 @@ export default function CategoryFilters({
   }
 
   const deleteItem = async (categoryKey, filterType, itemToDelete) => {
-    if (confirm(`Delete "${itemToDelete}"?`)) {
+    showDelete(
+      "Delete Item",
+      `Delete "${itemToDelete}"?`,
+      async () => {
       const updatedCategories = {
         ...categorySystem,
         [categoryKey]: {
@@ -506,7 +514,7 @@ export default function CategoryFilters({
         ...prev,
         [filterType]: prev[filterType]?.filter((item) => item !== itemToDelete) || [],
       }))
-    }
+    })
   }
 
   const startEditing = (categoryKey, filterType, item) => {
@@ -526,14 +534,20 @@ export default function CategoryFilters({
   }
 
   const deleteProduct = async (productId) => {
-    if (confirm("Are you sure you want to delete this product?")) {
-      try {
-        await fetch(`/api/products/${productId}`, { method: "DELETE" })
-        loadProducts() // Reload products
-      } catch (error) {
-        console.error("Error deleting product:", error)
+    showDelete(
+      "Delete Product",
+      "Are you sure you want to delete this product?",
+      async () => {
+        try {
+          await fetch(`/api/products/${productId}`, { method: "DELETE" })
+          loadProducts() // Reload products
+          showSuccess("Success", "Product deleted successfully!")
+        } catch (error) {
+          console.error("Error deleting product:", error)
+          showError("Error", "Failed to delete product. Please try again.")
+        }
       }
-    }
+    )
   }
 
   // Add new attribute value to database and update state
@@ -546,7 +560,7 @@ export default function CategoryFilters({
       // Check if value already exists
       const existingAttribute = attributes.find(attr => attr.name === attributeName);
       if (existingAttribute && existingAttribute.items.includes(trimmedValue)) {
-        alert(`"${trimmedValue}" already exists in this attribute!`);
+        showError("Validation Error", `"${trimmedValue}" already exists in this attribute!`);
         return;
       }
 
@@ -573,14 +587,16 @@ export default function CategoryFilters({
         setAttributes(updatedAttributes);
         
         // Show success message
-        alert(`"${trimmedValue}" added successfully to ${attributeName}!`);
+        showSuccess("Success", `"${trimmedValue}" added successfully to ${attributeName}!`, () => {
+          // Stay on the same page - no navigation
+        });
       } else {
         const errorData = await response.json();
-        alert(`Failed to add value: ${errorData.message || 'Unknown error'}`);
+        showError("Error", `Failed to add value: ${errorData.message || 'Unknown error'}`);
       }
     } catch (error) {
       console.error('Error adding attribute value:', error);
-      alert('Error adding attribute value. Please try again.');
+      showError("Error", "Error adding attribute value. Please try again.");
     }
   }
 
@@ -596,7 +612,7 @@ export default function CategoryFilters({
       if (category && category.attributes) {
         const attribute = category.attributes.find(attr => attr.name === attributeName);
         if (attribute && attribute.items.includes(trimmedValue)) {
-          alert(`"${trimmedValue}" already exists in this attribute!`);
+          showError("Validation Error", `"${trimmedValue}" already exists in this attribute!`);
           return;
         }
       }
@@ -632,14 +648,16 @@ export default function CategoryFilters({
         }
         
         // Show success message
-        alert(`"${trimmedValue}" added successfully to ${attributeName}!`);
+        showSuccess("Success", `"${trimmedValue}" added successfully to ${attributeName}!`, () => {
+          // Stay on the same page - no navigation
+        });
       } else {
         const errorData = await response.json();
-        alert(`Failed to add value: ${errorData.message || 'Unknown error'}`);
+        showError("Error", `Failed to add value: ${errorData.message || 'Unknown error'}`);
       }
     } catch (error) {
       console.error('Error adding attribute value:', error);
-      alert('Error adding attribute value. Please try again.');
+      showError("Error", "Error adding attribute value. Please try again.");
     }
   }
 
@@ -665,7 +683,7 @@ export default function CategoryFilters({
     console.log('Saving edited value:', { attributeName, oldValue, newValue }); // Debug log
     
     if (!newValue || !newValue.trim()) {
-      alert('Value cannot be empty!');
+      showError("Validation Error", "Value cannot be empty!");
       return;
     }
 
@@ -682,7 +700,7 @@ export default function CategoryFilters({
       if (category && category.attributes) {
         const attribute = category.attributes.find(attr => attr.name === attributeName);
         if (attribute && attribute.items.includes(trimmedValue) && trimmedValue !== oldValue) {
-          alert(`"${trimmedValue}" already exists in this attribute!`);
+          showError("Validation Error", `"${trimmedValue}" already exists in this attribute!`);
           return;
         }
       }
@@ -749,15 +767,17 @@ export default function CategoryFilters({
         // Exit edit mode
         cancelEditingAttributeValue(attributeName, oldValue);
         
-        alert(`"${oldValue}" updated to "${trimmedValue}" successfully!`);
+        showSuccess("Success", `"${oldValue}" updated to "${trimmedValue}" successfully!`, () => {
+          // Stay on the same page - no navigation
+        });
       } else {
         const errorData = await response.json();
         console.error('Error response:', errorData);
-        alert(`Failed to update value: ${errorData.message || 'Unknown error'}`);
+        showError("Error", `Failed to update value: ${errorData.message || 'Unknown error'}`);
       }
     } catch (error) {
       console.error('Error updating attribute value:', error);
-      alert('Error updating attribute value. Please try again.');
+      showError("Error", "Error updating attribute value. Please try again.");
     }
   };
 
@@ -778,13 +798,13 @@ export default function CategoryFilters({
     try {
       // Validate form data
       if (!mainCategoryEditForm.name || !mainCategoryEditForm.key) {
-        alert("Please fill in category name and key");
+        showError("Validation Error", "Please fill in category name and key");
         return;
       }
 
       // Check if new key already exists (if key changed)
       if (mainCategoryEditForm.key !== oldKey && categorySystem[mainCategoryEditForm.key]) {
-        alert("Category key already exists");
+        showError("Validation Error", "Category key already exists");
         return;
       }
 
@@ -831,14 +851,17 @@ export default function CategoryFilters({
         setEditingMainCategory(null);
         setMainCategoryEditForm({ name: "", key: "", description: "" });
         
-        alert(`Category "${mainCategoryEditForm.name}" updated successfully!`);
+        showSuccess("Success", `Category "${mainCategoryEditForm.name}" updated successfully!`, () => {
+          // Stay on the same page - no navigation
+          console.log("Category updated successfully, staying on current page");
+        });
       } else {
         const errorData = await response.json();
-        alert(`Failed to update category: ${errorData.message || 'Unknown error'}`);
+        showError("Error", `Failed to update category: ${errorData.message || 'Unknown error'}`);
       }
     } catch (error) {
       console.error("Error updating category:", error);
-      alert("Error updating category. Please try again.");
+      showError("Error", "Error updating category. Please try again.");
     }
   }
 
@@ -1594,45 +1617,53 @@ export default function CategoryFilters({
                             type="button"
                             onClick={async (e) => {
                               e.stopPropagation();
-                              if (confirm(`Delete "${item}" from ${attr.displayName}?`)) {
-                                try {
-                                  // Delete from database first
-                                  const response = await fetch(`http://localhost:5000/api/categories/${selectedMainCategory}/attributes/${attr.name}/items/${encodeURIComponent(item)}`, {
-                                    method: 'DELETE',
-                                    headers: {
-                                      'Content-Type': 'application/json'
-                                    }
-                                  });
-
-                                  if (response.ok) {
-                                    // Remove the item from the attribute
-                                    const updatedAttributes = attributes.map(attribute => {
-                                      if (attribute.name === attr.name) {
-                                        return {
-                                          ...attribute,
-                                          items: attribute.items.filter(i => i !== item)
-                                        };
+                              showDelete(
+                                "Delete Attribute Value",
+                                `Delete "${item}" from ${attr.displayName}?`,
+                                async () => {
+                                  try {
+                                    // Delete from database first
+                                    const response = await fetch(`http://localhost:5000/api/categories/${selectedMainCategory}/attributes/${attr.name}/items/${encodeURIComponent(item)}`, {
+                                      method: 'DELETE',
+                                      headers: {
+                                        'Content-Type': 'application/json'
                                       }
-                                      return attribute;
                                     });
-                                    setAttributes(updatedAttributes);
-                                    
-                                    // Also remove from selected values if it was selected
-                                    if (selectedAttributeValues[attr.name] === item) {
-                                      setSelectedAttributeValues(prev => {
-                                        const newValues = { ...prev };
-                                        delete newValues[attr.name];
-                                        return newValues;
+
+                                    if (response.ok) {
+                                      // Remove the item from the attribute
+                                      const updatedAttributes = attributes.map(attribute => {
+                                        if (attribute.name === attr.name) {
+                                          return {
+                                            ...attribute,
+                                            items: attribute.items.filter(i => i !== item)
+                                          };
+                                        }
+                                        return attribute;
                                       });
+                                      setAttributes(updatedAttributes);
+                                      
+                                      // Also remove from selected values if it was selected
+                                      if (selectedAttributeValues[attr.name] === item) {
+                                        setSelectedAttributeValues(prev => {
+                                          const newValues = { ...prev };
+                                          delete newValues[attr.name];
+                                          return newValues;
+                                        });
+                                      }
+                                      
+                                      showSuccess("Success", `"${item}" deleted successfully!`, () => {
+                                        // Stay on the same page
+                                      });
+                                    } else {
+                                      showError("Error", "Failed to delete from database. Please try again.");
                                     }
-                                  } else {
-                                    alert('Failed to delete from database. Please try again.');
+                                  } catch (error) {
+                                    console.error('Error deleting attribute value:', error);
+                                    showError("Error", "Error deleting attribute value. Please try again.");
                                   }
-                                } catch (error) {
-                                  console.error('Error deleting attribute value:', error);
-                                  alert('Error deleting attribute value. Please try again.');
                                 }
-                              }
+                              );
                             }}
                             style={{
                               background: "none",
@@ -2067,6 +2098,21 @@ export default function CategoryFilters({
           </CardContent>
         </Card>
       )}
+
+      {/* Custom Modal */}
+      <Modal
+        isOpen={isOpen}
+        onClose={closeModal}
+        title={config.title}
+        message={config.message}
+        type={config.type}
+        onConfirm={config.onConfirm}
+        confirmText={config.confirmText}
+        cancelText={config.cancelText}
+        showCancel={config.showCancel}
+      >
+        {config.children}
+      </Modal>
     </div>
   )
 }

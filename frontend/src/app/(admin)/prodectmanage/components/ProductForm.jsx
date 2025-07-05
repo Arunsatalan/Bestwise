@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import dynamic from "next/dynamic"
 import { Button } from "../../../../components/ui/button"
@@ -14,8 +14,8 @@ import { Eye, ArrowLeft, Check, AlertCircle } from "lucide-react"
 import MediaUpload from "./MediaUpload";
 import PricingSection from "./PricingSection"
 import InventorySection from "./InventorySection"
-import VariantsSection from "./VariantsSection"
 import CategoryFilters from "./CategoryFilters"
+import { Modal, useConfirmModal } from "../../../../components/ui/modal"
 
 // Dynamically import components that use browser-only APIs
 const RichTextEditor = dynamic(
@@ -56,6 +56,9 @@ export default function ProductForm({ product = null }) {
   const [previewErrors, setPreviewErrors] = useState([])
   const [editingField, setEditingField] = useState(null)
   const [editValue, setEditValue] = useState("")
+  const [currentTab, setCurrentTab] = useState("basic") // Track current tab
+  const tabRef = useRef("basic") // Persist tab state across re-renders
+  const { isOpen, config, showError, showSuccess, closeModal } = useConfirmModal()
 
   useEffect(() => {
     setIsClient(true)
@@ -79,6 +82,20 @@ export default function ProductForm({ product = null }) {
       console.log("🆕 Initializing ProductForm for new product")
     }
   }, [product])
+
+  // Debug tab changes
+  useEffect(() => {
+    console.log("🔍 Current tab changed to:", currentTab)
+    tabRef.current = currentTab // Update ref when tab changes
+  }, [currentTab])
+
+  // Initialize tab from ref on component mount/re-render
+  useEffect(() => {
+    if (tabRef.current && tabRef.current !== currentTab) {
+      console.log("🔍 Restoring tab from ref:", tabRef.current)
+      setCurrentTab(tabRef.current)
+    }
+  }, [])
 
   const loadCategories = async () => {
     try {
@@ -181,7 +198,7 @@ export default function ProductForm({ product = null }) {
   const handlePreview = () => {
     const errors = validateForm()
     if (errors.length > 0) {
-      alert("Please fix the following errors:\n" + errors.join("\n"))
+      showError("Validation Errors", "Please fix the following errors:\n" + errors.join("\n"))
       return
     }
     
@@ -884,7 +901,15 @@ const handleSubmit = async () => {
         </div>
       )}
       
-      <Tabs defaultValue="basic" className="w-full">
+      <Tabs 
+        value={currentTab} 
+        onValueChange={(value) => {
+          console.log("🔍 Tab changed from", currentTab, "to", value)
+          setCurrentTab(value)
+          tabRef.current = value
+        }} 
+        className="w-full"
+      >
         <TabsList className="flex w-full overflow-x-auto gap-1 p-1">
           <TabsTrigger value="basic" className="text-xs px-2 py-2 whitespace-nowrap">Basic Info</TabsTrigger>
           <TabsTrigger value="categories" className="text-xs px-2 py-2 whitespace-nowrap">Categories</TabsTrigger>
@@ -1032,12 +1057,7 @@ const handleSubmit = async () => {
           />
         </TabsContent>
 
-        <TabsContent value="variants">
-          <VariantsSection
-            variants={formData.variants}
-            onChange={(variants) => handleInputChange("variants", variants)}
-          />
-        </TabsContent>
+
       </Tabs>
 
       <div className="flex justify-end space-x-4">
@@ -1049,6 +1069,21 @@ const handleSubmit = async () => {
           {product ? "Preview Changes" : "Preview Product"}
         </Button>
       </div>
+
+      {/* Custom Modal */}
+      <Modal
+        isOpen={isOpen}
+        onClose={closeModal}
+        title={config.title}
+        message={config.message}
+        type={config.type}
+        onConfirm={config.onConfirm}
+        confirmText={config.confirmText}
+        cancelText={config.cancelText}
+        showCancel={config.showCancel}
+      >
+        {config.children}
+      </Modal>
     </form>
   )
 }

@@ -7,6 +7,7 @@ import { Card, CardContent } from "../../../components/ui/card"
 import { Badge } from "../../../components/ui/badge"
 import { Search, Plus, Edit, Trash2, Eye } from "lucide-react"
 import Link from "next/link"
+import { Modal, useConfirmModal } from "../../../components/ui/modal"
 
 // Type definitions for JSDoc
 /**
@@ -37,6 +38,7 @@ export default function ProductDashboard() {
   const [filterCategory, setFilterCategory] = useState("")
   const [filterStatus, setFilterStatus] = useState("")
   const [loading, setLoading] = useState(true)
+  const { isOpen, config, showDelete, showSuccess, showError, closeModal } = useConfirmModal()
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -61,14 +63,26 @@ export default function ProductDashboard() {
   const categoryList = Array.from(new Set(products.map(p => p.mainCategory).filter(Boolean)))
 
   const deleteProduct = async (id) => {
-    if (confirm("Are you sure you want to delete this product?")) {
-      try {
-        await fetch(`/api/products/${id}`, { method: "DELETE" })
-        fetchProducts()
-      } catch (error) {
-        console.error("Error deleting product:", error)
+    showDelete(
+      "Delete Product",
+      "Are you sure you want to delete this product? This action cannot be undone.",
+      async () => {
+        try {
+          const response = await fetch(`/api/products/${id}`, { method: "DELETE" })
+          if (response.ok) {
+            showSuccess("Success", "Product deleted successfully!", () => {
+              // Stay on the same page and refresh the product list
+              fetchProducts()
+            })
+          } else {
+            showError("Error", "Failed to delete product. Please try again.")
+          }
+        } catch (error) {
+          console.error("Error deleting product:", error)
+          showError("Error", "An error occurred while deleting the product.")
+        }
       }
-    }
+    )
   }
 
   const filteredProducts = products.filter((product) => {
@@ -208,6 +222,21 @@ export default function ProductDashboard() {
           <p className="text-gray-500 text-lg">No products found</p>
         </div>
       )}
+
+      {/* Custom Modal */}
+      <Modal
+        isOpen={isOpen}
+        onClose={closeModal}
+        title={config.title}
+        message={config.message}
+        type={config.type}
+        onConfirm={config.onConfirm}
+        confirmText={config.confirmText}
+        cancelText={config.cancelText}
+        showCancel={config.showCancel}
+      >
+        {config.children}
+      </Modal>
     </div>
   )
 }
