@@ -33,6 +33,29 @@ import { Modal, useConfirmModal } from "../../../components/ui/modal"
  * @property {string} key - Category key
  */
 
+// Type definitions for JSDoc
+/**
+ * @typedef {Object} Product
+ * @property {string} [_id] - MongoDB ObjectId
+ * @property {string} [id] - Alternative ID
+ * @property {string} name - Product name
+ * @property {string} sku - Product SKU
+ * @property {string} [mainCategory] - Main category
+ * @property {string} [category] - Category
+ * @property {number} price - Product price
+ * @property {number} stock - Stock quantity
+ * @property {string} status - Product status
+ * @property {Array<{url: string}>} [images] - Product images
+ */
+
+/**
+ * @typedef {Object} Category
+ * @property {string} [_id] - MongoDB ObjectId
+ * @property {string} [id] - Alternative ID
+ * @property {string} name - Category name
+ * @property {string} key - Category key
+ */
+
 export default function ProductDashboard() {
   const [products, setProducts] = useState([])
   const [searchTerm, setSearchTerm] = useState("")
@@ -76,11 +99,13 @@ export default function ProductDashboard() {
   // Build unique mainCategory list from products
   const categoryList = Array.from(new Set(products.map(p => p.mainCategory).filter(Boolean)))
 
+
   const getStockStatus = (stock) => {
     if (stock === 0) return { label: "Out of Stock", color: "destructive" }
     if (stock < 10) return { label: "Low Stock", color: "secondary" }
     return { label: "In Stock", color: "default" }
   }
+
 
   const deleteProduct = async (id) => {
     showDelete(
