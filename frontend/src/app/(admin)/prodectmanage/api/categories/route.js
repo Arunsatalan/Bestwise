@@ -1,5 +1,7 @@
 import fs from 'fs/promises';
-const filePath = './categoriesData.json';
+import path from 'path';
+
+const filePath = path.join(process.cwd(), 'categoriesData.json');
 
 // Mock database - replace with your actual database
 let categoriesData = {
@@ -135,17 +137,4 @@ export async function DELETE(request) {
   }
 }
 
-const showAttributes = ["colors", "sizes"];
-
-{currentCategoryData.attributes &&
-  currentCategoryData.attributes
-    .filter(attr => attr.name === "colors")
-    .map(attr => (
-      <FilterSection
-        key={attr.name}
-        title={attr.displayName}
-        filterType={attr.name}
-        items={Array.isArray(attr.items) ? attr.items : []}
-        categoryKey={selectedMainCategory}
-      />
-    ))}
+// API route file - no JSX code should be here

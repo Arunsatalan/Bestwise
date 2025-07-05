@@ -1042,6 +1042,8 @@ export default function CategoryFilters({
                     key={item}
                     onClick={() => setSelectedAttributeValues((prev) => ({ ...prev, [attr.name]: item }))}
                     style={{
+                      display: "inline-flex",
+                      alignItems: "center",
                       background: selectedAttributeValues[attr.name] === item ? "#a78bfa" : "#f3f3f3",
                       color: selectedAttributeValues[attr.name] === item ? "#fff" : "#000",
                       borderRadius: "8px",
@@ -1049,10 +1051,67 @@ export default function CategoryFilters({
                       fontSize: "0.95rem",
                       cursor: "pointer",
                       border: selectedAttributeValues[attr.name] === item ? "2px solid #7c3aed" : "none",
-                      transition: "all 0.2s"
+                      transition: "all 0.2s",
+                      marginRight: "0.5rem"
                     }}
                   >
                     {item}
+                    <button
+                      type="button"
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        if (confirm(`Delete "${item}" from ${attr.displayName}?`)) {
+                          try {
+                            // Delete from database first
+                            const response = await fetch(`http://localhost:5000/api/categories/${selectedMainCategory}/attributes/${attr.name}/items/${encodeURIComponent(item)}`, {
+                              method: 'DELETE',
+                              headers: {
+                                'Content-Type': 'application/json'
+                              }
+                            });
+
+                            if (response.ok) {
+                              // Remove the item from the attribute
+                              const updatedAttributes = attributes.map(attribute => {
+                                if (attribute.name === attr.name) {
+                                  return {
+                                    ...attribute,
+                                    items: attribute.items.filter(i => i !== item)
+                                  };
+                                }
+                                return attribute;
+                              });
+                              setAttributes(updatedAttributes);
+                              
+                              // Also remove from selected values if it was selected
+                              if (selectedAttributeValues[attr.name] === item) {
+                                setSelectedAttributeValues(prev => {
+                                  const newValues = { ...prev };
+                                  delete newValues[attr.name];
+                                  return newValues;
+                                });
+                              }
+                            } else {
+                              alert('Failed to delete from database. Please try again.');
+                            }
+                          } catch (error) {
+                            console.error('Error deleting attribute value:', error);
+                            alert('Error deleting attribute value. Please try again.');
+                          }
+                        }
+                      }}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        marginLeft: "0.4rem",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center"
+                      }}
+                      title={`Delete '${item}'`}
+                    >
+                      <Trash2 size={14} color={selectedAttributeValues[attr.name] === item ? "#fff" : "#7c3aed"} />
+                    </button>
                   </span>
                 ))}
               </div>
@@ -1178,6 +1237,8 @@ export default function CategoryFilters({
                         key={item}
                         onClick={() => setSelectedAttributeValues((prev) => ({ ...prev, [attr.name]: item }))}
                         style={{
+                          display: "inline-flex",
+                          alignItems: "center",
                           background: selectedAttributeValues[attr.name] === item ? "#a78bfa" : "#f3f3f3",
                           color: selectedAttributeValues[attr.name] === item ? "#fff" : "#000",
                           borderRadius: "8px",
@@ -1185,10 +1246,75 @@ export default function CategoryFilters({
                           fontSize: "0.95rem",
                           cursor: "pointer",
                           border: selectedAttributeValues[attr.name] === item ? "2px solid #7c3aed" : "none",
-                          transition: "all 0.2s"
+                          transition: "all 0.2s",
+                          marginRight: "0.5rem"
                         }}
                       >
                         {item}
+                        <button
+                          type="button"
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            if (confirm(`Delete "${item}" from ${attr.displayName}?`)) {
+                              try {
+                                // Delete from database first
+                                const response = await fetch(`http://localhost:5000/api/categories/${selectedMainCategory}/attributes/${attr.name}/items/${encodeURIComponent(item)}`, {
+                                  method: 'DELETE',
+                                  headers: {
+                                    'Content-Type': 'application/json'
+                                  }
+                                });
+
+                                if (response.ok) {
+                                  // Remove the item from the category system
+                                  const updatedCategorySystem = { ...categorySystem };
+                                  const category = updatedCategorySystem[selectedMainCategory];
+                                  if (category && category.attributes) {
+                                    const updatedAttributes = category.attributes.map(attribute => {
+                                      if (attribute.name === attr.name) {
+                                        return {
+                                          ...attribute,
+                                          items: attribute.items.filter(i => i !== item)
+                                        };
+                                      }
+                                      return attribute;
+                                    });
+                                    updatedCategorySystem[selectedMainCategory] = {
+                                      ...category,
+                                      attributes: updatedAttributes
+                                    };
+                                    setCategorySystem(updatedCategorySystem);
+                                    
+                                    // Also remove from selected values if it was selected
+                                    if (selectedAttributeValues[attr.name] === item) {
+                                      setSelectedAttributeValues(prev => {
+                                        const newValues = { ...prev };
+                                        delete newValues[attr.name];
+                                        return newValues;
+                                      });
+                                    }
+                                  }
+                                } else {
+                                  alert('Failed to delete from database. Please try again.');
+                                }
+                              } catch (error) {
+                                console.error('Error deleting attribute value:', error);
+                                alert('Error deleting attribute value. Please try again.');
+                              }
+                            }
+                          }}
+                          style={{
+                            background: "none",
+                            border: "none",
+                            marginLeft: "0.4rem",
+                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center"
+                          }}
+                          title={`Delete '${item}'`}
+                        >
+                          <Trash2 size={14} color={selectedAttributeValues[attr.name] === item ? "#fff" : "#7c3aed"} />
+                        </button>
                       </span>
                     ))}
                   </div>
