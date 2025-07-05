@@ -63,6 +63,29 @@ export default function CategoryFilters({
     }
   }, [selectedFilters])
 
+  // Watch for changes in selectedAttributeValues and notify parent
+  useEffect(() => {
+    if (isProductForm && onFiltersChange) {
+      // Convert selectedAttributeValues to the expected filters format
+      const filters = {};
+      Object.entries(selectedAttributeValues).forEach(([key, value]) => {
+        if (value) {
+          filters[key] = [value];
+        }
+      });
+      
+      // Only call onFiltersChange if the filters have actually changed
+      const currentFiltersString = JSON.stringify(filters);
+      const previousFiltersString = JSON.stringify(currentSelectedFilters);
+      
+      if (currentFiltersString !== previousFiltersString) {
+        console.log("🔍 Selected Attribute Values Changed:", selectedAttributeValues);
+        console.log("🔍 Converted Filters:", filters);
+        onFiltersChange(filters);
+      }
+    }
+  }, [selectedAttributeValues, isProductForm, onFiltersChange, currentSelectedFilters]);
+
   // Load categories and products from backend on component mount
   useEffect(() => {
     loadCategories()
@@ -901,7 +924,7 @@ export default function CategoryFilters({
                   className="flex items-center gap-1 px-3 py-1 cursor-pointer hover:bg-gray-100 transition-colors"
                   onClick={() => handleFilterSelection(filterType, item)}
                 >
-                  {item.name}
+                  {item}
                   {!isProductForm && (
                     <>
                       <Button
@@ -1032,6 +1055,24 @@ export default function CategoryFilters({
     }
     fetchAttributes();
   }, [selectedMainCategory]);
+
+  const handleAttributeValueSelect = (attributeName, value) => {
+    console.log("🔍 Attribute Value Selected:", { attributeName, value });
+    
+    setSelectedAttributeValues(prev => {
+      const newValues = { ...prev };
+      if (newValues[attributeName] === value) {
+        // If already selected, deselect it
+        delete newValues[attributeName];
+      } else {
+        // Select the new value
+        newValues[attributeName] = value;
+      }
+      
+      console.log("🔍 Updated Selected Values:", newValues);
+      return newValues;
+    });
+  };
 
   if (loading) {
     return (
@@ -1401,7 +1442,7 @@ export default function CategoryFilters({
                   return (
                     <span
                       key={item}
-                      onClick={() => !isEditing && setSelectedAttributeValues((prev) => ({ ...prev, [attr.name]: item }))}
+                      onClick={() => !isEditing && handleAttributeValueSelect(attr.name, item)}
                       style={{
                         display: "inline-flex",
                         alignItems: "center",
@@ -1416,42 +1457,42 @@ export default function CategoryFilters({
                         marginRight: "0.5rem"
                       }}
                     >
-                                                {isEditing ? (
-                            <>
-                              <input
-                                type="text"
-                                defaultValue={item}
-                                style={{
-                                  background: "transparent",
-                                  border: "none",
-                                  color: "inherit",
-                                  fontSize: "inherit",
-                                  outline: "none",
-                                  width: "80px",
-                                  marginRight: "0.5rem"
-                                }}
-                                onKeyDown={(e) => {
-                                  if (e.key === "Enter") {
-                                    saveEditedAttributeValue(attr.name, item, e.target.value);
-                                  } else if (e.key === "Escape") {
-                                    cancelEditingAttributeValue(attr.name, item);
-                                  }
-                                }}
-                                onChange={(e) => {
-                                  // Update the editing state with the new value
-                                  setEditingAttributeValues(prev => ({
-                                    ...prev,
-                                    [`${attr.name}-${item}`]: e.target.value
-                                  }));
-                                }}
-                                autoFocus
-                              />
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  const currentValue = editingAttributeValues[`${attr.name}-${item}`] || item;
-                                  saveEditedAttributeValue(attr.name, item, currentValue);
-                                }}
+                      {isEditing ? (
+                        <>
+                          <input
+                            type="text"
+                            defaultValue={item}
+                            style={{
+                              background: "transparent",
+                              border: "none",
+                              color: "inherit",
+                              fontSize: "inherit",
+                              outline: "none",
+                              width: "80px",
+                              marginRight: "0.5rem"
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                saveEditedAttributeValue(attr.name, item, e.target.value);
+                              } else if (e.key === "Escape") {
+                                cancelEditingAttributeValue(attr.name, item);
+                              }
+                            }}
+                            onChange={(e) => {
+                              // Update the editing state with the new value
+                              setEditingAttributeValues(prev => ({
+                                ...prev,
+                                [`${attr.name}-${item}`]: e.target.value
+                              }));
+                            }}
+                            autoFocus
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const currentValue = editingAttributeValues[`${attr.name}-${item}`] || item;
+                              saveEditedAttributeValue(attr.name, item, currentValue);
+                            }}
                             style={{
                               background: "#10b981",
                               border: "none",
@@ -1749,7 +1790,7 @@ export default function CategoryFilters({
                       return (
                         <span
                           key={item}
-                          onClick={() => !isEditing && setSelectedAttributeValues((prev) => ({ ...prev, [attr.name]: item }))}
+                          onClick={() => !isEditing && handleAttributeValueSelect(attr.name, item)}
                           style={{
                             display: "inline-flex",
                             alignItems: "center",
