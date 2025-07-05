@@ -60,6 +60,7 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("overview")
   const [realLowStockProducts, setRealLowStockProducts] = useState([])
   const [realLowStockCount, setRealLowStockCount] = useState(0)
+  const [systemAlerts, setSystemAlerts] = useState([])
 
   // Check if mobile view
   useEffect(() => {
@@ -109,8 +110,30 @@ export default function Dashboard() {
             product.stock < 10 || product.stock === 0
           );
           
+          // Separate out of stock and low stock
+          const outOfStock = lowStockProducts.filter(product => product.stock === 0);
+          const lowStock = lowStockProducts.filter(product => product.stock > 0 && product.stock < 10);
+          
           setRealLowStockProducts(lowStockProducts);
           setRealLowStockCount(lowStockProducts.length);
+          
+          // Update system alerts with detailed counts
+          const lowStockAlert = {
+            type: "low-stock",
+            message: `${outOfStock.length} out of stock, ${lowStock.length} low stock products need attention`,
+            severity: "warning",
+            time: "Just now",
+            clickable: true,
+            action: () => {
+              window.location.href = '/prodectmanage?filter=low-stock'
+            }
+          };
+          
+          // Update system alerts state with the new low stock alert
+          setSystemAlerts(prevAlerts => {
+            const existingAlerts = prevAlerts.filter(alert => alert.type !== "low-stock");
+            return [lowStockAlert, ...existingAlerts];
+          });
         }
       } catch (error) {
         console.error('Error fetching low stock products:', error);
@@ -316,27 +339,7 @@ export default function Dashboard() {
     { event: "Holiday Decoration Return", client: "City Mall", date: "Jun 25, 2025", status: "Scheduled" },
   ]
 
-  // System alerts with real data
-  const systemAlerts = [
-    {
-      type: "low-stock",
-      message: `${realLowStockCount} products are running low on stock`,
-      severity: "warning",
-      time: "Just now",
-    },
-    {
-      type: "order",
-      message: "New order #1003 requires attention",
-      severity: "info",
-      time: "5 minutes ago",
-    },
-    {
-      type: "payment",
-      message: "Payment for order #998 failed",
-      severity: "error",
-      time: "1 hour ago",
-    },
-  ]
+
 
   const getSalesDataByPeriod = () => {
     switch (reportPeriod) {
@@ -433,10 +436,10 @@ export default function Dashboard() {
               </Button>
 
               {/* Alerts dropdown */}
-              {showAlerts && (
+              {showAlerts && systemAlerts.length > 0 && (
                 <div className="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg border border-gray-200 z-50">
                   <div className="flex justify-between items-center p-3 border-b border-gray-200">
-                    <h3 className="font-medium">Notifications</h3>
+                    <h3 className="font-medium">Notifications ({systemAlerts.length})</h3>
                     <Button variant="ghost" size="sm" onClick={() => setShowAlerts(false)}>
                       <X className="h-4 w-4" />
                     </Button>
@@ -445,7 +448,13 @@ export default function Dashboard() {
                     {systemAlerts.map((alert, index) => (
                       <div 
                         key={index} 
-                        className="p-3 border-b border-gray-100 hover:bg-gray-50"
+                        className={cn(
+                          "p-3 border-b border-gray-100",
+                          alert.clickable 
+                            ? "hover:bg-gray-50 cursor-pointer" 
+                            : "hover:bg-gray-50"
+                        )}
+                        onClick={alert.clickable ? alert.action : undefined}
                       >
                         <div className="flex gap-3 items-start">
                           <div
@@ -472,6 +481,9 @@ export default function Dashboard() {
                           <div className="flex-1">
                             <p className="text-sm font-medium">{alert.message}</p>
                             <p className="text-xs text-gray-500 mt-1">{alert.time}</p>
+                            {alert.clickable && (
+                              <p className="text-xs text-blue-600 mt-1">Click to view details</p>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -482,9 +494,26 @@ export default function Dashboard() {
                       variant="ghost" 
                       size="sm" 
                       className="text-sm text-pink-600 hover:text-pink-700"
+                      onClick={() => setShowAlerts(false)}
                     >
-                      View all notifications
+                      Close
                     </Button>
+                  </div>
+                </div>
+              )}
+              
+              {/* Show message when no notifications */}
+              {showAlerts && systemAlerts.length === 0 && (
+                <div className="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg border border-gray-200 z-50">
+                  <div className="flex justify-between items-center p-3 border-b border-gray-200">
+                    <h3 className="font-medium">Notifications</h3>
+                    <Button variant="ghost" size="sm" onClick={() => setShowAlerts(false)}>
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <div className="p-6 text-center">
+                    <p className="text-gray-500">No notifications at the moment</p>
+                    <p className="text-sm text-gray-400 mt-1">All systems are running smoothly</p>
                   </div>
                 </div>
               )}
