@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import React, { useState, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 import { Button } from "../../../components/ui/button"
 import { Input } from "../../../components/ui/input"
 import { Card, CardContent } from "../../../components/ui/card"
@@ -37,8 +38,21 @@ export default function ProductDashboard() {
   const [searchTerm, setSearchTerm] = useState("")
   const [filterCategory, setFilterCategory] = useState("")
   const [filterStatus, setFilterStatus] = useState("")
+  const [filterStock, setFilterStock] = useState("")
   const [loading, setLoading] = useState(true)
   const { isOpen, config, showDelete, showSuccess, showError, closeModal } = useConfirmModal()
+
+  // Check URL parameters for automatic filtering
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const urlParams = new URLSearchParams(window.location.search)
+      const filterParam = urlParams.get('filter')
+      
+      if (filterParam === 'low-stock') {
+        setFilterStock('low-stock')
+      }
+    }
+  }, [])
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -61,6 +75,12 @@ export default function ProductDashboard() {
 
   // Build unique mainCategory list from products
   const categoryList = Array.from(new Set(products.map(p => p.mainCategory).filter(Boolean)))
+
+  const getStockStatus = (stock) => {
+    if (stock === 0) return { label: "Out of Stock", color: "destructive" }
+    if (stock < 10) return { label: "Low Stock", color: "secondary" }
+    return { label: "In Stock", color: "default" }
+  }
 
   const deleteProduct = async (id) => {
     showDelete(
@@ -91,14 +111,16 @@ export default function ProductDashboard() {
       product.sku.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesCategory = !filterCategory || product.mainCategory === filterCategory
     const matchesStatus = !filterStatus || product.status === filterStatus
-    return matchesSearch && matchesCategory && matchesStatus
+    
+    // Stock filtering logic
+    let matchesStock = true
+    if (filterStock) {
+      const stockStatus = getStockStatus(product.stock)
+      matchesStock = stockStatus.label.toLowerCase().replace(/\s+/g, '-') === filterStock
+    }
+    
+    return matchesSearch && matchesCategory && matchesStatus && matchesStock
   })
-
-  const getStockStatus = (stock) => {
-    if (stock === 0) return { label: "Out of Stock", color: "destructive" }
-    if (stock < 10) return { label: "Low Stock", color: "secondary" }
-    return { label: "In Stock", color: "default" }
-  }
 
   if (loading) {
     return (
@@ -111,7 +133,19 @@ export default function ProductDashboard() {
   return (
     <div className="container mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Product Management</h1>
+        <div>
+          <h1 className="text-3xl font-bold">Product Management</h1>
+          {filterStock === 'low-stock' && (
+            <div className="flex items-center gap-2 mt-2">
+              <Badge variant="secondary" className="bg-amber-100 text-amber-800 border-amber-200">
+                🔔 Low Stock Filter Active
+              </Badge>
+              <span className="text-sm text-gray-600">
+                Showing {filteredProducts.length} low stock products
+              </span>
+            </div>
+          )}
+        </div>
         <Link href="/prodectmanage/products/add">
           <Button>
             <Plus className="w-4 h-4 mr-2" />
@@ -155,9 +189,68 @@ export default function ProductDashboard() {
               <option value="draft">Draft</option>
               <option value="archived">Archived</option>
             </select>
+            <select
+              value={filterStock}
+              onChange={(e) => setFilterStock(e.target.value)}
+              className="px-3 py-2 border rounded-md"
+            >
+              <option value="">All Stock</option>
+              <option value="in-stock">In Stock</option>
+              <option value="low-stock">Low Stock</option>
+              <option value="out-of-stock">Out of Stock</option>
+            </select>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setSearchTerm("")
+                setFilterCategory("")
+                setFilterStatus("")
+                setFilterStock("")
+                // Clear URL parameter
+                if (typeof window !== "undefined") {
+                  const url = new URL(window.location.href)
+                  url.searchParams.delete('filter')
+                  window.history.replaceState({}, '', url.toString())
+                }
+              }}
+              className="px-4 py-2"
+            >
+              {filterStock === 'low-stock' ? 'Clear Low Stock Filter' : 'Clear All Filters'}
+            </Button>
           </div>
         </CardContent>
       </Card>
+
+      {/* Active Filters Summary */}
+      {(searchTerm || filterCategory || filterStatus || filterStock) && (
+        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-sm font-medium text-blue-800">Active Filters:</span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {searchTerm && (
+              <Badge variant="secondary" className="text-xs">
+                Search: "{searchTerm}"
+              </Badge>
+            )}
+            {filterCategory && (
+              <Badge variant="secondary" className="text-xs">
+                Category: {filterCategory}
+              </Badge>
+            )}
+            {filterStatus && (
+              <Badge variant="secondary" className="text-xs">
+                Status: {filterStatus}
+              </Badge>
+            )}
+            {filterStock && (
+              <Badge variant="secondary" className="text-xs">
+                Stock: {filterStock.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+              </Badge>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Products Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">

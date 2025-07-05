@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import React, { useState, useEffect } from "react"
 import { useLoading } from '../../hooks/useLoading'
 import Loader from '../../components/loader/page'
 import {
@@ -35,6 +35,7 @@ import {
   Menu,
   AlertTriangle,
   ChevronRight,
+  Edit,
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "../../../components/ui/card"
 import { Button } from "../../../components/ui/button"
@@ -45,6 +46,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "../../../components/ui/avat
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../../components/ui/tabs"
 import { Sheet, SheetContent, SheetTrigger } from "../../../components/ui/sheet"
 import { cn } from "../../../lib/utils"
+import Link from "next/link"
 
 export default function Dashboard() {
   const { loading, withLoading } = useLoading();
@@ -53,8 +55,11 @@ export default function Dashboard() {
   const [reportPeriod, setReportPeriod] = useState("monthly")
   const [selectedRegion, setSelectedRegion] = useState("all")
   const [showAlerts, setShowAlerts] = useState(true)
+  const [showLowStockModal, setShowLowStockModal] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const [activeTab, setActiveTab] = useState("overview")
+  const [realLowStockProducts, setRealLowStockProducts] = useState([])
+  const [realLowStockCount, setRealLowStockCount] = useState(0)
 
   // Check if mobile view
   useEffect(() => {
@@ -88,6 +93,34 @@ export default function Dashboard() {
 
     fetchDashboardData();
   }, [withLoading]);
+
+  // Fetch real product data and count low stock products
+  useEffect(() => {
+    const fetchLowStockProducts = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/products');
+        const result = await response.json();
+        
+        if (result.data && Array.isArray(result.data)) {
+          const products = result.data;
+          
+          // Filter low stock products (stock < 10 or stock === 0)
+          const lowStockProducts = products.filter(product => 
+            product.stock < 10 || product.stock === 0
+          );
+          
+          setRealLowStockProducts(lowStockProducts);
+          setRealLowStockCount(lowStockProducts.length);
+        }
+      } catch (error) {
+        console.error('Error fetching low stock products:', error);
+        // Fallback to sample data if API fails
+        setRealLowStockCount(lowStockProducts.length);
+      }
+    };
+
+    fetchLowStockProducts();
+  }, []);
 
   // Sample data for charts
   const salesData = [
@@ -226,14 +259,20 @@ export default function Dashboard() {
 
   // Product Stock Status with alerts for low stock
   const productStatus = [
-    { product: "Birthday Gift Box", stock: 85, isLow: false },
-    { product: "Wedding Decoration Set", stock: 20, isLow: true },
-    { product: "Party Lights", stock: 60, isLow: false },
-    { product: "Custom Gift Baskets", stock: 75, isLow: false },
-    { product: "Greeting Cards", stock: 95, isLow: false },
-    { product: "Balloon Arrangements", stock: 15, isLow: true },
-    { product: "Gift Wrapping Paper", stock: 10, isLow: true },
-    { product: "Event Chairs", stock: 5, isLow: true },
+    { product: "Birthday Gift Box", stock: 85, isLow: false, category: "Gifts", sku: "BG001" },
+    { product: "Wedding Decoration Set", stock: 20, isLow: true, category: "Decorations", sku: "WD001" },
+    { product: "Party Lights", stock: 60, isLow: false, category: "Rentals", sku: "PL001" },
+    { product: "Custom Gift Baskets", stock: 75, isLow: false, category: "Gifts", sku: "CGB001" },
+    { product: "Greeting Cards", stock: 95, isLow: false, category: "Gifts", sku: "GC001" },
+    { product: "Balloon Arrangements", stock: 15, isLow: true, category: "Decorations", sku: "BA001" },
+    { product: "Gift Wrapping Paper", stock: 10, isLow: true, category: "Supplies", sku: "GWP001" },
+    { product: "Event Chairs", stock: 5, isLow: true, category: "Rentals", sku: "EC001" },
+    { product: "Table Cloths", stock: 0, isLow: true, category: "Rentals", sku: "TC001" },
+    { product: "Cake Stands", stock: 8, isLow: true, category: "Rentals", sku: "CS001" },
+    { product: "Photo Frames", stock: 12, isLow: true, category: "Gifts", sku: "PF001" },
+    { product: "Candles", stock: 0, isLow: true, category: "Decorations", sku: "C001" },
+    { product: "Ribbons", stock: 25, isLow: true, category: "Supplies", sku: "R001" },
+    { product: "Party Hats", stock: 3, isLow: true, category: "Supplies", sku: "PH001" },
   ]
 
   // Get low stock products
@@ -277,11 +316,11 @@ export default function Dashboard() {
     { event: "Holiday Decoration Return", client: "City Mall", date: "Jun 25, 2025", status: "Scheduled" },
   ]
 
-  // System alerts
+  // System alerts with real data
   const systemAlerts = [
     {
       type: "low-stock",
-      message: "4 products are running low on stock",
+      message: `${realLowStockCount} products are running low on stock`,
       severity: "warning",
       time: "Just now",
     },
@@ -404,7 +443,10 @@ export default function Dashboard() {
                   </div>
                   <div className="max-h-[300px] overflow-y-auto">
                     {systemAlerts.map((alert, index) => (
-                      <div key={index} className="p-3 border-b border-gray-100 hover:bg-gray-50">
+                      <div 
+                        key={index} 
+                        className="p-3 border-b border-gray-100 hover:bg-gray-50"
+                      >
                         <div className="flex gap-3 items-start">
                           <div
                             className={cn(
@@ -436,7 +478,11 @@ export default function Dashboard() {
                     ))}
                   </div>
                   <div className="p-2 text-center border-t border-gray-100">
-                    <Button variant="ghost" size="sm" className="text-sm text-pink-600 hover:text-pink-700">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="text-sm text-pink-600 hover:text-pink-700"
+                    >
                       View all notifications
                     </Button>
                   </div>
@@ -480,27 +526,39 @@ export default function Dashboard() {
           </div>
 
           {/* Low Stock Alert Banner */}
-          {lowStockProducts.length > 0 && (
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6 flex items-start gap-3">
-              <div className="p-1 bg-amber-100 rounded-full">
-                <AlertTriangle className="h-5 w-5 text-amber-500" />
+          {realLowStockCount > 0 && (
+            <div 
+              className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6 flex items-start gap-3 hover:bg-amber-100 transition-colors cursor-pointer"
+              onClick={() => {
+                // Navigate to ProductDashboard with low stock filter
+                window.location.href = '/prodectmanage?filter=low-stock'
+              }}
+            >
+            <div className="p-1 bg-amber-100 rounded-full">
+              <AlertTriangle className="h-5 w-5 text-amber-500" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-medium text-amber-800">Low Stock Alert</h3>
+              <p className="text-sm text-amber-700 mt-1">
+                {realLowStockCount} products are running low on stock and need attention.
+              </p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {realLowStockProducts.slice(0, 3).map((product, index) => (
+                  <Badge key={index} variant="outline" className="bg-white border-amber-200 text-amber-700">
+                    {product.name}: {product.stock} left
+                  </Badge>
+                ))}
+                {realLowStockCount > 3 && (
+                  <Badge variant="outline" className="bg-white border-amber-200 text-amber-700">
+                    +{realLowStockCount - 3} more
+                  </Badge>
+                )}
               </div>
-              <div className="flex-1">
-                <h3 className="font-medium text-amber-800">Low Stock Alert</h3>
-                <p className="text-sm text-amber-700 mt-1">
-                  {lowStockProducts.length} products are running low on stock and need attention.
-                </p>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {lowStockProducts.map((product, index) => (
-                    <Badge key={index} variant="outline" className="bg-white border-amber-200 text-amber-700">
-                      {product.product}: {product.stock} left
-                    </Badge>
-                  ))}
-                </div>
+            </div>
+                          <div className="flex items-center gap-2">
+                <span className="text-sm text-amber-700">Click to View All Low Stock Products</span>
+                <ChevronRight className="h-4 w-4 text-amber-700" />
               </div>
-              <Button variant="ghost" size="sm" className="text-amber-700 hover:text-amber-800 hover:bg-amber-100">
-                <ChevronRight className="h-4 w-4" />
-              </Button>
             </div>
           )}
 
@@ -990,9 +1048,6 @@ export default function Dashboard() {
                             <Progress
                               value={item.stock}
                               className="h-2"
-                              indicatorClassName={
-                                item.stock > 70 ? "bg-green-500" : item.stock > 30 ? "bg-amber-500" : "bg-red-500"
-                              }
                             />
                           </div>
                         ))}
@@ -1438,9 +1493,6 @@ export default function Dashboard() {
                           <Progress
                             value={item.stock}
                             className="h-2"
-                            indicatorClassName={
-                              item.stock > 70 ? "bg-green-500" : item.stock > 30 ? "bg-amber-500" : "bg-red-500"
-                            }
                           />
                         </div>
                       ))}
@@ -1519,6 +1571,169 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* Low Stock Modal */}
+      {showLowStockModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+            <div className="flex justify-between items-center p-6 border-b border-gray-200">
+              <div>
+                <h2 className="text-xl font-bold text-gray-800">Low Stock & Out of Stock Products</h2>
+                <p className="text-sm text-gray-600 mt-1">
+                  {lowStockProducts.length} products need attention
+                </p>
+              </div>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setShowLowStockModal(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <X className="h-5 w-5" />
+              </Button>
+            </div>
+
+            <div className="p-6">
+              {/* Filters */}
+              <div className="flex flex-wrap gap-4 mb-6">
+                <div className="flex items-center gap-2">
+                  <label className="text-sm font-medium text-gray-700">Stock Status:</label>
+                  <Select defaultValue="all">
+                    <SelectTrigger className="w-[140px]">
+                      <SelectValue placeholder="All" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Low Stock</SelectItem>
+                      <SelectItem value="out-of-stock">Out of Stock</SelectItem>
+                      <SelectItem value="critical">Critical (≤5)</SelectItem>
+                      <SelectItem value="low">Low (6-20)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex items-center gap-2">
+                  <label className="text-sm font-medium text-gray-700">Category:</label>
+                  <Select defaultValue="all">
+                    <SelectTrigger className="w-[140px]">
+                      <SelectValue placeholder="All" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Categories</SelectItem>
+                      <SelectItem value="Gifts">Gifts</SelectItem>
+                      <SelectItem value="Rentals">Rentals</SelectItem>
+                      <SelectItem value="Decorations">Decorations</SelectItem>
+                      <SelectItem value="Supplies">Supplies</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button variant="outline" size="sm">
+                  <Filter className="h-4 w-4 mr-2" />
+                  Export List
+                </Button>
+              </div>
+
+              {/* Products Table */}
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-gray-200">
+                      <th className="text-left text-sm font-medium text-gray-700 pb-3">Product</th>
+                      <th className="text-left text-sm font-medium text-gray-700 pb-3">SKU</th>
+                      <th className="text-left text-sm font-medium text-gray-700 pb-3">Category</th>
+                      <th className="text-left text-sm font-medium text-gray-700 pb-3">Stock</th>
+                      <th className="text-left text-sm font-medium text-gray-700 pb-3">Status</th>
+                      <th className="text-left text-sm font-medium text-gray-700 pb-3">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {lowStockProducts.map((product, index) => (
+                      <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
+                        <td className="py-4 text-gray-800 font-medium">{product.product}</td>
+                        <td className="py-4 text-gray-600">{product.sku}</td>
+                        <td className="py-4 text-gray-600">{product.category}</td>
+                        <td className="py-4">
+                          <div className="flex items-center gap-2">
+                            <span className={`font-medium ${
+                              product.stock === 0 ? 'text-red-600' : 
+                              product.stock <= 5 ? 'text-orange-600' : 'text-amber-600'
+                            }`}>
+                              {product.stock}
+                            </span>
+                            <div className="w-20">
+                              <Progress 
+                                value={Math.min((product.stock / 100) * 100, 100)} 
+                                className="h-2"
+                              />
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-4">
+                          <Badge 
+                            variant={
+                              product.stock === 0 ? "destructive" : 
+                              product.stock <= 5 ? "secondary" : "outline"
+                            }
+                            className={
+                              product.stock === 0 ? "bg-red-100 text-red-700 border-red-200" :
+                              product.stock <= 5 ? "bg-orange-100 text-orange-700 border-orange-200" :
+                              "bg-amber-100 text-amber-700 border-amber-200"
+                            }
+                          >
+                            {product.stock === 0 ? "Out of Stock" : 
+                             product.stock <= 5 ? "Critical" : "Low Stock"}
+                          </Badge>
+                        </td>
+                        <td className="py-4">
+                          <div className="flex gap-2">
+                            <Button size="sm" variant="outline">
+                              <Edit className="h-3 w-3 mr-1" />
+                              Edit
+                            </Button>
+                            <Button size="sm" variant="outline">
+                              <Package className="h-3 w-3 mr-1" />
+                              Restock
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Summary */}
+              <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-center">
+                  <div>
+                    <div className="text-2xl font-bold text-red-600">
+                      {lowStockProducts.filter(p => p.stock === 0).length}
+                    </div>
+                    <div className="text-sm text-gray-600">Out of Stock</div>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-orange-600">
+                      {lowStockProducts.filter(p => p.stock > 0 && p.stock <= 5).length}
+                    </div>
+                    <div className="text-sm text-gray-600">Critical</div>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-amber-600">
+                      {lowStockProducts.filter(p => p.stock > 5 && p.stock <= 20).length}
+                    </div>
+                    <div className="text-sm text-gray-600">Low Stock</div>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-gray-800">
+                      {lowStockProducts.length}
+                    </div>
+                    <div className="text-sm text-gray-600">Total</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }
+
