@@ -63,7 +63,8 @@ export default function ProductForm({ product = null }) {
     
     // Initialize form data safely
     if (product) {
-      setFormData({
+      console.log("🔄 Initializing ProductForm with product data:", product)
+      const initialFormData = {
         ...defaultProduct,
         ...product,
         dimensions: product.dimensions || { length: 0, width: 0, height: 0 },
@@ -71,22 +72,30 @@ export default function ProductForm({ product = null }) {
         tags: product.tags || [],
         images: product.images || [],
         variants: product.variants || [],
-      })
+      }
+      console.log("📝 Setting initial form data:", initialFormData)
+      setFormData(initialFormData)
+    } else {
+      console.log("🆕 Initializing ProductForm for new product")
     }
   }, [product])
 
   const loadCategories = async () => {
-  try {
-    const response = await fetch("/prodectmanage/api/categories") // fix path here
-    if (!response.ok) {
-      throw new Error("Failed to fetch categories")
+    try {
+      console.log("🔄 Loading categories...")
+      const response = await fetch("/prodectmanage/api/categories")
+      if (!response.ok) {
+        throw new Error("Failed to fetch categories")
+      }
+      const data = await response.json()
+      console.log("📂 Categories loaded:", data)
+      setCategorySystem(data)
+    } catch (error) {
+      console.error("❌ Error loading categories:", error)
+      // Set empty object to prevent infinite loading
+      setCategorySystem({})
     }
-    const data = await response.json()
-    setCategorySystem(data)
-  } catch (error) {
-    console.error("Error loading categories:", error)
   }
-}
 
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({
@@ -261,15 +270,30 @@ const handleSubmit = async () => {
       variants: formData.variants || [],
       status: formData.status || "draft",
       // Add timestamps
-      createdAt: new Date(),
       updatedAt: new Date(),
     };
 
-    console.log("📦 Sending product data to MongoDB:", productData);
+    // Only add createdAt for new products
+    if (!product) {
+      productData.createdAt = new Date();
+    }
 
-    const API_URL = `${process.env.NEXT_PUBLIC_API_URL}/products`;
-    const url = product ? `${API_URL}/${product.id}` : API_URL;
+    console.log("📦 Sending product data to MongoDB:", productData);
+    console.log("🔍 Category and Filters Debug:", {
+      mainCategory: formData.mainCategory,
+      categoryName: categorySystem[formData.mainCategory]?.name,
+      filters: formData.filters,
+      filtersKeys: Object.keys(formData.filters || {}),
+      filtersValues: Object.values(formData.filters || {}),
+      totalFilters: Object.values(formData.filters || {}).flat().length
+    });
+
+    // Use hardcoded URL for now to avoid double /api issue
+    const baseURL = "http://localhost:5000";
+    const url = product ? `${baseURL}/api/products/${product.id}` : `${baseURL}/api/products`;
     const method = product ? "PUT" : "POST";
+
+    console.log(`🔄 ${method} request to:`, url);
 
     const response = await fetch(url, {
       method,
@@ -355,6 +379,9 @@ const handleSubmit = async () => {
             <p className="text-gray-600 mb-4">
               Your product "{formData.name}" has been {product ? "updated" : "created"} and is now stored in MongoDB.
             </p>
+            <p className="text-sm text-gray-500 mb-4">
+              {product ? "All changes have been saved to the database." : "The new product has been added to your inventory."}
+            </p>
             
             {/* Show stored data summary */}
             <div className="bg-gray-50 rounded-lg p-4 mb-6 text-left">
@@ -383,7 +410,7 @@ const handleSubmit = async () => {
             </div>
             
             <div className="mt-6">
-              <Button onClick={() => router.push("/")}>Return to Dashboard</Button>
+              <Button onClick={() => router.push("/prodectmanage")}>Return to Products</Button>
             </div>
           </CardContent>
         </Card>
@@ -844,6 +871,19 @@ const handleSubmit = async () => {
   // Form Step
   return (
     <form className="space-y-6">
+      {/* Debug info for editing */}
+      {product && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-blue-600 font-semibold">✏️ Editing Product</span>
+            <span className="text-sm text-blue-600">ID: {product.id}</span>
+          </div>
+          <p className="text-sm text-blue-700">
+            All fields are pre-filled with existing data. Make your changes and click "Preview Changes" to continue.
+          </p>
+        </div>
+      )}
+      
       <Tabs defaultValue="basic" className="w-full">
         <TabsList className="flex w-full overflow-x-auto gap-1 p-1">
           <TabsTrigger value="basic" className="text-xs px-2 py-2 whitespace-nowrap">Basic Info</TabsTrigger>
@@ -862,21 +902,29 @@ const handleSubmit = async () => {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="name">Product Name *</Label>
+                  <Label htmlFor="name">
+                    Product Name * 
+                    {product && <span className="text-blue-600 text-xs ml-2">(Pre-filled)</span>}
+                  </Label>
                   <Input
                     id="name"
                     value={formData.name}
                     onChange={(e) => handleInputChange("name", e.target.value)}
                     required
+                    className={product ? "border-blue-200 bg-blue-50" : ""}
                   />
                 </div>
                 <div>
-                  <Label htmlFor="sku">SKU *</Label>
+                  <Label htmlFor="sku">
+                    SKU * 
+                    {product && <span className="text-blue-600 text-xs ml-2">(Pre-filled)</span>}
+                  </Label>
                   <Input
                     id="sku"
                     value={formData.sku}
                     onChange={(e) => handleInputChange("sku", e.target.value)}
                     required
+                    className={product ? "border-blue-200 bg-blue-50" : ""}
                   />
                 </div>
               </div>
@@ -919,15 +967,26 @@ const handleSubmit = async () => {
         </TabsContent>
 
         <TabsContent value="categories">
-          <CategoryFilters
-            category={formData.mainCategory}
-            tags={formData.tags}
-            onCategoryChange={handleCategoryChange}
-            onTagsChange={(tags) => handleInputChange("tags", tags)}
-            onFiltersChange={handleFiltersChange}
-            selectedFilters={formData.filters}
-            isProductForm={true}
-          />
+          {Object.keys(categorySystem).length === 0 ? (
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mr-3"></div>
+                  <span>Loading categories...</span>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <CategoryFilters
+              category={formData.mainCategory}
+              tags={formData.tags}
+              onCategoryChange={handleCategoryChange}
+              onTagsChange={(tags) => handleInputChange("tags", tags)}
+              onFiltersChange={handleFiltersChange}
+              selectedFilters={formData.filters}
+              isProductForm={true}
+            />
+          )}
         </TabsContent>
 
         <TabsContent value="media">
@@ -982,12 +1041,12 @@ const handleSubmit = async () => {
       </Tabs>
 
       <div className="flex justify-end space-x-4">
-        <Button type="button" variant="outline" onClick={() => router.push("/")}>
+        <Button type="button" variant="outline" onClick={() => router.push("/prodectmanage")}>
           Cancel
         </Button>
         <Button type="button" onClick={handlePreview}>
           <Eye className="w-4 h-4 mr-2" />
-          Preview Product
+          {product ? "Preview Changes" : "Preview Product"}
         </Button>
       </div>
     </form>

@@ -16,7 +16,7 @@ const productSchema = new mongoose.Schema({
   shortDescription: { type: String, required: true },
   detailedDescription: String,
   mainCategory: { type: String, required: true },
-  filters: { type: Map, of: [String], default: {} },
+  filters: { type: Object, default: {} },
   tags: [String],
   images: [{ id: String, url: String, name: String, size: Number }],
   videos: [{ id: String, url: String, name: String, size: Number }],

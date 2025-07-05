@@ -26,6 +26,11 @@ export default function CategoryFilters({
   const [categorySystem, setCategorySystem] = useState({})
   const [selectedMainCategory, setSelectedMainCategory] = useState(category || "")
   const [currentSelectedFilters, setCurrentSelectedFilters] = useState(selectedFilters || {})
+  
+  // Debug currentSelectedFilters changes
+  useEffect(() => {
+    console.log("🔍 currentSelectedFilters changed:", currentSelectedFilters);
+  }, [currentSelectedFilters])
   const [editingItems, setEditingItems] = useState({})
   const [newItemInputs, setNewItemInputs] = useState({})
   const [showAddInput, setShowAddInput] = useState({})
@@ -58,7 +63,9 @@ export default function CategoryFilters({
   }, [category])
 
   useEffect(() => {
+    console.log("🔍 CategoryFilters received selectedFilters:", selectedFilters);
     if (selectedFilters && Object.keys(selectedFilters).length > 0) {
+      console.log("🔍 Setting currentSelectedFilters to:", selectedFilters);
       setCurrentSelectedFilters(selectedFilters)
     }
   }, [selectedFilters])
@@ -1351,7 +1358,7 @@ export default function CategoryFilters({
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
-                <span>{isProductForm ? "Select Product Filters" : `Filters for ${currentCategoryData.name}`}</span>
+                <span>{isProductForm ? "Select Product Filters" : `Filters for ${currentCategoryData?.name || selectedMainCategory || "No category"}`}</span>
                 <div className="flex gap-2">
                   <Badge variant="outline">
                     {Object.values(currentSelectedFilters).flat().length + Object.keys(selectedAttributeValues).length} total selections
@@ -1682,7 +1689,7 @@ export default function CategoryFilters({
             <div className="space-y-3">
               <div className="flex items-center gap-2">
                 <Badge variant="default" className="font-medium">
-                  Main Category: {currentCategoryData.name}
+                  Main Category: {currentCategoryData?.name || selectedMainCategory || "No category selected"}
                 </Badge>
               </div>
               {Object.entries(currentSelectedFilters).map(([filterType, items]) => {
