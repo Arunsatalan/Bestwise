@@ -55,6 +55,51 @@ router.put("/:id", updateCategory);
 // Delete category
 router.delete("/:id", deleteCategory);
 
+// Add a new value to a category's attribute
+router.post("/:categoryKey/attributes/:attributeName/items", async (req, res) => {
+    const { categoryKey, attributeName } = req.params;
+    const { value } = req.body;
+    const Category = require("../models/Category");
+
+    try {
+        if (!value || !value.trim()) {
+            return res.status(400).json({ success: false, message: "Value is required" });
+        }
+
+        const category = await Category.findOne({ key: categoryKey });
+        if (!category) {
+            return res.status(404).json({ success: false, message: "Category not found" });
+        }
+
+        const attribute = category.attributes.find(attr => attr.name === attributeName);
+        if (!attribute) {
+            return res.status(404).json({ success: false, message: "Attribute not found in this category" });
+        }
+
+        // Check if value already exists
+        if (attribute.items.includes(value.trim())) {
+            return res.status(400).json({ success: false, message: "Value already exists in this attribute" });
+        }
+
+        // Add the new value to the attribute's items array
+        attribute.items.push(value.trim());
+
+        await category.save();
+
+        res.json({
+            success: true,
+            message: "Value added to attribute successfully",
+            data: {
+                category: categoryKey,
+                attribute: attributeName,
+                addedValue: value.trim()
+            }
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: "Error adding value", error: error.message });
+    }
+});
+
 // Delete a value from a category's attribute
 router.delete("/:categoryKey/attributes/:attributeName/items/:itemValue", async (req, res) => {
     const { categoryKey, attributeName, itemValue } = req.params;

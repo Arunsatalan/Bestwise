@@ -442,6 +442,113 @@ export default function CategoryFilters({
     }
   }
 
+  // Add new attribute value to database and update state
+  const addAttributeValue = async (attributeName, newValue) => {
+    if (!newValue || !newValue.trim()) return;
+    
+    const trimmedValue = newValue.trim();
+    
+    try {
+      // Check if value already exists
+      const existingAttribute = attributes.find(attr => attr.name === attributeName);
+      if (existingAttribute && existingAttribute.items.includes(trimmedValue)) {
+        alert(`"${trimmedValue}" already exists in this attribute!`);
+        return;
+      }
+
+      // Add to database
+      const response = await fetch(`http://localhost:5000/api/categories/${selectedMainCategory}/attributes/${attributeName}/items`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ value: trimmedValue })
+      });
+
+      if (response.ok) {
+        // Update local state
+        const updatedAttributes = attributes.map(attribute => {
+          if (attribute.name === attributeName) {
+            return {
+              ...attribute,
+              items: [...attribute.items, trimmedValue]
+            };
+          }
+          return attribute;
+        });
+        setAttributes(updatedAttributes);
+        
+        // Show success message
+        alert(`"${trimmedValue}" added successfully to ${attributeName}!`);
+      } else {
+        const errorData = await response.json();
+        alert(`Failed to add value: ${errorData.message || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error adding attribute value:', error);
+      alert('Error adding attribute value. Please try again.');
+    }
+  }
+
+  // Add new attribute value to category system (for second section)
+  const addAttributeValueToCategory = async (attributeName, newValue) => {
+    if (!newValue || !newValue.trim()) return;
+    
+    const trimmedValue = newValue.trim();
+    
+    try {
+      // Check if value already exists in category system
+      const category = categorySystem[selectedMainCategory];
+      if (category && category.attributes) {
+        const attribute = category.attributes.find(attr => attr.name === attributeName);
+        if (attribute && attribute.items.includes(trimmedValue)) {
+          alert(`"${trimmedValue}" already exists in this attribute!`);
+          return;
+        }
+      }
+
+      // Add to database
+      const response = await fetch(`http://localhost:5000/api/categories/${selectedMainCategory}/attributes/${attributeName}/items`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ value: trimmedValue })
+      });
+
+      if (response.ok) {
+        // Update category system state
+        const updatedCategorySystem = { ...categorySystem };
+        const category = updatedCategorySystem[selectedMainCategory];
+        if (category && category.attributes) {
+          const updatedAttributes = category.attributes.map(attribute => {
+            if (attribute.name === attributeName) {
+              return {
+                ...attribute,
+                items: [...attribute.items, trimmedValue]
+              };
+            }
+            return attribute;
+          });
+          updatedCategorySystem[selectedMainCategory] = {
+            ...category,
+            attributes: updatedAttributes
+          };
+          setCategorySystem(updatedCategorySystem);
+        }
+        
+        // Show success message
+        alert(`"${trimmedValue}" added successfully to ${attributeName}!`);
+      } else {
+        const errorData = await response.json();
+        alert(`Failed to add value: ${errorData.message || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error adding attribute value:', error);
+      alert('Error adding attribute value. Please try again.');
+    }
+  }
+
   // Edit main category
   const startEditMainCategory = (categoryKey) => {
     setEditingMainCategory(categoryKey)
@@ -1036,6 +1143,65 @@ export default function CategoryFilters({
           {attributes.map(attr => (
             <div key={attr.name} style={{ marginBottom: "1.5rem" }}>
               <h3 style={{ fontWeight: "bold", marginBottom: "0.5rem" }}>{attr.displayName}</h3>
+              
+              {/* Add new value input and button */}
+              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.75rem" }}>
+                <Input
+                  placeholder={`Add new ${attr.displayName.toLowerCase()}...`}
+                  style={{ 
+                    width: "200px", 
+                    height: "36px", 
+                    fontSize: "0.875rem",
+                    border: "1px solid #d1d5db",
+                    borderRadius: "6px",
+                    padding: "0.5rem 0.75rem"
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && e.target.value.trim()) {
+                      addAttributeValue(attr.name, e.target.value.trim());
+                      e.target.value = "";
+                    }
+                  }}
+                />
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={(e) => {
+                    const input = e.target.parentElement.querySelector("input");
+                    if (input && input.value.trim()) {
+                      addAttributeValue(attr.name, input.value.trim());
+                      input.value = "";
+                    }
+                  }}
+                  style={{
+                    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                    border: "none",
+                    borderRadius: "6px",
+                    padding: "0.5rem 1rem",
+                    color: "white",
+                    fontSize: "0.875rem",
+                    fontWeight: "500",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.5rem",
+                    transition: "all 0.2s ease",
+                    boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.transform = "translateY(-1px)";
+                    e.target.style.boxShadow = "0 4px 8px rgba(0,0,0,0.15)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.transform = "translateY(0)";
+                    e.target.style.boxShadow = "0 2px 4px rgba(0,0,0,0.1)";
+                  }}
+                >
+                  <Plus size={16} />
+                  Add
+                </Button>
+              </div>
+              
               <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
                 {attr.items.map((item) => (
                   <span
@@ -1231,6 +1397,65 @@ export default function CategoryFilters({
               categorySystem[selectedMainCategory].attributes.map((attr) => (
                 <div key={attr.name} style={{ marginBottom: "1.5rem" }}>
                   <h3 style={{ fontWeight: "bold", marginBottom: "0.5rem" }}>{attr.displayName}</h3>
+                  
+                  {/* Add new value input and button */}
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.75rem" }}>
+                    <Input
+                      placeholder={`Add new ${attr.displayName.toLowerCase()}...`}
+                      style={{ 
+                        width: "200px", 
+                        height: "36px", 
+                        fontSize: "0.875rem",
+                        border: "1px solid #d1d5db",
+                        borderRadius: "6px",
+                        padding: "0.5rem 0.75rem"
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && e.target.value.trim()) {
+                          addAttributeValueToCategory(attr.name, e.target.value.trim());
+                          e.target.value = "";
+                        }
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={(e) => {
+                        const input = e.target.parentElement.querySelector("input");
+                        if (input && input.value.trim()) {
+                          addAttributeValueToCategory(attr.name, input.value.trim());
+                          input.value = "";
+                        }
+                      }}
+                      style={{
+                        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                        border: "none",
+                        borderRadius: "6px",
+                        padding: "0.5rem 1rem",
+                        color: "white",
+                        fontSize: "0.875rem",
+                        fontWeight: "500",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "0.5rem",
+                        transition: "all 0.2s ease",
+                        boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
+                      }}
+                      onMouseEnter={(e) => {
+                        e.target.style.transform = "translateY(-1px)";
+                        e.target.style.boxShadow = "0 4px 8px rgba(0,0,0,0.15)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.target.style.transform = "translateY(0)";
+                        e.target.style.boxShadow = "0 2px 4px rgba(0,0,0,0.1)";
+                      }}
+                    >
+                      <Plus size={16} />
+                      Add
+                    </Button>
+                  </div>
+                  
                   <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
                     {attr.items.map((item) => (
                       <span
