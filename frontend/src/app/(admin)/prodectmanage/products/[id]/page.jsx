@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import { Button } from "../../../../../components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "../../../../../components/ui/card"
+import { Badge } from "../../../../../components/ui/badge"
 import { ArrowLeft, Edit, Trash2, Package, DollarSign, Tag, Eye } from "lucide-react"
 import Link from "next/link"
 
@@ -158,6 +158,38 @@ export default function ProductDetail() {
               )}
             </CardContent>
           </Card>
+
+          {/* Category Attributes */}
+          {product.filters && Object.keys(product.filters).length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Tag className="w-5 h-5" />
+                  Category Attributes
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {Object.entries(product.filters).map(([attributeName, values]) => (
+                  <div key={attributeName}>
+                    <p className="text-sm text-gray-600 capitalize mb-2">
+                      {attributeName.replace(/([A-Z])/g, ' $1').trim()}:
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {Array.isArray(values) ? (
+                        values.map((value, index) => (
+                          <Badge key={index} variant="secondary">
+                            {value}
+                          </Badge>
+                        ))
+                      ) : (
+                        <Badge variant="secondary">{values}</Badge>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
 
           {/* Pricing */}
           <Card>

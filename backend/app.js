@@ -13,9 +13,16 @@ const app = express();
 
 connectDB();
 
+const allowedOrigins = ['http://localhost:3000', 'http://localhost:3001'];
+if (process.env.FRONT_URL) {
+  allowedOrigins.push(process.env.FRONT_URL);
+}
+
 app.use(cors({
-  origin: process.env.FRONT_URL || ['http://localhost:3000', 'http://localhost:3001'], // frontend URLs
-  credentials: true
+  origin: allowedOrigins,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-auth-token']
 }));
 app.use(express.json());
 app.use(cookieParser());
