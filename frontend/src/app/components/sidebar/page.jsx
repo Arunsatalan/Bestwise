@@ -3,47 +3,50 @@
 import * as React from "react"
 import { useRouter } from "next/navigation"
 import {
-  BarChart3,
-  Users,
-  Package,
-  ShoppingCart,
-  Gift,
-  ImageIcon,
-  FileText,
-  Settings,
-  LogOut,
-  ChevronDown,
-  Home,
-  Eye,
-  Edit,
   Activity,
-  Search,
-  Plus,
+  AlertTriangle,
+  Archive,
+  BarChart3,
+  Bell,
+  Bookmark,
+  Calendar,
   Calculator,
+  CheckCircle,
+  ChevronDown,
+  ClipboardList,
   Clock,
   CreditCard,
-  RefreshCw,
-  Archive,
-  UserCheck,
-  Palette,
-  Star,
-  Calendar,
-  TrendingUp,
-  DollarSign,
-  ShoppingBag,
-  Shield,
-  User,
-  Key,
-  Bell,
-  Menu,
-  X,
-  Heart,
-  ShoppingBasket,
-  Truck,
-  HelpCircle,
-  MessageSquare,
   CreditCardIcon,
-  Bookmark,
+  DollarSign,
+  Edit,
+  Eye,
+  FileText,
+  Gift,
+  Heart,
+  HelpCircle,
+  Home,
+  ImageIcon,
+  Key,
+  LogOut,
+  Menu,
+  MessageSquare,
+  Package,
+  Palette,
+  Plus,
+  RefreshCw,
+  Search,
+  Settings,
+  Shield,
+  ShoppingBag,
+  ShoppingBasket,
+  ShoppingCart,
+  Star,
+  TrendingUp,
+  Truck,
+  User,
+  UserCheck,
+  Users,
+  X,
 } from "lucide-react"
 
 // Navigation data configuration for each role
@@ -439,127 +442,81 @@ const getNavigationData = (role) => {
         },
       ]
 
-    case "customer":
-      return [
+    case "Inventory Manager":
+  return [
+    {
+      title: "Home",
+      icon: Home,
+      items: [
         {
-          title: "Shop",
-          icon: ShoppingBag,
-          items: [
-            {
-              title: "Browse All Products",
-              icon: Search,
-              href: "/shop/browse",
-            },
-            { title: "Featured Items", icon: Star, href: "/shop/featured" },
-            { title: "New Arrivals", icon: Package, href: "/shop/new" },
-            { title: "Special Offers", icon: Gift, href: "/shop/offers" },
-            { title: "Categories", icon: FileText, href: "/shop/categories" },
-          ],
+          title: "Dashboard",
+          icon: BarChart3,
+          href: "/inventorymanager",
         },
+      ],
+    },
+    {
+      title: "Product Management",
+      icon: ShoppingBag,
+      items: [
         {
-          title: "My Shopping",
+          title: "Products ",
+          icon: Search,
+          href: "/productsmanage",
+        },
+      ],
+    },
+    {
+      title: "Order Management",
+      icon: ClipboardList,
+      items: [
+        {
+          title: "All Orders",
           icon: ShoppingCart,
-          items: [
-            {
-              title: "Shopping Cart",
-              icon: ShoppingCart,
-              href: "/customer/cart",
-            },
-            {
-              title: "My Orders",
-              icon: ShoppingBasket,
-              href: "/customer/orders",
-            },
-            {
-              title: "Order Tracking",
-              icon: Truck,
-              href: "/customer/tracking",
-            },
-            { title: "Wishlist", icon: Heart, href: "/customer/wishlist" },
-            { title: "Recently Viewed", icon: Eye, href: "/customer/recent" },
-          ],
+          href: "/inventory/orders",
         },
         {
-          title: "Gift Services",
-          icon: Gift,
-          items: [
-            {
-              title: "Surprise Gifts",
-              icon: Gift,
-              href: "/customer/gifts/surprise",
-            },
-            {
-              title: "Gift Cards",
-              icon: CreditCardIcon,
-              href: "/customer/gifts/cards",
-            },
-            {
-              title: "Custom Gifts",
-              icon: Palette,
-              href: "/customer/gifts/custom",
-            },
-            {
-              title: "Gift Tracking",
-              icon: Eye,
-              href: "/customer/gifts/track",
-            },
-          ],
+          title: "Pending Orders",
+          icon: Clock,
+          href: "/inventory/orders/pending",
         },
         {
-          title: "My Account",
-          icon: User,
-          items: [
-            { title: "Profile", icon: User, href: "/customer/account/profile" },
-            {
-              title: "Addresses",
-              icon: Home,
-              href: "/customer/account/addresses",
-            },
-            {
-              title: "Payment Methods",
-              icon: CreditCardIcon,
-              href: "/customer/account/payment",
-            },
-            {
-              title: "Order History",
-              icon: Clock,
-              href: "/customer/account/history",
-            },
-          ],
+          title: "Completed Orders",
+          icon: CheckCircle,
+          href: "/inventory/orders/completed",
+        },
+      ],
+    },
+    {
+      title: "Low Stock Alerts",
+      icon: AlertTriangle,
+      items: [
+        {
+          title: "View Low Stock",
+          icon: Eye,
+          href: "/inventory/alerts/low-stock",
         },
         {
-          title: "Customer Support",
-          icon: HelpCircle,
-          items: [
-            {
-              title: "Help Center",
-              icon: HelpCircle,
-              href: "/customer/support/help",
-            },
-            {
-              title: "Contact Us",
-              icon: MessageSquare,
-              href: "/customer/support/contact",
-            },
-            {
-              title: "Order Issues",
-              icon: ShoppingCart,
-              href: "/customer/support/orders",
-            },
-            {
-              title: "Return Policy",
-              icon: RefreshCw,
-              href: "/customer/support/returns",
-            },
-            {
-              title: "Live Chat",
-              icon: MessageSquare,
-              href: "/customer/support/chat",
-            },
-          ],
+          title: "Restock Requests",
+          icon: RefreshCw,
+          href: "/inventory/alerts/restock",
         },
-      ]
-
+      ],
+    },
+    {
+      title: "Settings",
+      icon: Settings,
+      items: [
+        {
+          title: "General Settings",
+          icon: Settings,
+          href: "/settings",
+        },
+       
+      ],
+    },
+  ];
+  
     default:
       return []
   }
