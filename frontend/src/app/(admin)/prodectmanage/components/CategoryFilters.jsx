@@ -76,10 +76,9 @@ export default function CategoryFilters({
       const attributeValues = {};
       Object.entries(selectedFilters).forEach(([key, values]) => {
         if (Array.isArray(values) && values.length > 0) {
-          // For editing, we want to show the first selected value
-          attributeValues[key] = values[0];
-        } else if (typeof values === 'string') {
           attributeValues[key] = values;
+        } else if (typeof values === 'string') {
+          attributeValues[key] = [values];
         }
       });
       console.log("🔍 Initializing selectedAttributeValues for editing:", attributeValues);
@@ -92,9 +91,9 @@ export default function CategoryFilters({
     if (isProductForm && onFiltersChange) {
       // Convert selectedAttributeValues to the expected filters format
       const filters = {};
-      Object.entries(selectedAttributeValues).forEach(([key, value]) => {
-        if (value) {
-          filters[key] = [value];
+      Object.entries(selectedAttributeValues).forEach(([key, values]) => {
+        if (Array.isArray(values) && values.length > 0) {
+          filters[key] = values;
         }
       });
       
@@ -125,9 +124,9 @@ export default function CategoryFilters({
       const attributeValues = {};
       Object.entries(selectedFilters).forEach(([key, values]) => {
         if (Array.isArray(values) && values.length > 0) {
-          attributeValues[key] = values[0];
-        } else if (typeof values === 'string') {
           attributeValues[key] = values;
+        } else if (typeof values === 'string') {
+          attributeValues[key] = [values];
         }
       });
       console.log("🔍 Setting selectedAttributeValues:", attributeValues);
@@ -754,10 +753,10 @@ export default function CategoryFilters({
         setAttributes(updatedAttributes);
 
         // Update selected values if the edited value was selected
-        if (selectedAttributeValues[attributeName] === oldValue) {
+        if (Array.isArray(selectedAttributeValues[attributeName]) && selectedAttributeValues[attributeName].includes(oldValue)) {
           setSelectedAttributeValues(prev => ({
             ...prev,
-            [attributeName]: trimmedValue
+            [attributeName]: prev[attributeName].map(v => v === oldValue ? newValue : v)
           }));
         }
 
@@ -1121,20 +1120,17 @@ export default function CategoryFilters({
   }, [selectedMainCategory]);
 
   const handleAttributeValueSelect = (attributeName, value) => {
-    console.log("🔍 Attribute Value Selected:", { attributeName, value });
-    
     setSelectedAttributeValues(prev => {
-      const newValues = { ...prev };
-      if (newValues[attributeName] === value) {
-        // If already selected, deselect it
-        delete newValues[attributeName];
+      const prevValues = Array.isArray(prev[attributeName]) ? prev[attributeName] : [];
+      let newValues;
+      if (prevValues.includes(value)) {
+        // Deselect
+        newValues = prevValues.filter(v => v !== value);
       } else {
-        // Select the new value
-        newValues[attributeName] = value;
+        // Select
+        newValues = [...prevValues, value];
       }
-      
-      console.log("🔍 Updated Selected Values:", newValues);
-      return newValues;
+      return { ...prev, [attributeName]: newValues };
     });
   };
 
@@ -2052,9 +2048,9 @@ export default function CategoryFilters({
                 <strong>Selected Values:</strong>
               </div>
               <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem", marginBottom: "0.75rem" }}>
-                {Object.entries(selectedAttributeValues).map(([attr, value]) => (
+                {Object.entries(selectedAttributeValues).map(([attr, values]) => (
                   <span key={attr} style={{ background: "#ede9fe", borderRadius: "8px", padding: "0.25rem 0.75rem", fontWeight: 500 }}>
-                    {categorySystem[selectedMainCategory].attributes.find(a => a.name === attr)?.displayName || attr}: {value}
+                    {categorySystem[selectedMainCategory].attributes.find(a => a.name === attr)?.displayName || attr}: {values.join(', ')}
                   </span>
                 ))}
               </div>
