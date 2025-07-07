@@ -1,5 +1,6 @@
 "use client"
 
+import React from "react";
 import { useState, useEffect } from "react"
 import { Button } from "../../../../components/ui/button"
 import { Input } from "../../../../components/ui/input"
@@ -24,7 +25,7 @@ export default function CategoryFilters({
   const params = useParams();
   const productId = params?.id; // Now productId is defined
 
-  const [categorySystem, setCategorySystem] = useState({})
+  const [categorySystem, setCategorySystem] = useState(/** @type {any} */ ({}))
   const [selectedMainCategory, setSelectedMainCategory] = useState(category || "")
   const [currentSelectedFilters, setCurrentSelectedFilters] = useState(selectedFilters || {})
   
@@ -37,8 +38,8 @@ export default function CategoryFilters({
   const [showAddInput, setShowAddInput] = useState({})
   const [showCreateCategoryForm, setShowCreateCategoryForm] = useState(false)
   const [loading, setLoading] = useState(true)
-  const [products, setProducts] = useState([])
-  const [filteredProducts, setFilteredProducts] = useState([])
+  const [products, setProducts] = useState(/** @type {any[]} */ ([]))
+  const [filteredProducts, setFilteredProducts] = useState(/** @type {any[]} */ ([]))
   const [showProducts, setShowProducts] = useState(false)
   const [editingMainCategory, setEditingMainCategory] = useState(null)
   const [mainCategoryEditForm, setMainCategoryEditForm] = useState({ name: "", key: "", description: "" })
@@ -46,7 +47,7 @@ export default function CategoryFilters({
   const { isOpen, config, showDelete, showSuccess, showError, closeModal } = useConfirmModal()
 
   const [product, setProduct] = useState(null)
-  const [attributes, setAttributes] = useState([])
+  const [attributes, setAttributes] = useState(/** @type {any[]} */ ([]))
   const [selectedAttributeValue, setSelectedAttributeValue] = useState(null)
   const [selectedAttributeValues, setSelectedAttributeValues] = useState({})
   const [editingAttributeValues, setEditingAttributeValues] = useState({})
@@ -56,7 +57,7 @@ export default function CategoryFilters({
     name: "",
     key: "",
     description: "",
-    attributes: [{ name: "subcategories", displayName: "Subcategories", items: [] }]
+    attributes: /** @type {any[]} */ ([{ name: "subcategories", displayName: "Subcategories", items: [] }])
   })
 
   // Initialize state from props
@@ -272,7 +273,7 @@ export default function CategoryFilters({
       name: "",
       key: "",
       description: "",
-      attributes: [{ name: "subcategories", displayName: "Subcategories", items: [] }]
+      attributes: /** @type {any[]} */ ([{ name: "subcategories", displayName: "Subcategories", items: [] }])
     })
     setShowCreateCategoryForm(false)
 
@@ -907,8 +908,10 @@ export default function CategoryFilters({
                 }))
               }
               onKeyDown={(e) => {
-                if (e.key === "Enter" && e.target.value.trim()) {
-                  addItem(categoryKey, filterType, e.target.value.trim())
+                // @ts-ignore
+                const target = e.target;
+                if (e.key === "Enter" && target.value && target.value.trim()) {
+                  addItem(categoryKey, filterType, target.value.trim())
                 }
                 if (e.key === "Escape") {
                   setShowAddInput((prev) => ({ ...prev, [`${categoryKey}-${filterType}`]: false }))
@@ -951,8 +954,10 @@ export default function CategoryFilters({
                     }
                     className="h-6 text-sm border-0 p-0 w-24"
                     onKeyDown={(e) => {
-                      if (e.key === "Enter" && e.target.value.trim()) {
-                        editItem(categoryKey, filterType, item, e.target.value.trim())
+                      // @ts-ignore
+                      const target = e.target;
+                      if (e.key === "Enter" && target.value && target.value.trim()) {
+                        editItem(categoryKey, filterType, item, target.value.trim())
                       }
                       if (e.key === "Escape") {
                         cancelEditing(categoryKey, filterType, item)
@@ -965,9 +970,11 @@ export default function CategoryFilters({
                     size="sm"
                     variant="ghost"
                     className="h-5 w-5 p-0"
-                    onClick={(e) =>
-                      editItem(categoryKey, filterType, item, e.target.value.trim())
-                    }
+                    onClick={(e) => {
+                      // @ts-ignore
+                      const target = e.target;
+                      editItem(categoryKey, filterType, item, target.value && target.value.trim())
+                    }}
                   >
                     <Save className="w-3 h-3" />
                   </Button>
@@ -1247,9 +1254,11 @@ export default function CategoryFilters({
                       <Input
                         placeholder={`Add ${attribute.displayName.toLowerCase()} item (e.g., Red, Large, Cotton)`}
                         onKeyDown={(e) => {
-                          if (e.key === "Enter" && e.target.value.trim()) {
-                            addItemToAttribute(attributeIndex, e.target.value.trim())
-                            e.target.value = ""
+                          // @ts-ignore
+                          const target = e.target;
+                          if (e.key === "Enter" && target.value && target.value.trim()) {
+                            addItemToAttribute(attributeIndex, target.value.trim())
+                            target.value = ""
                           }
                         }}
                       />
@@ -1257,8 +1266,9 @@ export default function CategoryFilters({
                         type="button"
                         size="sm"
                         onClick={(e) => {
-                          const input = e.target.parentElement.querySelector("input")
-                          if (input.value.trim()) {
+                          // @ts-ignore
+                          const input = (e.target && e.target.parentElement && e.target.parentElement.querySelector("input")) || null;
+                          if (input && input.value.trim()) {
                             addItemToAttribute(attributeIndex, input.value.trim())
                             input.value = ""
                           }
@@ -1450,9 +1460,11 @@ export default function CategoryFilters({
                     padding: "0.5rem 0.75rem"
                   }}
                   onKeyDown={(e) => {
-                    if (e.key === "Enter" && e.target.value.trim()) {
-                      addAttributeValue(attr.name, e.target.value.trim());
-                      e.target.value = "";
+                    // @ts-ignore
+                    const target = e.target;
+                    if (e.key === "Enter" && target.value && target.value.trim()) {
+                      addAttributeValue(attr.name, target.value.trim());
+                      target.value = "";
                     }
                   }}
                 />
@@ -1460,7 +1472,8 @@ export default function CategoryFilters({
                   type="button"
                   size="sm"
                   onClick={(e) => {
-                    const input = e.target.parentElement.querySelector("input");
+                    // @ts-ignore
+                    const input = (e.target && e.target.parentElement && e.target.parentElement.querySelector("input")) || null;
                     if (input && input.value.trim()) {
                       addAttributeValue(attr.name, input.value.trim());
                       input.value = "";
@@ -1498,7 +1511,7 @@ export default function CategoryFilters({
               <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
                 {attr.items.map((item) => {
                   const isEditing = editingAttributeValues[`${attr.name}-${item}`];
-                  
+                  const isSelected = Array.isArray(selectedAttributeValues[attr.name]) && selectedAttributeValues[attr.name].includes(item);
                   return (
                     <span
                       key={item}
@@ -1506,13 +1519,13 @@ export default function CategoryFilters({
                       style={{
                         display: "inline-flex",
                         alignItems: "center",
-                        background: selectedAttributeValues[attr.name] === item ? "#a78bfa" : "#f3f3f3",
-                        color: selectedAttributeValues[attr.name] === item ? "#fff" : "#000",
+                        background: isSelected ? "#a78bfa" : "#f3f3f3",
+                        color: isSelected ? "#fff" : "#000",
                         borderRadius: "8px",
                         padding: "0.25rem 0.75rem",
                         fontSize: "0.95rem",
                         cursor: isEditing ? "default" : "pointer",
-                        border: selectedAttributeValues[attr.name] === item ? "2px solid #7c3aed" : "none",
+                        border: isSelected ? "2px solid #7c3aed" : "none",
                         transition: "all 0.2s",
                         marginRight: "0.5rem"
                       }}
@@ -1532,8 +1545,10 @@ export default function CategoryFilters({
                               marginRight: "0.5rem"
                             }}
                             onKeyDown={(e) => {
-                              if (e.key === "Enter") {
-                                saveEditedAttributeValue(attr.name, item, e.target.value);
+                              // @ts-ignore
+                              const target = e.target;
+                              if (e.key === "Enter" && target.value && target.value.trim()) {
+                                saveEditedAttributeValue(attr.name, item, target.value.trim());
                               } else if (e.key === "Escape") {
                                 cancelEditingAttributeValue(attr.name, item);
                               }
@@ -1604,7 +1619,7 @@ export default function CategoryFilters({
                             }}
                             title={`Edit '${item}'`}
                           >
-                            <Edit size={12} color={selectedAttributeValues[attr.name] === item ? "#fff" : "#7c3aed"} />
+                            <Edit size={12} color={isSelected ? "#fff" : "#7c3aed"} />
                           </button>
                           <button
                             type="button"
@@ -1671,7 +1686,7 @@ export default function CategoryFilters({
                             }}
                             title={`Delete '${item}'`}
                           >
-                            <Trash2 size={12} color={selectedAttributeValues[attr.name] === item ? "#fff" : "#7c3aed"} />
+                            <Trash2 size={12} color={isSelected ? "#fff" : "#7c3aed"} />
                           </button>
                         </>
                       )}
@@ -1809,9 +1824,11 @@ export default function CategoryFilters({
                         padding: "0.5rem 0.75rem"
                       }}
                       onKeyDown={(e) => {
-                        if (e.key === "Enter" && e.target.value.trim()) {
-                          addAttributeValueToCategory(attr.name, e.target.value.trim());
-                          e.target.value = "";
+                        // @ts-ignore
+                        const target = e.target;
+                        if (e.key === "Enter" && target.value && target.value.trim()) {
+                          addAttributeValueToCategory(attr.name, target.value.trim());
+                          target.value = "";
                         }
                       }}
                     />
@@ -1819,7 +1836,8 @@ export default function CategoryFilters({
                       type="button"
                       size="sm"
                       onClick={(e) => {
-                        const input = e.target.parentElement.querySelector("input");
+                        // @ts-ignore
+                        const input = (e.target && e.target.parentElement && e.target.parentElement.querySelector("input")) || null;
                         if (input && input.value.trim()) {
                           addAttributeValueToCategory(attr.name, input.value.trim());
                           input.value = "";
@@ -1857,7 +1875,7 @@ export default function CategoryFilters({
                   <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
                     {attr.items.map((item) => {
                       const isEditing = editingAttributeValues[`${attr.name}-${item}`];
-                      
+                      const isSelected = Array.isArray(selectedAttributeValues[attr.name]) && selectedAttributeValues[attr.name].includes(item);
                       return (
                         <span
                           key={item}
@@ -1865,13 +1883,13 @@ export default function CategoryFilters({
                           style={{
                             display: "inline-flex",
                             alignItems: "center",
-                            background: selectedAttributeValues[attr.name] === item ? "#a78bfa" : "#f3f3f3",
-                            color: selectedAttributeValues[attr.name] === item ? "#fff" : "#000",
+                            background: isSelected ? "#a78bfa" : "#f3f3f3",
+                            color: isSelected ? "#fff" : "#000",
                             borderRadius: "8px",
                             padding: "0.25rem 0.75rem",
                             fontSize: "0.95rem",
                             cursor: isEditing ? "default" : "pointer",
-                            border: selectedAttributeValues[attr.name] === item ? "2px solid #7c3aed" : "none",
+                            border: isSelected ? "2px solid #7c3aed" : "none",
                             transition: "all 0.2s",
                             marginRight: "0.5rem"
                           }}
@@ -1891,8 +1909,10 @@ export default function CategoryFilters({
                                   marginRight: "0.5rem"
                                 }}
                                 onKeyDown={(e) => {
-                                  if (e.key === "Enter") {
-                                    saveEditedAttributeValue(attr.name, item, e.target.value);
+                                  // @ts-ignore
+                                  const target = e.target;
+                                  if (e.key === "Enter" && target.value && target.value.trim()) {
+                                    saveEditedAttributeValue(attr.name, item, target.value.trim());
                                   } else if (e.key === "Escape") {
                                     cancelEditingAttributeValue(attr.name, item);
                                   }
@@ -1963,7 +1983,7 @@ export default function CategoryFilters({
                                 }}
                                 title={`Edit '${item}'`}
                               >
-                                <Edit size={12} color={selectedAttributeValues[attr.name] === item ? "#fff" : "#7c3aed"} />
+                                <Edit size={12} color={isSelected ? "#fff" : "#7c3aed"} />
                               </button>
                               <button
                                 type="button"
@@ -2027,7 +2047,7 @@ export default function CategoryFilters({
                                 }}
                                 title={`Delete '${item}'`}
                               >
-                                <Trash2 size={12} color={selectedAttributeValues[attr.name] === item ? "#fff" : "#7c3aed"} />
+                                <Trash2 size={12} color={isSelected ? "#fff" : "#7c3aed"} />
                               </button>
                             </>
                           )}
