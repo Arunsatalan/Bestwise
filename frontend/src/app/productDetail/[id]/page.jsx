@@ -25,6 +25,7 @@ function ProductDetailPage() {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
   // Fetch specific product by ID
   useEffect(() => {
@@ -72,6 +73,32 @@ function ProductDetailPage() {
     dispatch(getProducts());
   }, [dispatch])
 
+  // Get the main product image
+  const getMainImage = () => {
+    if (product?.images && product.images.length > 0) {
+      // If images array contains objects with url property
+      if (typeof product.images[0] === 'object' && product.images[0].url) {
+        return product.images[selectedImageIndex]?.url || product.images[0].url;
+      }
+      // If images array contains direct URLs
+      return product.images[selectedImageIndex] || product.images[0];
+    }
+    return '/placeholder.svg';
+  };
+
+  // Get thumbnail images
+  const getThumbnailImages = () => {
+    if (product?.images && product.images.length > 0) {
+      return product.images.slice(0, 4).map((image, index) => {
+        if (typeof image === 'object' && image.url) {
+          return image.url;
+        }
+        return image;
+      });
+    }
+    return [];
+  };
+
   if (loading) {
     return (
       <div className="p-6 text-center">
@@ -89,21 +116,46 @@ function ProductDetailPage() {
     );
   }
 
+  const thumbnailImages = getThumbnailImages();
+
   return (
 
     <div className='w-full justify-center flex-co px-4 sm:px-8 md:px-16 lg:px-24'>  <Navbar />
       <div className='w-full flex flex-col lg:flex-row h-auto mt-[20px]'>
         {/* Left Section - Image & Description */}
         <div className='flex-col justify-center w-full lg:w-[60%]'>
-          <div className='w-full h-[300px] sm:h-[400px] md:h-[500px] bg-gray-300 rounded-[10px]'>
-            {/* Replace with product image if available */}
-            <img src="/mug.jpg" alt={product.name} className="w-full h-full object-cover rounded-[10px]" />
+          <div className='w-full h-[300px] sm:h-[400px] md:h-[500px] bg-gray-300 rounded-[10px] overflow-hidden'>
+            <img 
+              src={getMainImage()} 
+              alt={product.name} 
+              className="w-full h-full object-cover rounded-[10px]"
+              onError={(e) => {
+                e.target.src = '/placeholder.svg';
+              }}
+            />
           </div>
-          <div className='flex space-x-1 pt-[10px]'>
-            {[1, 2, 3, 4].map((_, i) => (
-              <div key={i} className=' bg-gray-300 w-[72px] h-[72px] rounded-[5px]'>1</div>
-            ))}
-          </div>
+          {thumbnailImages.length > 0 && (
+            <div className='flex space-x-1 pt-[10px]'>
+              {thumbnailImages.map((imageUrl, index) => (
+                <div 
+                  key={index} 
+                  className={`w-[72px] h-[72px] rounded-[5px] overflow-hidden cursor-pointer border-2 ${
+                    selectedImageIndex === index ? 'border-purple-500' : 'border-gray-300'
+                  }`}
+                  onClick={() => setSelectedImageIndex(index)}
+                >
+                  <img 
+                    src={imageUrl} 
+                    alt={`${product.name} ${index + 1}`}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.target.src = '/placeholder.svg';
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Right Section - Info & Actions */}
@@ -121,7 +173,9 @@ function ProductDetailPage() {
             </div>
             <div className='flex items-center space-x-[15px]'>
               <span className='font-extra-large font-bold'>US ${product.retailPrice}</span>
-              <span className='font-content line-through'>US {product.salePrice}$</span>
+              {product.salePrice > 0 && (
+                <span className='font-content line-through'>US ${product.salePrice}</span>
+              )}
             </div>
             <div className='flex items-center space-x-[10px]'>
               <span className='font-medium'>Quantity</span>
@@ -178,51 +232,67 @@ function ProductDetailPage() {
       {/* all Products */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 mt-8 md:mt-[100px]">
         {allProducts && allProducts.length > 0 ? (
-          allProducts.slice(0, 9).map((product) => (
-            <Link
-              key={product._id}
-              href={`/productDetail/${product._id}`}
-              className="w-full h-auto rounded-lg block"
-            >
-              <div className="relative">
-                <Image
-                  src="/mug.jpg" // Replace with product.
-                  alt={product.name}
-                  width={172}
-                  height={172}
-                  className="rounded-lg object-cover w-full h-auto"
-                />
-                <div className="absolute top-2 left-2 bg-red-100 rounded-full p-1">
-                  <Flame className="text-red-500 w-4 h-4" />
-                </div>
-                <div className="absolute top-2 right-2 bg-purple-100 rounded-full p-1">
-                  <Heart className="text-purple-500 w-4 h-4" />
-                </div>
-              </div>
+          allProducts.slice(0, 9).map((product) => {
+            // Get product image
+            const getProductImage = () => {
+              if (product?.images && product.images.length > 0) {
+                if (typeof product.images[0] === 'object' && product.images[0].url) {
+                  return product.images[0].url;
+                }
+                return product.images[0];
+              }
+              return '/placeholder.svg';
+            };
 
-              <div className="mt-2 px-1">
-                <h3 className="font-medium truncate">{product.name}</h3>
-                <p className="font-medium text-gray-700">
-                  US ${product.price}
-                </p>
-                <div className="flex text-yellow-400 text-xs sm:text-sm mt-1">
-                  {Array.from({ length: 5 }, (_, i) => {
-                    const fullStars = Math.floor(product.rating || 0);
-                    const hasHalfStar = (product.rating || 0) - fullStars >= 0.5;
-
-                    if (i < fullStars) {
-                      return <AiFillStar key={i} />;
-                    } else if (i === fullStars && hasHalfStar) {
-                      return <AiTwotoneStar key={i} />;
-                    } else {
-                      return <AiOutlineStar key={i} />;
-                    }
-                  })}
+            return (
+              <Link
+                key={product._id}
+                href={`/productDetail/${product._id}`}
+                className="w-full h-auto rounded-lg block"
+              >
+                <div className="relative">
+                  <Image
+                    src={getProductImage()}
+                    alt={product.name}
+                    width={172}
+                    height={172}
+                    className="rounded-lg object-cover w-full h-auto"
+                    onError={(e) => {
+                      e.target.src = '/placeholder.svg';
+                    }}
+                  />
+                  <div className="absolute top-2 left-2 bg-red-100 rounded-full p-1">
+                    <Flame className="text-red-500 w-4 h-4" />
+                  </div>
+                  <div className="absolute top-2 right-2 bg-purple-100 rounded-full p-1">
+                    <Heart className="text-purple-500 w-4 h-4" />
+                  </div>
                 </div>
 
-              </div>
-            </Link>
-          ))
+                <div className="mt-2 px-1">
+                  <h3 className="font-medium truncate">{product.name}</h3>
+                  <p className="font-medium text-gray-700">
+                    US ${product.price || product.retailPrice}
+                  </p>
+                  <div className="flex text-yellow-400 text-xs sm:text-sm mt-1">
+                    {Array.from({ length: 5 }, (_, i) => {
+                      const fullStars = Math.floor(product.rating || 0);
+                      const hasHalfStar = (product.rating || 0) - fullStars >= 0.5;
+
+                      if (i < fullStars) {
+                        return <AiFillStar key={i} />;
+                      } else if (i === fullStars && hasHalfStar) {
+                        return <AiTwotoneStar key={i} />;
+                      } else {
+                        return <AiOutlineStar key={i} />;
+                      }
+                    })}
+                  </div>
+
+                </div>
+              </Link>
+            );
+          })
         ) : (
           <p className="text-red-500">Server currently busy!</p>
         )}

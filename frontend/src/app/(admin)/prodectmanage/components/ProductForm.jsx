@@ -60,6 +60,17 @@ export default function ProductForm({ product = null }) {
   const tabRef = useRef("basic") // Persist tab state across re-renders
   const { isOpen, config, showError, showSuccess, closeModal } = useConfirmModal()
 
+  // Helper function to get product image
+  const getProductImage = (product, index = 0) => {
+    if (product?.images && product.images.length > 0) {
+      if (typeof product.images[index] === 'object' && product.images[index].url) {
+        return product.images[index].url;
+      }
+      return product.images[index];
+    }
+    return '/placeholder.svg';
+  };
+
   useEffect(() => {
     setIsClient(true)
     loadCategories()
@@ -471,9 +482,12 @@ const handleSubmit = async () => {
               <CardContent className="p-6">
                 <div className="aspect-square mb-4">
                   <img
-                    src={formData.images?.[0] || "/placeholder.svg"}
+                    src={getProductImage(formData)}
                     alt={formData.name || "Product image"}
-                    className="w-full h-full object-co rounded-lg"
+                    className="w-full h-full object-cover rounded-lg"
+                    onError={(e) => {
+                      e.target.src = '/placeholder.svg';
+                    }}
                   />
                 </div>
                 {formData.images?.length > 1 && (
@@ -481,9 +495,12 @@ const handleSubmit = async () => {
                     {formData.images.slice(1).map((image, index) => (
                       <img
                         key={index}
-                        src={image || "/placeholder.svg"}
+                        src={getProductImage(formData, index + 1)}
                         alt={`${formData.name || "Product"} ${index + 2}`}
                         className="aspect-square object-cover rounded"
+                        onError={(e) => {
+                          e.target.src = '/placeholder.svg';
+                        }}
                       />
                     ))}
                   </div>

@@ -48,6 +48,17 @@ export default function ProductDetail() {
     }
   }
 
+  // Helper function to get product image
+  const getProductImage = (product, index = 0) => {
+    if (product?.images && product.images.length > 0) {
+      if (typeof product.images[index] === 'object' && product.images[index].url) {
+        return product.images[index].url;
+      }
+      return product.images[index];
+    }
+    return '/placeholder.svg';
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -103,9 +114,12 @@ export default function ProductDetail() {
             <CardContent className="p-6">
               <div className="aspect-square mb-4">
                 <img
-                  src={product.images?.[0]?.url || "/placeholder.svg?height=400&width=400"}
+                  src={getProductImage(product)}
                   alt={product.name}
                   className="w-full h-full object-cover rounded-lg"
+                  onError={(e) => {
+                    e.target.src = '/placeholder.svg';
+                  }}
                 />
               </div>
               {product.images?.length > 1 && (
@@ -113,9 +127,12 @@ export default function ProductDetail() {
                   {product.images.slice(1).map((image, index) => (
                     <img
                       key={index}
-                      src={image.url || "/placeholder.svg"}
+                      src={getProductImage(product, index + 1)}
                       alt={`${product.name} ${index + 2}`}
                       className="aspect-square object-cover rounded"
+                      onError={(e) => {
+                        e.target.src = '/placeholder.svg';
+                      }}
                     />
                   ))}
                 </div>

@@ -3,13 +3,16 @@
 import { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useRouter } from "next/navigation";
-import { FiMail, FiPhone, FiMapPin, FiShoppingBag, FiLogOut, FiEdit2, FiUser, FiEye, FiEyeOff } from "react-icons/fi";
+import { FiMail, FiPhone, FiMapPin, FiShoppingBag, FiLogOut, FiEdit2, FiUser, FiEye, FiEyeOff, FiClock } from "react-icons/fi";
 import Navbar from "@/app/components/navbar/page";
 import axios from "axios";
 import { toast, Toaster } from 'sonner';
 import { FaUser } from "react-icons/fa";
 import { RiLockPasswordFill } from "react-icons/ri";
 import { updateUserProfile } from "../../slices/userSlice";
+import { IoCloseCircleOutline } from "react-icons/io5";
+import { useRef } from "react";
+import { fetchUserProfile } from '../../actions/userActions'; // import at the top
 
 export default function ProfilePage() {
   const { user } = useSelector(state => state.userState);
@@ -21,32 +24,189 @@ export default function ProfilePage() {
   const [address, setAddress] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
+  // Reminder state
+  const [reminders, setReminders] = useState([]);
+  const [reminderLoading, setReminderLoading] = useState(false);
+  const [editReminder, setEditReminder] = useState(null);
+  const [editFields, setEditFields] = useState({ remindermsg: '', date: '', time: '', event: '' });
+  const [editSaving, setEditSaving] = useState(false);
+  const [deleteLoadingId, setDeleteLoadingId] = useState(null);
+  const [isAddMode, setIsAddMode] = useState(false);
+
+  const [profileImage, setProfileImage] = useState(""); // Only used for upload, not for display
+  const [uploading, setUploading] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState("");
+  const fileInputRef = useRef(null);
+
   useEffect(() => {
     if (!user) {
       router.push("/login");
     } else {
       setPhone(user.phone || '');
       setAddress(user.address || '');
+      // No need to setProfileImage for display; always use user.profileImage
+      setSelectedFile(null);
+      setPreviewUrl("");
       setTimeout(() => setIsLoading(false), 800);
+      fetchReminders();
     }
   }, [user, router]);
 
-  const handleSaveChanges = async () => {
+  const fetchReminders = async () => {
+    setReminderLoading(true);
+    try {
+      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/reminder`, { withCredentials: true });
+      setReminders(res.data.reminders || []);
+    } catch (err) {
+      toast.error('Failed to fetch reminders');
+    } finally {
+      setReminderLoading(false);
+    }
+  };
+
+  const openEditModal = (reminder) => {
+    setEditReminder(reminder);
+    setEditFields({
+      remindermsg: reminder.remindermsg,
+      date: reminder.date ? reminder.date.slice(0, 10) : '',
+      time: reminder.time || '',
+      event: reminder.event || '',
+    });
+  };
+  const closeEditModal = () => {
+    setEditReminder(null);
+    setEditFields({ remindermsg: '', date: '', time: '', event: '' });
+    setIsAddMode(false);
+  };
+  const handleEditChange = (e) => {
+    setEditFields({ ...editFields, [e.target.name]: e.target.value });
+  };
+  const handleEditSave = async () => {
+    if (!editFields.remindermsg || !editFields.date || !editFields.time || !editFields.event) {
+      toast.error('Please fill all fields');
+      return;
+    }
+    setEditSaving(true);
+    try {
+      if (isAddMode) {
+        await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/reminder`, editFields, { withCredentials: true });
+        toast.success('Reminder created!');
+      } else {
+        await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/reminder/${editReminder._id}`, editFields, { withCredentials: true });
+        toast.success('Reminder updated!');
+      }
+      closeEditModal();
+      fetchReminders();
+    } catch (err) {
+      toast.error('Failed to update reminder');
+    } finally {
+      setEditSaving(false);
+    }
+  };
+
+  const handleDeleteReminder = async (reminderId) => {
+    if (!window.confirm('Are you sure you want to delete this reminder?')) return;
+    setDeleteLoadingId(reminderId);
+    try {
+      await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/reminder/${reminderId}`, { withCredentials: true });
+      toast.success('Reminder deleted!');
+      fetchReminders();
+    } catch (err) {
+      toast.error('Failed to delete reminder');
+    } finally {
+      setDeleteLoadingId(null);
+    }
+  };
+
+  const handleProfileImageChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setSelectedFile(file);
+    setPreviewUrl(URL.createObjectURL(file));
+  };
+
+  const handleUploadProfileImage = async () => {
+    if (!selectedFile) return;
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+    setUploading(true);
+    try {
+      console.log('Uploading profile image...', selectedFile.name);
+      const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/upload/single`, formData, {
+        withCredentials: true,
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      
+      console.log('Upload response:', res.data);
+      
+      // Store the uploaded image URL
+      const uploadedImageUrl = res.data.data.url;
+      setProfileImage(uploadedImageUrl);
+      
+      console.log('Saving profile with new image URL:', uploadedImageUrl);
+      
+      // Immediately save the profile with the new image
+      await handleSaveChanges(uploadedImageUrl);
+      
+      setSelectedFile(null);
+      setPreviewUrl("");
+      toast.success('Profile image uploaded and saved successfully!');
+    } catch (err) {
+      console.error('Upload error:', err);
+      toast.error('Failed to upload image');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleEditPhotoClick = () => {
+    if (fileInputRef.current) fileInputRef.current.click();
+  };
+
+  const handleCancelImage = () => {
+    setSelectedFile(null);
+    setPreviewUrl("");
+  };
+
+  const handleSaveChanges = async (newProfileImage = null) => {
     setIsSaving(true);
     try {
+      // Use the new profile image if provided, otherwise use the current profileImage state or user's existing image
+      const imageToSave = newProfileImage || profileImage || user.profileImage || "";
+      
+      console.log('Saving profile changes:', { phone, address, profileImage: imageToSave });
+      
       const res = await axios.put(
         `${process.env.NEXT_PUBLIC_API_URL}/updateprofile`,
-            { phone, address },
-            { withCredentials: true }
+        { phone, address, profileImage: imageToSave },
+        { withCredentials: true }
       );
-      dispatch(updateUserProfile(res.data.user));
+      
+      console.log('Profile update response:', res.data);
+      
+      // Update the Redux state with the new user data
+      if (res.data && res.data.user) {
+        dispatch(updateUserProfile(res.data.user));
+        console.log('Updated Redux state with new user data');
+      }
+      
+      // Reset the profile image state after successful save
+      setProfileImage("");
       toast.success("Profile updated successfully!");
     } catch (err) {
+      console.error('Profile update error:', err);
       const msg = err.response?.data?.message || "Failed to update profile.";
       toast.error(msg);
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const openAddModal = () => {
+    setIsAddMode(true);
+    setEditReminder({});
+    setEditFields({ remindermsg: '', date: '', time: '', event: '' });
   };
 
   if (!user) return null;
@@ -76,21 +236,55 @@ export default function ProfilePage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
             {/* Left Column - Profile Card */}
             <aside className="lg:col-span-1">
-              <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 flex flex-col items-center sticky top-28">
+              <div className="bg-white rounded-md border p-8 flex flex-col items-center sticky top-28" style={{ borderColor: 'rgba(217,217,217,0.5)' }}>
                 <div className="relative mb-4">
                   <span className="block w-36 h-36 rounded-full bg-gradient-to-tr from-purple-200 to-blue-200 p-1 shadow-lg">
                     <img
-                      src={user.avatar || "/default-avatar.png"}
+                      src={previewUrl || user?.profileImage || '/placeholder.svg'}
                       alt="Profile"
                       className="w-full h-full rounded-full object-cover border-4 border-white shadow-md"
+                      onError={(e) => {
+                        e.target.src = '/placeholder.svg';
+                      }}
                     />
                   </span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    ref={fileInputRef}
+                    style={{ display: 'none' }}
+                    onChange={handleProfileImageChange}
+                  />
                   <button
                     className="absolute bottom-2 right-2 bg-white p-2 rounded-full border border-gray-200 shadow hover:bg-gray-50 transition-colors"
                     title="Change photo"
+                    onClick={handleEditPhotoClick}
+                    disabled={uploading}
                   >
                     <FiEdit2 className="w-5 h-5 text-gray-600" />
                   </button>
+                  {selectedFile && (
+                    <div className="absolute left-1/2 -bottom-16 transform -translate-x-1/2 w-64 bg-white border border-gray-200 rounded-lg shadow-lg p-4 flex flex-col items-center z-10">
+                      <div className="mb-2 text-gray-700 font-medium">Preview</div>
+                      <img src={previewUrl} alt="Preview" className="w-24 h-24 rounded-full object-cover border mb-2" />
+                      <div className="flex gap-2">
+                        <button
+                          className="px-4 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors text-sm"
+                          onClick={handleUploadProfileImage}
+                          disabled={uploading}
+                        >
+                          {uploading ? 'Uploading...' : 'Upload'}
+                        </button>
+                        <button
+                          className="px-4 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors text-sm"
+                          onClick={handleCancelImage}
+                          disabled={uploading}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <h2 className="mt-2 text-2xl font-semibold text-gray-900">{user.firstName} {user.lastName}</h2>
                 <div className="mt-1 flex items-center text-sm text-gray-500">
@@ -124,7 +318,7 @@ export default function ProfilePage() {
             {/* Right Column - Information */}
             <section className="lg:col-span-2 space-y-10">
               {/* Personal Information */}
-              <div className="bg-white rounded-2xl shadow-lg border border-gray-100">
+              <div className="bg-white rounded-md border" style={{ borderColor: 'rgba(217,217,217,0.5)' }}>
                 <div className="flex items-center gap-3 px-8 py-5 border-b border-gray-100 bg-gray-50 rounded-t-2xl">
                   <span className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-tr from-purple-100 to-blue-100">
                     <FaUser className="w-5 h-5 text-purple-600" />
@@ -167,7 +361,7 @@ export default function ProfilePage() {
                   <div className="flex justify-end">
                     <button
                       type="button"
-                      onClick={handleSaveChanges}
+                      onClick={() => handleSaveChanges()}
                       disabled={isSaving}
                       className="px-8 py-3 bg-purple-600 text-white text-base font-semibold rounded-lg shadow hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-400 transition-colors disabled:opacity-50"
                     >
@@ -178,7 +372,7 @@ export default function ProfilePage() {
               </div>
 
               {/* Password Change Section */}
-              <div className="bg-white rounded-2xl shadow-lg border border-gray-100">
+              <div className="bg-white rounded-md border" style={{ borderColor: 'rgba(217,217,217,0.5)' }}>
                 <div className="flex items-center gap-3 px-8 py-5 border-b border-gray-100 bg-gray-50 rounded-t-2xl">
                   <span className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-tr from-pink-100 to-yellow-100">
                     <RiLockPasswordFill  className="w-5 h-5 text-pink-600" />
@@ -191,7 +385,7 @@ export default function ProfilePage() {
               </div>
 
               {/* Order Summary */}
-              <div className="bg-white rounded-2xl shadow-lg border border-gray-100">
+              <div className="bg-white rounded-md border" style={{ borderColor: 'rgba(217,217,217,0.5)' }}>
                 <div className="flex items-center gap-3 px-8 py-5 border-b border-gray-100 bg-gray-50 rounded-t-2xl">
                   <span className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-tr from-green-100 to-blue-100">
                     <FiShoppingBag className="w-5 h-5 text-green-600" />
@@ -219,6 +413,138 @@ export default function ProfilePage() {
                   </div>
                 </div>
               </div>
+
+              {/* Reminder History */}
+              <div className="bg-white rounded-md border" style={{ borderColor: 'rgba(217,217,217,0.5)' }}>
+                <div className="flex items-center gap-3 px-8 py-5 border-b border-gray-100 bg-gray-50 rounded-t-2xl">
+                  <span className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-tr from-yellow-100 to-purple-100">
+                    <FiClock className="w-5 h-5 text-yellow-600" />
+                  </span>
+                  <h3 className="text-xl font-semibold text-gray-900 tracking-tight">Reminder History</h3>
+                </div>
+                <div className="p-8">
+                  {reminderLoading ? (
+                    <div>Loading reminders...</div>
+                  ) : reminders.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-12">
+                      <div className="bg-purple-50 rounded-full p-4 mb-4">
+                        <FiClock className="w-10 h-10 text-purple-400" />
+                      </div>
+                      <div className="text-lg font-semibold text-gray-700 mb-1">No Reminders Yet</div>
+                      <div className="text-gray-400 text-sm mb-4">You haven't set any reminders. Start by adding a new one!</div>
+                      <button
+                        className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors shadow"
+                        onClick={openAddModal}
+                      >
+                        Set Reminder
+                      </button>
+                    </div>
+                  ) : (
+                    <ul className="space-y-4">
+                      {reminders.map(reminder => (
+                        <li key={reminder._id} className="flex flex-col md:flex-row md:items-center md:justify-between bg-gray-50 rounded-lg p-4 border border-gray-100">
+                          <div>
+                            <div className="font-semibold text-gray-800">{reminder.event}</div>
+                            <div className="text-gray-600 text-sm">{reminder.remindermsg}</div>
+                            <div className="text-gray-500 text-xs mt-1">{reminder.date ? reminder.date.slice(0,10) : ''} {reminder.time}</div>
+                          </div>
+                          <div className="flex gap-2 mt-2 md:mt-0">
+                            <button
+                              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                              onClick={() => openEditModal(reminder)}
+                            >
+                              Edit
+                            </button>
+                            <button
+                              className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-700 transition-colors"
+                              onClick={() => handleDeleteReminder(reminder._id)}
+                              disabled={deleteLoadingId === reminder._id}
+                            >
+                              {deleteLoadingId === reminder._id ? 'Deleting...' : 'Delete'}
+                            </button>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </div>
+
+              {/* Edit Reminder Modal */}
+              {(editReminder || isAddMode) && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
+                  <div className="bg-white rounded-md p-8 w-full max-w-md relative" style={{ border: '1px solid rgba(217,217,217,0.5)' }}>
+                    <button className="absolute top-2 right-2 text-gray-400 hover:text-red-500" onClick={closeEditModal}>
+                      <IoCloseCircleOutline  className="w-6 h-6" />
+                    </button>
+                    <h3 className="text-lg font-semibold mb-4">{isAddMode ? 'Set Reminder' : 'Edit Reminder'}</h3>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Message</label>
+                        <textarea
+                          name="remindermsg"
+                          value={editFields.remindermsg}
+                          onChange={handleEditChange}
+                          className="w-full border border-gray-200 rounded-lg p-2"
+                          rows={3}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                        <input
+                          name="date"
+                          type="date"
+                          value={editFields.date}
+                          onChange={handleEditChange}
+                          className="w-full border border-gray-200 rounded-lg p-2"
+                          min={new Date().toISOString().split('T')[0]}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Time</label>
+                        <input
+                          name="time"
+                          type="time"
+                          value={editFields.time}
+                          onChange={handleEditChange}
+                          className="w-full border border-gray-200 rounded-lg p-2"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Event</label>
+                        <select
+                          name="event"
+                          value={editFields.event}
+                          onChange={handleEditChange}
+                          className="w-full border border-gray-200 rounded-lg p-2"
+                        >
+                          <option value="">Select Event</option>
+                          <option value="Birthday">Birthday</option>
+                          <option value="Fathers Day">Father's Day</option>
+                          <option value="Mothers Day">Mother's Day</option>
+                          <option value="Brothers Day">Brother's Day</option>
+                          <option value="Christmas">Christmas</option>
+                          <option value="Key Birthday">Key Birthday</option>
+                          <option value="New Year">New Year</option>
+                          <option value="Others">Others</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div className="flex justify-end gap-2 mt-6">
+                      <button
+                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg"
+                        onClick={closeEditModal}
+                        disabled={editSaving}
+                      >Cancel</button>
+                      <button
+                        className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                        onClick={handleEditSave}
+                        disabled={editSaving}
+                      >{editSaving ? (isAddMode ? 'Creating...' : 'Saving...') : (isAddMode ? 'Create' : 'Save')}</button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </section>
           </div>
         </main>
@@ -297,7 +623,6 @@ function PasswordChangeForm() {
             onChange={e => setCurrentPassword(e.target.value)}
             className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-transparent transition text-gray-900 bg-gray-50 pr-12"
             placeholder="Enter current password"
-            autoComplete="current-password"
           />
           <button
             type="button"

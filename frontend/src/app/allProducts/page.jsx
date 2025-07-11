@@ -119,6 +119,17 @@ function AllProducts() {
         );
     };
 
+    // Helper function to get product image
+    const getProductImage = (product) => {
+      if (product?.images && product.images.length > 0) {
+        if (typeof product.images[0] === 'object' && product.images[0].url) {
+          return product.images[0].url;
+        }
+        return product.images[0];
+      }
+      return '/placeholder.svg';
+    };
+
     return (
         <>
             <Navbar />
@@ -187,19 +198,22 @@ function AllProducts() {
                                             <CardContent className="p-0 flex-grow flex flex-col">
                                                 <div className="relative">
                                                     <Image
-                                                        src={product.images?.[0]?.url || "/mug.jpg"}
+                                                        src={getProductImage(product)}
                                                         alt={product.name}
                                                         width={250}
                                                         height={250}
                                                         className="w-full aspect-square object-cover rounded-t-lg transition-transform duration-300 group-hover:scale-105"
+                                                        onError={(e) => {
+                                                          e.target.src = '/placeholder.svg';
+                                                        }}
                                                     />
                                                     <div className="absolute top-2 left-2 bg-red-100 rounded-full p-1">
                                                         <Flame className="text-red-500 w-4 h-4" />
                                                     </div>
-                                                    <div className="absolute top-2 right-2 bg-purple-100 rounded-full p-1 cursor-pointer hover:bg-purple-200"
-                                                        onClick={(e) => {
+                                                    <div className="absolute top-2 right-2 bg-purple-100 rounded-full p-1 cursor-pointer hover:bg-purple-200 transition-colors"
+                                                        onClick={e => {
                                                             e.preventDefault();
-                                                            if (!isAuthenticated) return toast.error('Please login to add to wishlist');
+                                                            if (!isAuthenticated) return alert('Please login to add to wishlist');
                                                             dispatch(addToWishlist(product));
                                                             toast.success('Added to wishlist!');
                                                         }}
@@ -207,18 +221,29 @@ function AllProducts() {
                                                         <Heart className="text-purple-500 w-4 h-4" />
                                                     </div>
                                                 </div>
-                                                <div className="p-4 flex-grow flex flex-col">
-                                                    <h3 className="font-medium text-base truncate flex-grow">{product.name}</h3>
-                                                    <p className="font-semibold text-purple-600 text-lg my-1">${product.price}</p>
-                                                    <div className="flex items-center gap-2">
-                                                        {renderRatingStars(product.averageRating || 0)}
-                                                        <span className="text-gray-500 text-xs">({product.numOfReviews || 0} reviews)</span>
+                                                <div className="p-3 flex-grow flex flex-col">
+                                                    <h3 className="font-medium text-sm sm:text-base truncate mb-2">{product.name}</h3>
+                                                    <p className="font-semibold text-purple-600 text-sm sm:text-base mb-2">
+                                                        US ${product.price || product.retailPrice}
+                                                    </p>
+                                                    <div className="flex text-yellow-400 text-xs sm:text-sm mb-3">
+                                                        {Array.from({ length: 5 }, (_, i) => {
+                                                            const fullStars = Math.floor(product.rating || 0);
+                                                            const hasHalfStar = (product.rating || 0) - fullStars >= 0.5;
+                                                            if (i < fullStars) {
+                                                                return <AiFillStar key={i} />;
+                                                            } else if (i === fullStars && hasHalfStar) {
+                                                                return <AiTwotoneStar key={i} />;
+                                                            } else {
+                                                                return <AiOutlineStar key={i} />;
+                                                            }
+                                                        })}
                                                     </div>
                                                     <Button
-                                                        className="mt-3 w-full bg-purple-600 hover:bg-purple-700 text-white"
-                                                        onClick={(e) => {
+                                                        className="mt-auto w-full bg-purple-600 hover:bg-purple-700 text-white"
+                                                        onClick={e => {
                                                             e.preventDefault();
-                                                            if (!isAuthenticated) return toast.error('Please login to add to cart');
+                                                            if (!isAuthenticated) return alert('Please login to add to cart');
                                                             dispatch(addToCart({ product, quantity: 1 }));
                                                             toast.success('Added to cart!');
                                                         }}

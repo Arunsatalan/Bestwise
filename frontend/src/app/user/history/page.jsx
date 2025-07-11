@@ -53,6 +53,17 @@ function Page() {
         );
     }
 
+    // Helper function to get product image
+    const getProductImage = (product) => {
+      if (product?.images && product.images.length > 0) {
+        if (typeof product.images[0] === 'object' && product.images[0].url) {
+          return product.images[0].url;
+        }
+        return product.images[0];
+      }
+      return '/placeholder.svg';
+    };
+
     return (
         <div>
             <div className='px-4 md:px-20 lg:px-[80px] min-h-screen'>
@@ -77,11 +88,14 @@ function Page() {
                                     <div className='flex items-center w-full md:w-[40%] mb-2 md:mb-0'>
                                         <div className="relative w-[40%] md:w-[25%] min-w-[80px] max-w-[130px]">
                                             <Image
-                                                src={item.product?.images?.[0]?.url || "/mug.jpg"}
+                                                src={getProductImage(item.product)}
                                                 alt={item.product?.name || "Product image"}
                                                 width={130}
                                                 height={120}
                                                 className="rounded-lg object-cover w-full h-auto"
+                                                onError={(e) => {
+                                                  e.target.src = '/placeholder.svg';
+                                                }}
                                             />
                                         </div>
                                         <span className='text-base md:text-[18px] font-semibold ml-2'>{item.product?.name || 'Product name'}</span>

@@ -147,6 +147,17 @@ export default function ProductDashboard() {
     return matchesSearch && matchesCategory && matchesStatus && matchesStock
   })
 
+  // Helper function to get product image
+  const getProductImage = (product) => {
+    if (product?.images && product.images.length > 0) {
+      if (typeof product.images[0] === 'object' && product.images[0].url) {
+        return product.images[0].url;
+      }
+      return product.images[0];
+    }
+    return '/placeholder.svg';
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -285,12 +296,12 @@ export default function ProductDashboard() {
             <Card key={product._id || product.id} className="overflow-hidden">
               <div className="aspect-square relative">
                 <img
-                  src={
-                    product.images?.[0]?.url ||
-                    "/placeholder.svg?height=200&width=200"
-                  }
+                  src={getProductImage(product)}
                   alt={product.name}
                   className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.target.src = '/placeholder.svg';
+                  }}
                 />
                 <Badge variant={stockStatus.color} className="absolute top-2 right-2">
                   {stockStatus.label}
@@ -300,7 +311,7 @@ export default function ProductDashboard() {
                 <h3 className="font-semibold text-lg mb-2 truncate">{product.name}</h3>
                 <p className="text-sm text-gray-600 mb-2">SKU: {product.sku}</p>
                 <div className="flex justify-between items-center mb-3">
-                  <span className="text-lg font-bold">${product.price}</span>
+                  <span className="text-lg font-bold">${product.price || product.retailPrice}</span>
                   <Badge variant="outline">{product.mainCategory || product.category}</Badge>
                 </div>
                 <div className="flex justify-between items-center">

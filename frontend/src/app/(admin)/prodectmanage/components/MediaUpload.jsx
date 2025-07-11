@@ -4,6 +4,8 @@ import { useState, useRef } from "react"
 import { Button } from "../../../../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../../../../components/ui/card"
 import { Upload, X, ImageIcon, Video, Move } from "lucide-react"
+import axios from "axios"
+import { toast } from "sonner"
 
 export default function MediaUpload({ images = [], videos = [], onImagesChange, onVideosChange }) {
   const [dragOver, setDragOver] = useState(false)
@@ -38,58 +40,94 @@ export default function MediaUpload({ images = [], videos = [], onImagesChange, 
     const newVideos = []
 
     for (const file of files) {
-      if (file.type.startsWith("image/")) {
-        if (file.size > 5 * 1024 * 1024) {
-          alert(`Image ${file.name} is too large. Maximum size is 5MB.`)
-          continue
+      try {
+        if (file.type.startsWith("image/")) {
+          if (file.size > 5 * 1024 * 1024) {
+            toast.error(`Image ${file.name} is too large. Maximum size is 5MB.`)
+            continue
+          }
+          const url = await uploadFile(file)
+          if (url) {
+            newImages.push({
+              id: Date.now() + Math.random(),
+              url,
+              name: file.name,
+              size: file.size,
+            })
+            toast.success(`Image ${file.name} uploaded successfully!`)
+          }
+        } else if (file.type.startsWith("video/")) {
+          if (file.size > 50 * 1024 * 1024) {
+            toast.error(`Video ${file.name} is too large. Maximum size is 50MB.`)
+            continue
+          }
+          const url = await uploadFile(file)
+          if (url) {
+            newVideos.push({
+              id: Date.now() + Math.random(),
+              url,
+              name: file.name,
+              size: file.size,
+            })
+            toast.success(`Video ${file.name} uploaded successfully!`)
+          }
+        } else {
+          toast.error(`Unsupported file type: ${file.name}`)
         }
-        const url = await uploadFile(file)
-        if (url) {
-          newImages.push({
-            id: Date.now() + Math.random(),
-            url,
-            name: file.name,
-            size: file.size,
-          })
-        }
-      } else if (file.type.startsWith("video/")) {
-        if (file.size > 50 * 1024 * 1024) {
-          alert(`Video ${file.name} is too large. Maximum size is 50MB.`)
-          continue
-        }
-        const url = await uploadFile(file)
-        if (url) {
-          newVideos.push({
-            id: Date.now() + Math.random(),
-            url,
-            name: file.name,
-            size: file.size,
-          })
-        }
+      } catch (error) {
+        console.error(`Error uploading ${file.name}:`, error)
+        toast.error(`Failed to upload ${file.name}`)
       }
     }
 
-    onImagesChange([...images, ...newImages])
-    onVideosChange([...videos, ...newVideos])
+    if (newImages.length > 0) {
+      onImagesChange([...images, ...newImages])
+    }
+    if (newVideos.length > 0) {
+      onVideosChange([...videos, ...newVideos])
+    }
     setUploading(false)
   }
 
   const uploadFile = async (file) => {
-    // Simulate file upload - replace with actual upload logic
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const url = URL.createObjectURL(file)
-        resolve(url)
-      }, 1000)
-    })
+    try {
+      console.log('Uploading file:', file.name, 'Size:', file.size)
+      
+      const formData = new FormData()
+      formData.append('file', file)
+
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_API_URL}/upload/single`,
+        formData,
+        {
+          withCredentials: true,
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      )
+
+      console.log('Upload response:', response.data)
+
+      if (response.data && response.data.data && response.data.data.url) {
+        return response.data.data.url
+      } else {
+        throw new Error('No URL received from upload')
+      }
+    } catch (error) {
+      console.error('Upload error:', error)
+      throw error
+    }
   }
 
   const removeImage = (id) => {
     onImagesChange(images.filter((img) => img.id !== id))
+    toast.success('Image removed')
   }
 
   const removeVideo = (id) => {
     onVideosChange(videos.filter((vid) => vid.id !== id))
+    toast.success('Video removed')
   }
 
   const moveImage = (fromIndex, toIndex) => {
@@ -97,6 +135,7 @@ export default function MediaUpload({ images = [], videos = [], onImagesChange, 
     const [movedImage] = newImages.splice(fromIndex, 1)
     newImages.splice(toIndex, 0, movedImage)
     onImagesChange(newImages)
+    toast.success('Image order updated')
   }
 
   const formatFileSize = (bytes) => {
@@ -158,6 +197,9 @@ export default function MediaUpload({ images = [], videos = [], onImagesChange, 
                       src={image.url || "/placeholder.svg"}
                       alt={image.name}
                       className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.target.src = '/placeholder.svg'
+                      }}
                     />
                   </div>
                   <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">

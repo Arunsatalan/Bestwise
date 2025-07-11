@@ -109,7 +109,8 @@ exports.loginUser = async (req, res) => {
         role: user.role,
         phone: user.phone,
         address: user.address,
-        zipCode: user.zipCode
+        zipCode: user.zipCode,
+        profileImage: user.profileImage,
       }
     });
 
@@ -191,14 +192,28 @@ exports.changePassword = async (req, res) => {
 // Update-User-Profile  -- {base_url}/api/updateprofile
 exports.updateUserProfile = async (req, res) => {
   try {
-    const { phone, address } = req.body;
+    const { phone, address, profileImage } = req.body;
+
+    console.log("Received profile update request:", { 
+      userId: req.user.id, 
+      phone, 
+      address, 
+      profileImage: profileImage ? 'Image provided' : 'No image' 
+    });
+
     const user = await User.findById(req.user.id);
 
     if (user) {
-      user.phone = phone || user.phone;
-      user.address = address || user.address;
+      // Update fields only if they are provided
+      if (phone !== undefined) user.phone = phone;
+      if (address !== undefined) user.address = address;
+      if (profileImage !== undefined) {
+        user.profileImage = profileImage;
+        console.log("Updated profile image to:", profileImage);
+      }
 
       const updatedUser = await user.save();
+      console.log("Profile updated successfully for user:", updatedUser._id);
 
       res.status(200).json({
         success: true,
@@ -210,12 +225,15 @@ exports.updateUserProfile = async (req, res) => {
           role: updatedUser.role,
           phone: updatedUser.phone,
           address: updatedUser.address,
+          profileImage: updatedUser.profileImage, 
         },
       });
     } else {
+      console.log("User not found:", req.user.id);
       res.status(404).json({ success: false, message: "User not found" });
     }
   } catch (err) {
+    console.error("Profile update error:", err);
     res.status(500).json({
       success: false,
       message: "Something went wrong",

@@ -160,7 +160,7 @@ function Navbar() {
                   {giftDropdownOpen && (
                     <ul className="absolute right-0 mt-2 bg-white border border-gray-200 rounded-md shadow-lg w-56 text-sm z-50">
                       <li className="px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors" onClick={() => handleNavigation('/surprisegift')}>Surprise Gift Delivery</li>
-                      <li className="px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors">Customizable Gift</li>
+                      <li className="px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors"  onClick={() => handleNavigation('/user/customizegifts')} >Customizable Gift</li>
                       <li className="px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors" onClick={openModal}>Reminder Gift</li>
                     </ul>
                   )}

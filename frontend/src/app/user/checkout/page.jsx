@@ -33,6 +33,17 @@ export default function CheckoutPage() {
 
     const total = cart.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
 
+    // Helper function to get product image
+    const getProductImage = (product) => {
+      if (product?.images && product.images.length > 0) {
+        if (typeof product.images[0] === 'object' && product.images[0].url) {
+          return product.images[0].url;
+        }
+        return product.images[0];
+      }
+      return '/placeholder.svg';
+    };
+
     return (
         <>
             <div className='pl-[80px] pr-[80px] flex-col items-center'>
@@ -58,11 +69,14 @@ export default function CheckoutPage() {
                                     <div key={item.productId} className='w-full flex justify-center mb-[30px]'>
                                         <div className="relative w-[15%] ">
                                             <Image
-                                                src={item.product.image || "/mug.jpg"}
+                                                src={getProductImage(item.product)}
                                                 alt={item.product.name}
                                                 width={130}
                                                 height={120}
                                                 className="rounded-lg object-cover"
+                                                onError={(e) => {
+                                                  e.target.src = '/placeholder.svg';
+                                                }}
                                             />
                                         </div>
                                         <div className='w-[40%] flex-col pl-[20px]'>

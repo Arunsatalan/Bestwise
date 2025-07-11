@@ -17,12 +17,17 @@ const userSlice = createSlice({
             }
         },
         userLogout(state, action) {
-            // NOTE: You should also clear cart and wishlist state on logout in your component or with a thunk
             return {
                 isAuthenticated: false,
                 user: null,
                 role: null
             }
+        },
+        updateUserProfile(state, action) {
+            return {
+                ...state,
+                user: action.payload,
+            };
         },
     }
 });

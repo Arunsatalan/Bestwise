@@ -1,6 +1,7 @@
 import './globals.css';
 import ReduxProvider from './ReduxProvider';
 import { Toaster } from 'sonner';
+import UserProfileHydrator from './components/UserProfileHydrator';
 
 export const metadata = {
   title: 'Best Wishes',
@@ -12,6 +13,7 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body className="antialiased">
         <ReduxProvider>
+          <UserProfileHydrator />
           {children}
           <Toaster position="top-center" richColors />
         </ReduxProvider>
