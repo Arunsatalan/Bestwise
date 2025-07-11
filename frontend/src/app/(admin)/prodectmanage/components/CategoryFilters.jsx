@@ -1254,11 +1254,12 @@ export default function CategoryFilters({
                       <Input
                         placeholder={`Add ${attribute.displayName.toLowerCase()} item (e.g., Red, Large, Cotton)`}
                         onKeyDown={(e) => {
-                          // @ts-ignore
                           const target = e.target;
-                          if (e.key === "Enter" && target.value && target.value.trim()) {
-                            addItemToAttribute(attributeIndex, target.value.trim())
-                            target.value = ""
+                          if (target instanceof HTMLInputElement) {
+                            if (e.key === "Enter" && target.value && target.value.trim()) {
+                              addItemToAttribute(attributeIndex, target.value.trim())
+                              target.value = ""
+                            }
                           }
                         }}
                       />
@@ -1266,11 +1267,13 @@ export default function CategoryFilters({
                         type="button"
                         size="sm"
                         onClick={(e) => {
-                          // @ts-ignore
-                          const input = (e.target && e.target.parentElement && e.target.parentElement.querySelector("input")) || null;
-                          if (input && input.value.trim()) {
-                            addItemToAttribute(attributeIndex, input.value.trim())
-                            input.value = ""
+                          if (e.target instanceof HTMLElement) {
+                            const parent = e.target.parentElement;
+                            const input = parent ? parent.querySelector("input") : null;
+                            if (input instanceof HTMLInputElement && input.value.trim()) {
+                              addItemToAttribute(attributeIndex, input.value.trim())
+                              input.value = ""
+                            }
                           }
                         }}
                       >
@@ -1403,7 +1406,7 @@ export default function CategoryFilters({
                       )}
                     </div>
                     <p className="text-sm text-gray-500 mt-1">{categorySystem[categoryKey].description || "No description"}</p>
-                    <p className="text-xs text-gray-400 mt-1">{Object.keys(categorySystem[categoryKey]).length - 2} attributes</p>
+                    <p className="text-xs text-gray-400 mt-1">{Array.isArray(categorySystem[categoryKey].attributes) ? categorySystem[categoryKey].attributes.length : 0} attributes</p>
                     {selectedMainCategory === categoryKey && (
                       <Badge variant="default" className="mt-2">Selected</Badge>
                     )}
@@ -1460,11 +1463,11 @@ export default function CategoryFilters({
                     padding: "0.5rem 0.75rem"
                   }}
                   onKeyDown={(e) => {
-                    // @ts-ignore
-                    const target = e.target;
-                    if (e.key === "Enter" && target.value && target.value.trim()) {
-                      addAttributeValue(attr.name, target.value.trim());
-                      target.value = "";
+                    if (e.target instanceof HTMLInputElement) {
+                      if (e.key === "Enter" && e.target.value && e.target.value.trim()) {
+                        addAttributeValue(attr.name, e.target.value.trim());
+                        e.target.value = "";
+                      }
                     }
                   }}
                 />
@@ -1472,11 +1475,13 @@ export default function CategoryFilters({
                   type="button"
                   size="sm"
                   onClick={(e) => {
-                    // @ts-ignore
-                    const input = (e.target && e.target.parentElement && e.target.parentElement.querySelector("input")) || null;
-                    if (input && input.value.trim()) {
-                      addAttributeValue(attr.name, input.value.trim());
-                      input.value = "";
+                    if (e.target instanceof HTMLElement) {
+                      const parent = e.target.parentElement;
+                      const input = parent ? parent.querySelector("input") : null;
+                      if (input instanceof HTMLInputElement && input.value.trim()) {
+                        addAttributeValue(attr.name, input.value.trim());
+                        input.value = "";
+                      }
                     }
                   }}
                   style={{
@@ -1545,12 +1550,12 @@ export default function CategoryFilters({
                               marginRight: "0.5rem"
                             }}
                             onKeyDown={(e) => {
-                              // @ts-ignore
-                              const target = e.target;
-                              if (e.key === "Enter" && target.value && target.value.trim()) {
-                                saveEditedAttributeValue(attr.name, item, target.value.trim());
-                              } else if (e.key === "Escape") {
-                                cancelEditingAttributeValue(attr.name, item);
+                              if (e.target instanceof HTMLInputElement) {
+                                if (e.key === "Enter" && e.target.value && e.target.value.trim()) {
+                                  saveEditedAttributeValue(attr.name, item, e.target.value.trim());
+                                } else if (e.key === "Escape") {
+                                  cancelEditingAttributeValue(attr.name, item);
+                                }
                               }
                             }}
                             onChange={(e) => {
@@ -1824,11 +1829,11 @@ export default function CategoryFilters({
                         padding: "0.5rem 0.75rem"
                       }}
                       onKeyDown={(e) => {
-                        // @ts-ignore
-                        const target = e.target;
-                        if (e.key === "Enter" && target.value && target.value.trim()) {
-                          addAttributeValueToCategory(attr.name, target.value.trim());
-                          target.value = "";
+                        if (e.target instanceof HTMLInputElement) {
+                          if (e.key === "Enter" && e.target.value && e.target.value.trim()) {
+                            addAttributeValueToCategory(attr.name, e.target.value.trim());
+                            e.target.value = "";
+                          }
                         }
                       }}
                     />
@@ -1836,11 +1841,13 @@ export default function CategoryFilters({
                       type="button"
                       size="sm"
                       onClick={(e) => {
-                        // @ts-ignore
-                        const input = (e.target && e.target.parentElement && e.target.parentElement.querySelector("input")) || null;
-                        if (input && input.value.trim()) {
-                          addAttributeValueToCategory(attr.name, input.value.trim());
-                          input.value = "";
+                        if (e.target instanceof HTMLElement) {
+                          const parent = e.target.parentElement;
+                          const input = parent ? parent.querySelector("input") : null;
+                          if (input instanceof HTMLInputElement && input.value.trim()) {
+                            addAttributeValueToCategory(attr.name, input.value.trim());
+                            input.value = "";
+                          }
                         }
                       }}
                       style={{
@@ -1909,12 +1916,12 @@ export default function CategoryFilters({
                                   marginRight: "0.5rem"
                                 }}
                                 onKeyDown={(e) => {
-                                  // @ts-ignore
-                                  const target = e.target;
-                                  if (e.key === "Enter" && target.value && target.value.trim()) {
-                                    saveEditedAttributeValue(attr.name, item, target.value.trim());
-                                  } else if (e.key === "Escape") {
-                                    cancelEditingAttributeValue(attr.name, item);
+                                  if (e.target instanceof HTMLInputElement) {
+                                    if (e.key === "Enter" && e.target.value && e.target.value.trim()) {
+                                      saveEditedAttributeValue(attr.name, item, e.target.value.trim());
+                                    } else if (e.key === "Escape") {
+                                      cancelEditingAttributeValue(attr.name, item);
+                                    }
                                   }
                                 }}
                                 onChange={(e) => {
