@@ -5,6 +5,7 @@ import userReducer from './slices/userSlice';
 import productReducer from './slices/productSlice';
 import cartReducer from './slices/cartSlice';
 import wishlistReducer from './slices/wishlistSlice';
+import categoryReducer from './slices/categorySlice';
 import { combineReducers } from 'redux';
 
 const persistConfig = {
@@ -18,6 +19,7 @@ const rootReducer = combineReducers({
   productsState: productReducer,
   cartState: cartReducer,
   wishlistState: wishlistReducer,
+  categoriesState: categoryReducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

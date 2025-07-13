@@ -14,6 +14,7 @@ import Footer from "./components/footer/page"
 import Navbar from "./components/navBar/page"
 import { useDispatch, useSelector } from "react-redux"
 import { getProducts } from "./actions/productAction"
+import { getCategories } from "./actions/categoryAction"
 import Link from "next/link"
 import { AiFillStar, AiOutlineStar, AiTwotoneStar } from 'react-icons/ai';
 import Loader from "./components/loader/page"
@@ -25,6 +26,7 @@ const images = ["/1.jpg", "/2.jpg", "/3.jpg"]
 
 export default function FancyCarousel() {
   const { allProducts } = useSelector((state) => state.productsState)
+  const { categories } = useSelector((state) => state.categoriesState)
   const { isAuthenticated } = useSelector((state) => state.userState)
   const dispatch = useDispatch()
     
@@ -32,6 +34,7 @@ export default function FancyCarousel() {
 
   useEffect(() => {
     dispatch(getProducts())
+    dispatch(getCategories())
     console.log("checkig",allProducts)
   }, [dispatch])
 
@@ -49,6 +52,20 @@ export default function FancyCarousel() {
   // Helper function to check if image is external
   const isExternalImage = (src) => {
     return src && (src.startsWith('http://') || src.startsWith('https://'));
+  };
+
+  // Helper function to get category image
+  const getCategoryImage = (category) => {
+    if (category?.image) {
+      return category.image;
+    }
+    // Fallback to icon or default image based on category name
+    const categoryName = category?.name?.toLowerCase();
+    if (categoryName?.includes('balloon')) return '/balloon.svg';
+    if (categoryName?.includes('mug')) return '/mug.svg';
+    if (categoryName?.includes('birthday') || categoryName?.includes('card')) return '/birthday-invitation.svg';
+    if (categoryName?.includes('home') || categoryName?.includes('living')) return '/home.svg';
+    return '/placeholder.svg';
   };
 
   const cards = [
@@ -77,18 +94,6 @@ export default function FancyCarousel() {
         "Schedule a surprise delivery for your loved ones at just the right moment. We'll handle the magic while you enjoy the reactions.",
     },
   ]
-
-  const categories = [
-    { name: "Balloons", image: "/balloon.svg?height=80&width=80" },
-    { name: "Mugs", image: "/mug.svg?height=80&width=80" },
-    { name: "Birthday Cards", image: "/birthday-invitation.svg?height=80&width=80" },
-    { name: "Home & Living", image: "/home.svg?height=80&width=80" },
-      // { name: "Sports", image: "/placeholder.svg?height=80&width=80" },
-      // { name: "Books", image: "/placeholder.svg?height=80&width=80" },
-      // { name: "Toys", image: "/placeholder.svg?height=80&width=80" },
-      // { name: "Beauty", image: "/placeholder.svg?height=80&width=80" },
-  ]
-
 
   const settings = {
     dots: true,
@@ -142,22 +147,47 @@ export default function FancyCarousel() {
           </div>
 
           <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 gap-4">
-            {categories.map((category, index) => (
-              <div key={index} className="flex flex-col items-center space-y-2 group cursor-pointer">
-                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-2 border-gray-200 overflow-hidden group-hover:border-purple-400 transition-colors">
-                  <Image
-                    src={category.image || "/placeholder.svg"}
-                    alt={category.name}
-                    width={80}
-                    height={80}
-                    className="w-full h-full object-cover"
-                  />
+            {categories && categories.length > 0 ? (
+              categories.map((category, index) => (
+                <div key={category._id || index} className="flex flex-col items-center space-y-2 group cursor-pointer">
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-2 border-gray-200 overflow-hidden group-hover:border-purple-400 transition-colors">
+                    <Image
+                      src={getCategoryImage(category)}
+                      alt={category.name}
+                      width={80}
+                      height={80}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <span className="text-xs sm:text-sm text-center text-gray-700 group-hover:text-purple-600 transition-colors">
+                    {category.name}
+                  </span>
                 </div>
-                <span className="text-xs sm:text-sm text-center text-gray-700 group-hover:text-purple-600 transition-colors">
-                  {category.name}
-                </span>
-              </div>
-            ))}
+              ))
+            ) : (
+              // Fallback categories if database is empty
+              [
+                { name: "Balloons", image: "/balloon.svg" },
+                { name: "Mugs", image: "/mug.svg" },
+                { name: "Birthday Cards", image: "/birthday-invitation.svg" },
+                { name: "Home & Living", image: "/home.svg" },
+              ].map((category, index) => (
+                <div key={index} className="flex flex-col items-center space-y-2 group cursor-pointer">
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-2 border-gray-200 overflow-hidden group-hover:border-purple-400 transition-colors">
+                    <Image
+                      src={category.image}
+                      alt={category.name}
+                      width={80}
+                      height={80}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <span className="text-xs sm:text-sm text-center text-gray-700 group-hover:text-purple-600 transition-colors">
+                    {category.name}
+                  </span>
+                </div>
+              ))
+            )}
           </div>
         </section>
 
