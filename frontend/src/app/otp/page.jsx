@@ -159,7 +159,7 @@ export default function OTPPage() {
           className="flex items-center gap-2 text-[#822be2] hover:text-[#822be2]/80 transition-colors mb-6"
         >
           <ArrowLeft className="h-4 w-4" />
-          <span onClick={() => handleNavigation('/login')}  className="text-sm font-medium">Back to Login</span>
+          <span onClick={() => handleNavigation('/signup')}  className="text-sm font-medium">Back to Signup</span>
         </button>
 
         {/* OTP Form */}

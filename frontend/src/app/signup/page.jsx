@@ -5,7 +5,7 @@ import { Eye, EyeOff } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import axios from "axios"
-import { toast } from "react-hot-toast"
+import { toast, Toaster } from 'sonner';
 import Image from "next/image"
 import logo from '../../assets/logo.png'
 
@@ -29,7 +29,7 @@ export default function Component() {
 
   const validateForm = () => {
     const newErrors = {}
-    
+
     if (!formData.firstName.trim()) newErrors.firstName = "First name is required"
     if (!formData.lastName.trim()) newErrors.lastName = "Last name is required"
     if (!formData.email.trim()) {
@@ -77,13 +77,18 @@ export default function Component() {
     }
   }
 
+  function generateOTP() {
+    return Math.floor(1000 + Math.random() * 9000).toString();
+  }
+
+
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    
-    if (!validateForm()) return
+    e.preventDefault();
+
+    if (!validateForm()) return;
 
     try {
-      setLoading(true)
+      setLoading(true);
       const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/register`, {
         firstName: formData.firstName,
         lastName: formData.lastName,
@@ -94,19 +99,84 @@ export default function Component() {
         zipCode: formData.zipCode
       }, {
         withCredentials: true
-      })
+      });
 
       if (response.data.success) {
-        toast.success('Account created successfully!')
-        router.push('/login') // Redirect to login page
+        const otp = generateOTP();
+        await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/otp`, {
+          email: formData.email,
+          otp: otp
+        }, {
+          withCredentials: true
+        });
+
+        await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/Email/sendEmail`, {
+          to: formData.email,
+          subject: "Best Wishes - Email Verification Code",
+          html: `
+    <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: auto;">
+      <h2 style="color: #822be2;">Hello ${formData.firstName},</h2>
+
+      <p>Thank you for registering with <strong>Best Wishes</strong>, your trusted E-Commerce platform.</p>
+
+      <p>Your One-Time Password (OTP) for email verification is:</p>
+
+      <div style="font-size: 24px; font-weight: bold; color: #ffffff; background-color: #822be2; padding: 10px 20px; width: fit-content; border-radius: 6px;">
+        ${otp}
+      </div>
+
+      <p style="margin-top: 20px;">
+        Please enter this code within <strong>1 minute</strong> to complete your registration.
+      </p>
+
+      <p>If you did not request this code, please ignore this email.</p>
+
+      <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;" />
+
+      <p style="font-size: 14px; color: #777;">
+        Best regards,<br/>
+        <strong>The Best Wishes Team</strong><br/>
+        <a href="https://www.bestwishes.lk" style="color: #822be2; text-decoration: none;">www.bestwishes.lk</a>
+      </p>
+    </div>
+  `
+        });
+
+
+        await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/twoFactor`, {
+          email: formData.email,
+          twoFactorEnabled: true
+        }, {
+          withCredentials: true
+        });
+
+        toast.success(`Hi ${formData.firstName} ,OTP sent your Email`);
+
+
+        setTimeout(() => {
+          router.push('/otp');
+        }, 2000); // wait 2 seconds before redirecting
+
       }
     } catch (error) {
-      const message = error.response?.data?.message || 'Something went wrong'
-      toast.error(message)
+      let message = 'Something went wrong';
+      if (error.response && error.response.data) {
+        message = error.response.data.message || message;
+      }
+
+      toast.error(message);
+
+      // Inline error update (optional but nice UX)
+      if (message.toLowerCase().includes('email')) {
+        setErrors(prev => ({
+          ...prev,
+          email: message
+        }));
+      }
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-[#f8f8f8] flex items-center justify-center p-4 sm:p-6 md:p-8">
@@ -115,9 +185,9 @@ export default function Component() {
         <div className="text-center mb-6 sm:mb-8">
           <div className="flex justify-center mb-4">
             <div className="w-[250px] relative">
-              <Image 
-                src={logo} 
-                alt="Best Wishes Logo" 
+              <Image
+                src={logo}
+                alt="Best Wishes Logo"
                 className="w-full h-auto"
                 priority
               />
@@ -333,6 +403,7 @@ export default function Component() {
           </p>
         </form>
       </div>
+      <Toaster position="top-center" richColors closeButton />
     </div>
   )
 }

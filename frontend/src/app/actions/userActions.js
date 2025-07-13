@@ -19,7 +19,11 @@ export const fetchUserProfile = () => async (dispatch) => {
     const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/myprofile`, { withCredentials: true });
     
     if (response.data && response.data.user) {
+
+      // console.log('User profile fetched successfully:', response.data.user);
+
       console.log('User profile fetched successfully:', response.data.user);
+
       dispatch(userLogin({ user: response.data.user, role: response.data.user.role }));
     } else {
       console.log('No user data in response:', response.data);

@@ -1,10 +1,12 @@
 const express = require('express');
 
-const {registerUser, loginUser, logoutUser, getUserProfile, changePassword, updateUserProfile} = require('../controllers/authController');
+const {registerUser, loginUser, logoutUser, getUserProfile, changePassword, updateUserProfile, otp, twoFactor} = require('../controllers/authController');
 const { isAuthenticated } = require('../middleware/authMiddleware');
 const router = express.Router();
 
 router.route('/register').post(registerUser);
+router.route('/otp').post(otp);
+router.route('/twoFactor').put(twoFactor);
 router.route('/login').post(loginUser);
 router.route('/logout').post(logoutUser);
 router.route('/myprofile').get(isAuthenticated, getUserProfile);

@@ -1,5 +1,6 @@
 const jwt = require("jsonwebtoken");
 const User = require('../models/User');
+const Otp = require('../models/Otp');
 
 
 // Token generator--summa
@@ -14,7 +15,7 @@ const generateToken = (user) => {
 
 // Register - {base_url} /api/register
 exports.registerUser = async (req, res) => {
-  const { firstName, lastName, email, password, phone, address } = req.body;
+  const { firstName, lastName, email, password, phone, address, zipCode } = req.body;
 
   try {
     const olduser = await User.findOne({ email });
@@ -33,6 +34,7 @@ exports.registerUser = async (req, res) => {
       password,
       phone,
       address,
+      zipCode,
       role: 'user'
     });
 
@@ -67,6 +69,48 @@ exports.registerUser = async (req, res) => {
     });
   }
 };
+
+
+// otp - {base_url} /api/otp
+exports.otp = async (req, res) => {
+  const { email, otp } = req.body;
+  await Otp.create({
+      email,
+      otp
+    });
+    res.status(201).json({
+      success: true
+    });
+};
+
+
+// otp - {base_url} /api/twoFactor
+exports.twoFactor = async (req, res) => {
+  try {
+    const { email, twoFactorEnabled } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ success: false, message: 'Email is required' });
+    }
+
+    const updatedUser = await User.findOneAndUpdate(
+      { email }, // Find by email
+      { twoFactorEnabled }, // Update the field
+      { new: true } // Return the updated user
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    return res.status(200).json({ success: true, user: updatedUser });
+  } catch (error) {
+    console.error('Error updating twoFactorEnabled:', error);
+    return res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
+
 
 
 
@@ -111,6 +155,9 @@ exports.loginUser = async (req, res) => {
         address: user.address,
         zipCode: user.zipCode,
         profileImage: user.profileImage,
+
+        twoFactorEnabled:user.twoFactorEnabled
+
       }
     });
 
