@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const connectDB = async () => {
   try {
     // Use environment variable or fallback to the provided MongoDB Atlas connection
-    const mongoURI = process.env.MONGO_URI || "mongodb+srv://cst21056:zShz90VmkH43JJcU@bestwishes.2aognuv.mongodb.net/bestwise?retryWrites=true&w=majority&appName=Bestwishes";
+    const mongoURI = process.env.MONGO_URI || "mongodb+srv://cst21056:zShz90VmkH43JJcU@bestwishes.2aognuv.mongodb.net/bestwise?retryWrites=true&w=majority";
     
     // Connect to MongoDB Atlas with proper options
     await mongoose.connect(mongoURI, {
