@@ -132,17 +132,26 @@ export const refreshAllData = async () => {
   };
 };
 
-// Auto-fetch real data on module load
-if (typeof window !== 'undefined') {
-  // Fetch categories immediately
-  fetchCategoriesFromDB();
-  
-  // Fetch products if needed
-  fetchProductsFromDB();
-  
-  // Set up periodic refresh (every 2 minutes for real-time updates)
-  setInterval(refreshAllData, 2 * 60 * 1000);
-}
+// Auto-fetch real data on module load (client-side only)
+let isInitialized = false;
+
+const initializeData = () => {
+  if (typeof window !== 'undefined' && !isInitialized) {
+    isInitialized = true;
+    
+    // Fetch categories immediately
+    fetchCategoriesFromDB();
+    
+    // Fetch products if needed
+    fetchProductsFromDB();
+    
+    // Set up periodic refresh (every 2 minutes for real-time updates)
+    setInterval(refreshAllData, 2 * 60 * 1000);
+  }
+};
+
+// Initialize data when module loads
+initializeData();
 
 // NO DUMMY DATA - All data comes from MongoDB in real-time
 
@@ -253,15 +262,20 @@ export const getUniqueAttributeValues = (categoryKey, attributeName) => {
   return Array.from(values);
 };
 
-// Real-time update listeners setup
-if (typeof window !== 'undefined') {
-  window.addEventListener('categoriesUpdated', (event) => {
-    console.log('Real Categories data updated from MongoDB:', event.detail);
-    // Trigger UI updates here
-  });
-  
-  window.addEventListener('productsUpdated', (event) => {
-    console.log('Real Products data updated from MongoDB:', event.detail);
-    // Trigger UI updates here
-  });
-}
+// Real-time update listeners setup (client-side only)
+const setupEventListeners = () => {
+  if (typeof window !== 'undefined') {
+    window.addEventListener('categoriesUpdated', (event) => {
+      console.log('Real Categories data updated from MongoDB:', event.detail);
+      // Trigger UI updates here
+    });
+    
+    window.addEventListener('productsUpdated', (event) => {
+      console.log('Real Products data updated from MongoDB:', event.detail);
+      // Trigger UI updates here
+    });
+  }
+};
+
+// Setup event listeners when module loads
+setupEventListeners();
