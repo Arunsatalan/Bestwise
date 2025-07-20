@@ -1,4 +1,7 @@
-import { Suspense } from "react"
+"use client"
+
+import { Suspense, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 import { ProductShowcase } from "./product-showcase"
 import { FilterSidebar } from "./filter-sidebar"
 import { CategoryExplorer } from "./category-explorer"
@@ -7,6 +10,9 @@ import { SortingOptions } from "./sorting-options"
 import { MobileFilterDrawer } from "./mobile-filter-drawer"
 
 export default function ShowcasePage() {
+  const searchParams = useSearchParams()
+  const categoryFromUrl = searchParams.get('category')
+
   return (
     <Providers>
       <div className="container mx-auto px-4 py-8">
@@ -15,7 +21,7 @@ export default function ShowcasePage() {
           <nav className="flex text-sm">
             <ol className="flex items-center space-x-2">
               <li>
-                <a href="#" className="text-gray-500 hover:text-purple-600">
+                <a href="/" className="text-gray-500 hover:text-purple-600">
                   Home
                 </a>
               </li>
@@ -23,7 +29,9 @@ export default function ShowcasePage() {
                 <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
                 </svg>
-                <span className="text-gray-900 font-medium">Products</span>
+                <span className="text-gray-900 font-medium">
+                  {categoryFromUrl ? `${categoryFromUrl} Products` : 'Products'}
+                </span>
               </li>
             </ol>
           </nav>
@@ -45,13 +53,15 @@ export default function ShowcasePage() {
           </div>
         </div>
 
-        <h1 className="text-3xl font-bold mb-6">Product Showcase</h1>
+        <h1 className="text-3xl font-bold mb-6">
+          {categoryFromUrl ? `${categoryFromUrl} Products` : 'Product Showcase'}
+        </h1>
 
         <div className="flex flex-col md:flex-row gap-6">
           {/* Sidebar with filters - hidden on mobile */}
           <div className="w-full md:w-1/4 hidden md:block">
             <Suspense fallback={<div className="h-screen bg-gray-100 animate-pulse rounded-lg"></div>}>
-              <FilterSidebar />
+              <FilterSidebar initialCategory={categoryFromUrl} />
             </Suspense>
           </div>
 

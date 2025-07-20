@@ -16,7 +16,7 @@ import {
 
 // NO STATIC DATA - All filter options fetched from MongoDB in real-time
 
-export function FilterSidebar() {
+export function FilterSidebar({ initialCategory }) {
   const dispatch = useDispatch()
   const { category, filters } = useSelector((state) => state.products.filters)
   const [selectedFilters, setSelectedFilters] = useState({})
@@ -111,6 +111,14 @@ export function FilterSidebar() {
     })
     setExpandedSections(newExpandedSections)
   }, [category, availableFilters, dispatch])
+
+  // Set initial category from URL parameter
+  useEffect(() => {
+    if (initialCategory && initialCategory !== category) {
+      console.log('Setting initial category from URL:', initialCategory)
+      handleCategoryChange(initialCategory)
+    }
+  }, [initialCategory, category])
 
   // Function to fetch filtered products from database
   const fetchFilteredProducts = async (filterParams) => {

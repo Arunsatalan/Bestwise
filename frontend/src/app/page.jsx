@@ -16,6 +16,7 @@ import { useDispatch, useSelector } from "react-redux"
 import { getProducts } from "./actions/productAction"
 import { getCategories } from "./actions/categoryAction"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { AiFillStar, AiOutlineStar, AiTwotoneStar } from 'react-icons/ai';
 import Loader from "./components/loader/page"
 import { addToCart } from "./slices/cartSlice";
@@ -154,6 +155,14 @@ export default function FancyCarousel() {
     ],
   }
 
+  const router = useRouter();
+
+  // Handle category click navigation
+  const handleCategoryClick = (categoryName) => {
+    // Navigate to showcase page with category parameter
+    router.push(`/allProducts/showcase?category=${encodeURIComponent(categoryName)}`);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
@@ -188,7 +197,7 @@ export default function FancyCarousel() {
 
           <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 gap-4">
             {displayCategories.map((category, index) => (
-              <div key={category._id || index} className="flex flex-col items-center space-y-2 group cursor-pointer">
+              <div key={category._id || index} className="flex flex-col items-center space-y-2 group cursor-pointer hover:transform hover:scale-105 transition-all duration-200" onClick={() => handleCategoryClick(category.name)}>
                 <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-2 border-gray-200 overflow-hidden group-hover:border-purple-400 transition-colors">
                   <Image
                     src={getCategoryImage(category)}
