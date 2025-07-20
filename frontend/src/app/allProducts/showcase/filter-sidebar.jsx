@@ -2,14 +2,16 @@
 
 import { useState, useEffect } from "react"
 import { useDispatch, useSelector } from "react-redux"
-import { setFilter, setCategory } from "./store"
+import { setFilter, setCategory, setFilteredProducts } from "./store"
 import { 
   getAllCategories, 
   getCategoryByName, 
   getCategoryAttributes, 
   getAttributeValues,
   getUniqueAttributeValues,
-  refreshAllData
+  refreshAllData,
+  fetchFilteredProductsFromDB,
+  getAllProducts
 } from "./sample-data"
 
 // NO STATIC DATA - All filter options fetched from MongoDB in real-time
@@ -108,15 +110,41 @@ export function FilterSidebar() {
       newExpandedSections[key] = true
     })
     setExpandedSections(newExpandedSections)
-  }, [category])
+  }, [category, availableFilters, dispatch])
 
-  // Handle category change
-  const handleCategoryChange = (newCategory) => {
-    dispatch(setCategory(newCategory))
+  // Function to fetch filtered products from database
+  const fetchFilteredProducts = async (filterParams) => {
+    try {
+      console.log('Fetching filtered products with params:', filterParams)
+      const filteredProducts = await fetchFilteredProductsFromDB(filterParams)
+      dispatch(setFilteredProducts(filteredProducts))
+    } catch (error) {
+      console.error('Error fetching filtered products:', error)
+    }
   }
 
-  // Handle filter change
-  const handleFilterChange = (filterKey, value) => {
+  // Handle category change with real-time database filtering
+  const handleCategoryChange = async (newCategory) => {
+    console.log('Category changed to:', newCategory)
+    console.log('Available categories:', categoriesData)
+    dispatch(setCategory(newCategory))
+    
+    // Fetch products for the new category from database
+    if (newCategory === "") {
+      // For "All Categories", fetch all products
+      const allProducts = getAllProducts()
+      dispatch(setFilteredProducts(allProducts))
+    } else {
+      // For specific category, fetch filtered products
+      await fetchFilteredProducts({
+        category: newCategory,
+        filters: {} // Reset filters when category changes
+      })
+    }
+  }
+
+  // Handle filter change with real-time database filtering
+  const handleFilterChange = async (filterKey, value) => {
     const currentValues = selectedFilters[filterKey] || []
     const newValues = currentValues.includes(value)
       ? currentValues.filter((v) => v !== value)
@@ -129,6 +157,15 @@ export function FilterSidebar() {
 
     setSelectedFilters(updatedFilters)
     dispatch(setFilter({ key: filterKey, values: newValues }))
+    
+    // Fetch filtered products from database
+    await fetchFilteredProducts({
+      category,
+      filters: {
+        ...filters,
+        [filterKey]: newValues
+      }
+    })
   }
 
   // Handle price range change
@@ -143,26 +180,53 @@ export function FilterSidebar() {
     }
   }
 
-  // Apply price range when slider interaction ends
-  const handlePriceChangeEnd = () => {
+  // Apply price range when slider interaction ends with database filtering
+  const handlePriceChangeEnd = async () => {
     dispatch(setFilter({ key: "price", values: priceRange }))
+    
+    // Fetch filtered products from database
+    await fetchFilteredProducts({
+      category,
+      filters: {
+        ...filters,
+        price: priceRange
+      }
+    })
   }
 
-  // Handle rating filter
-  const handleRatingChange = (rating) => {
+  // Handle rating filter with database filtering
+  const handleRatingChange = async (rating) => {
     const newRatings = ratingFilter.includes(rating)
       ? ratingFilter.filter((r) => r !== rating)
       : [...ratingFilter, rating]
 
     setRatingFilter(newRatings)
     dispatch(setFilter({ key: "rating", values: newRatings }))
+    
+    // Fetch filtered products from database
+    await fetchFilteredProducts({
+      category,
+      filters: {
+        ...filters,
+        rating: newRatings
+      }
+    })
   }
 
-  // Handle discount filter
-  const handleDiscountChange = (hasDiscount) => {
+  // Handle discount filter with database filtering
+  const handleDiscountChange = async (hasDiscount) => {
     const newValue = discountFilter.includes(hasDiscount) ? [] : [hasDiscount]
     setDiscountFilter(newValue)
     dispatch(setFilter({ key: "discount", values: newValue }))
+    
+    // Fetch filtered products from database
+    await fetchFilteredProducts({
+      category,
+      filters: {
+        ...filters,
+        discount: newValue
+      }
+    })
   }
 
   // Toggle section expansion

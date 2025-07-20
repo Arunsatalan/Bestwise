@@ -75,6 +75,162 @@ export const fetchProductsFromDB = async () => {
   }
 };
 
+// Function to fetch filtered products from MongoDB based on applied filters
+export const fetchFilteredProductsFromDB = async (filters = {}) => {
+  try {
+    console.log('Fetching filtered products from database with filters:', filters);
+    
+    // First try the filter endpoint
+    try {
+      // Build query parameters
+      const queryParams = new URLSearchParams();
+      
+      // Add category filter
+      if (filters.category && filters.category !== '') {
+        queryParams.append('category', filters.category);
+      }
+      
+      // Add attribute filters
+      if (filters.filters) {
+        Object.entries(filters.filters).forEach(([key, values]) => {
+          if (values && Array.isArray(values) && values.length > 0) {
+            if (key === 'price') {
+              queryParams.append('minPrice', values[0]);
+              queryParams.append('maxPrice', values[1]);
+            } else if (key === 'rating') {
+              queryParams.append('minRating', Math.min(...values));
+            } else if (key === 'discount') {
+              if (values.includes('yes') || values.includes(true)) {
+                queryParams.append('hasDiscount', 'true');
+              }
+            } else {
+              // Attribute filters (color, size, brand, etc.)
+              values.forEach(value => {
+                queryParams.append(`attributes.${key}`, value);
+              });
+            }
+          }
+        });
+      }
+      
+      const url = `${API_BASE_URL}/products/filter?${queryParams.toString()}`;
+      console.log('Fetching from URL:', url);
+      
+      const response = await fetch(url);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        const filteredProducts = result.data || [];
+        console.log('Filtered products fetched from MongoDB:', filteredProducts);
+        
+        // Trigger update event for UI components
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('filteredProductsUpdated', { 
+            detail: { products: filteredProducts, filters }
+          }));
+        }
+        
+        return filteredProducts;
+      } else {
+        console.warn('API returned success:false, falling back to local filtering:', result.message);
+        throw new Error(result.message || 'Failed to fetch filtered products');
+      }
+    } catch (apiError) {
+      console.warn('Filter API endpoint failed, falling back to local filtering:', apiError.message);
+      
+      // Fallback: Get all products and filter locally
+      const allProducts = await fetchProductsFromDB();
+      if (!allProducts || allProducts.length === 0) {
+        console.error('No products available for local filtering');
+        return [];
+      }
+      
+      console.log('Applying local filtering to', allProducts.length, 'products');
+      
+      // Apply local filtering
+      console.log('Available product categories:', allProducts.map(p => ({ name: p.name, category: p.category, mainCategory: p.mainCategory })));
+      console.log('Filtering for category:', filters.category);
+      
+      const filteredProducts = allProducts.filter(product => {
+        // Filter by category
+        if (filters.category && filters.category !== '') {
+          // Normalize category names for comparison
+          const normalizeCategory = (cat) => cat.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+          const filterCategory = normalizeCategory(filters.category);
+          
+          const productCategory = normalizeCategory(product.category || '');
+          const productMainCategory = normalizeCategory(product.mainCategory || '');
+          
+          const categoryMatch = productCategory === filterCategory || 
+                               productMainCategory === filterCategory ||
+                               product.category === filters.category || 
+                               product.mainCategory === filters.category;
+          
+          if (!categoryMatch) {
+            console.log(`Product "${product.name}" doesn't match category "${filters.category}" (normalized: "${filterCategory}") - product.category: "${product.category}" (normalized: "${productCategory}"), product.mainCategory: "${product.mainCategory}" (normalized: "${productMainCategory}")`);
+            return false;
+          } else {
+            console.log(`Product "${product.name}" matches category "${filters.category}"`);
+          }
+        }
+        
+        // Apply other filters
+        if (filters.filters) {
+          for (const [filterKey, filterValues] of Object.entries(filters.filters)) {
+            if (!filterValues || (Array.isArray(filterValues) && filterValues.length === 0)) continue;
+            
+            if (filterKey === 'price') {
+              const [min, max] = filterValues;
+              if (product.price < min || product.price > max) return false;
+            } else if (filterKey === 'discount') {
+              const hasDiscount = product.discount > 0;
+              if (filterValues.includes('yes') || filterValues.includes(true)) {
+                if (!hasDiscount) return false;
+              }
+            } else if (filterKey === 'rating') {
+              if (filterValues.length > 0) {
+                const minRating = Math.min(...filterValues);
+                if (product.rating < minRating) return false;
+              }
+            } else {
+              // Handle attribute filters
+              const productValue = product.attributes?.[filterKey];
+              if (!productValue) return false;
+              
+              if (Array.isArray(productValue)) {
+                if (!filterValues.some(v => productValue.includes(v))) return false;
+              } else {
+                if (!filterValues.includes(productValue)) return false;
+              }
+            }
+          }
+        }
+        
+        return true;
+      });
+      
+      console.log('Local filtering result:', filteredProducts.length, 'products');
+      
+      // Trigger update event for UI components
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('filteredProductsUpdated', { 
+          detail: { products: filteredProducts, filters }
+        }));
+      }
+      
+      return filteredProducts;
+    }
+  } catch (error) {
+    console.error('Error in fetchFilteredProductsFromDB:', error);
+    return [];
+  }
+};
+
 // Function to get all real categories from MongoDB
 export const getAllCategories = () => {
   return categoriesData;
