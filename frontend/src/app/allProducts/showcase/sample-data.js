@@ -160,22 +160,42 @@ export const fetchFilteredProductsFromDB = async (filters = {}) => {
         // Filter by category
         if (filters.category && filters.category !== '') {
           // Normalize category names for comparison
-          const normalizeCategory = (cat) => cat.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+          const normalizeCategory = (cat) => cat.toLowerCase()
+            .replace(/\s*&\s*/g, '-')  // Replace & with hyphen
+            .replace(/\s+/g, '-')      // Replace spaces with hyphens
+            .replace(/[^a-z0-9-]/g, '') // Remove special chars except hyphens
+            .replace(/-+/g, '-')       // Replace multiple hyphens with single
+            .replace(/^-|-$/g, '');    // Remove leading/trailing hyphens
           const filterCategory = normalizeCategory(filters.category);
           
           const productCategory = normalizeCategory(product.category || '');
           const productMainCategory = normalizeCategory(product.mainCategory || '');
           
-          const categoryMatch = productCategory === filterCategory || 
-                               productMainCategory === filterCategory ||
-                               product.category === filters.category || 
-                               product.mainCategory === filters.category;
+          // Multiple matching strategies for flexibility
+          const exactMatch = productCategory === filterCategory || 
+                            productMainCategory === filterCategory ||
+                            product.category === filters.category || 
+                            product.mainCategory === filters.category;
+          
+          // Flexible matching for plural/singular and partial matches (more precise)
+          const flexibleMatch = !exactMatch && (
+            // Only allow partial matches if they're substantial (at least 4 chars and 70% match)
+            (filterCategory.length >= 4 && productCategory.length >= 4 && 
+             (productCategory.includes(filterCategory) || filterCategory.includes(productCategory))) ||
+            (filterCategory.length >= 4 && productMainCategory.length >= 4 && 
+             (productMainCategory.includes(filterCategory) || filterCategory.includes(productMainCategory))) ||
+            // Handle plural/singular (remove 's' from end) - but only if substantial match
+            (filterCategory.length >= 4 && productCategory.replace(/s$/, '') === filterCategory.replace(/s$/, '')) ||
+            (filterCategory.length >= 4 && productMainCategory.replace(/s$/, '') === filterCategory.replace(/s$/, ''))
+          );
+          
+          const categoryMatch = exactMatch || flexibleMatch;
           
           if (!categoryMatch) {
             console.log(`Product "${product.name}" doesn't match category "${filters.category}" (normalized: "${filterCategory}") - product.category: "${product.category}" (normalized: "${productCategory}"), product.mainCategory: "${product.mainCategory}" (normalized: "${productMainCategory}")`);
             return false;
           } else {
-            console.log(`Product "${product.name}" matches category "${filters.category}"`);
+            console.log(`Product "${product.name}" matches category "${filters.category}" ${exactMatch ? '(exact)' : '(flexible)'}`);
           }
         }
         
