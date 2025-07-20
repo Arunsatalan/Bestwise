@@ -5,7 +5,7 @@ const initialState = {
   products: [],
   filteredProducts: [],
   filters: {
-    category: "Balloons",
+    category: "", // Default to "All Categories" (empty string)
     filters: {},
   },
   loading: false,
@@ -20,14 +20,14 @@ export const productSlice = createSlice({
     setProducts: (state, action) => {
       state.products = action.payload
       state.filteredProducts = action.payload.filter(
-        (product) => product.category === state.filters.category
+        (product) => product.category === state.filters.category || state.filters.category === ""
       )
     },
     setCategory: (state, action) => {
       state.filters.category = action.payload
       state.filters.filters = {}
       state.filteredProducts = state.products.filter(
-        (product) => product.category === action.payload
+        (product) => product.category === action.payload || action.payload === ""
       )
     },
     setFilter: (state, action) => {
@@ -35,7 +35,7 @@ export const productSlice = createSlice({
       state.filters.filters[key] = values
 
       state.filteredProducts = state.products.filter((product) => {
-        if (product.category !== state.filters.category) return false
+        if (product.category !== state.filters.category && state.filters.category !== "") return false
 
         for (const [filterKey, filterValues] of Object.entries(state.filters.filters)) {
           if (!filterValues || (Array.isArray(filterValues) && filterValues.length === 0)) continue

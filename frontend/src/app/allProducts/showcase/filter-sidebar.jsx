@@ -188,11 +188,14 @@ export function FilterSidebar() {
           {isLoading ? (
             <option value="">Loading categories...</option>
           ) : (
-            categoriesData.map((cat) => (
-              <option key={cat.key} value={cat.name}>
-                {cat.name}
-              </option>
-            ))
+            <>
+              <option value="">All Categories</option>
+              {categoriesData.map((cat) => (
+                <option key={cat.key} value={cat.name}>
+                  {cat.name}
+                </option>
+              ))}
+            </>
           )}
         </select>
       </div>
