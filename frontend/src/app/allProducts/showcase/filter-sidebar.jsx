@@ -3,239 +3,16 @@
 import { useState, useEffect } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { setFilter, setCategory } from "./store"
+import { 
+  getAllCategories, 
+  getCategoryByName, 
+  getCategoryAttributes, 
+  getAttributeValues,
+  getUniqueAttributeValues,
+  refreshAllData
+} from "./sample-data"
 
-// Define filter options for each category with more examples
-const filterOptions = {
-  Balloons: {
-    occasion: [
-      "Birthday",
-      "Wedding",
-      "Anniversary",
-      "Valentine's Day",
-      "Graduation",
-      "Baby Shower",
-      "Halloween",
-      "Christmas",
-      "New Year",
-      "Retirement",
-      "Engagement",
-      "Hen Party",
-      "Stag Do",
-      "Christening",
-    ],
-    type: [
-      "Latex",
-      "Foil",
-      "Bubble",
-      "Number/Letter",
-      "Confetti",
-      "LED",
-      "Helium-filled",
-      "Air-filled",
-      "Biodegradable",
-      "Shaped",
-    ],
-    size: ["Mini", "Standard", "Large", "Giant", "Jumbo", "Custom"],
-    color: [
-      "Red",
-      "Pink",
-      "Blue",
-      "Gold",
-      "Silver",
-      "Multi-color",
-      "Green",
-      "Purple",
-      "Black",
-      "White",
-      "Yellow",
-      "Orange",
-      "Rose Gold",
-      "Teal",
-      "Navy",
-      "Pastel Mix",
-    ],
-    finish: ["Matte", "Metallic", "Chrome", "Confetti", "Glitter", "Pearlescent", "Transparent", "Opaque"],
-  },
-  Cards: {
-    occasion: [
-      "Birthday",
-      "Wedding",
-      "Anniversary",
-      "Sympathy",
-      "Congratulations",
-      "Thank You",
-      "Get Well",
-      "New Baby",
-      "Retirement",
-      "Graduation",
-      "New Home",
-      "Engagement",
-      "Valentine's Day",
-      "Christmas",
-      "Easter",
-    ],
-    recipient: [
-      "Friend",
-      "Family",
-      "Partner",
-      "Colleague",
-      "Child",
-      "Parent",
-      "Grandparent",
-      "Teacher",
-      "Boss",
-      "Sibling",
-      "Cousin",
-      "Aunt/Uncle",
-      "Niece/Nephew",
-    ],
-    style: [
-      "Funny",
-      "Sentimental",
-      "Artistic",
-      "Photo",
-      "Pop-up",
-      "Musical",
-      "Handmade",
-      "Vintage",
-      "Modern",
-      "Minimalist",
-      "Luxury",
-      "Illustrated",
-      "Personalized",
-      "Letterpress",
-      "Foil",
-    ],
-  },
-  "Home & Living": {
-    subcategory: [
-      "Clocks",
-      "Frames",
-      "Candles",
-      "Decor",
-      "Garden",
-      "Cushions",
-      "Throws",
-      "Wall Art",
-      "Vases",
-      "Lamps",
-      "Rugs",
-      "Storage",
-      "Mirrors",
-      "Artificial Plants",
-      "Ornaments",
-    ],
-    color: [
-      "White",
-      "Black",
-      "Natural",
-      "Gold",
-      "Silver",
-      "Blue",
-      "Green",
-      "Pink",
-      "Multi-color",
-      "Wood",
-      "Grey",
-      "Beige",
-      "Copper",
-      "Brass",
-      "Terracotta",
-    ],
-    size: ["Small", "Medium", "Large", "Extra Large", "Mini", "Oversized", "Standard"],
-    brand: [
-      "HomeStyle",
-      "LivingCo",
-      "DecorPlus",
-      "FrameIt",
-      "ArtHome",
-      "GardenLife",
-      "LuxDecor",
-      "CozyHome",
-      "ModernLiving",
-      "NaturalHome",
-    ],
-  },
-  "Kitchen & Dining": {
-    type: [
-      "Mugs",
-      "Plates",
-      "Cutlery",
-      "Glasses",
-      "Cookware",
-      "Bakeware",
-      "Serveware",
-      "Storage",
-      "Gadgets",
-      "Textiles",
-      "Teapots",
-      "Coffee Makers",
-      "Coasters",
-      "Placemats",
-      "Trays",
-    ],
-    material: [
-      "Ceramic",
-      "Glass",
-      "Stainless Steel",
-      "Wood",
-      "Plastic",
-      "Silicone",
-      "Porcelain",
-      "Bamboo",
-      "Cast Iron",
-      "Copper",
-      "Marble",
-      "Melamine",
-      "Enamel",
-      "Crystal",
-    ],
-    brand: [
-      "KitchenPro",
-      "DineWell",
-      "CeramicArt",
-      "GlassWorks",
-      "ChefChoice",
-      "HomeCook",
-      "TableTop",
-      "GourmetKitchen",
-      "CulinaryDelight",
-      "DiningElegance",
-    ],
-  },
-  "Toys, Novelties & Collectibles": {
-    ageGroup: ["0-2 years", "3-5 years", "6-8 years", "9-12 years", "13+ years", "Adult", "All Ages"],
-    type: [
-      "Puzzle",
-      "Plush",
-      "Action Figure",
-      "Board Game",
-      "Collectible",
-      "Educational",
-      "Outdoor",
-      "Electronic",
-      "Building",
-      "Arts & Crafts",
-      "Vehicles",
-      "Dolls",
-      "Science Kits",
-      "Musical",
-      "Role Play",
-    ],
-    brand: [
-      "ToyWorld",
-      "CollectMore",
-      "PlayTime",
-      "GameMaster",
-      "KidZone",
-      "LearnPlay",
-      "FunToys",
-      "CollectiblesInc",
-      "CreativeToys",
-      "BrainGames",
-    ],
-  },
-}
+// NO STATIC DATA - All filter options fetched from MongoDB in real-time
 
 export function FilterSidebar() {
   const dispatch = useDispatch()
@@ -249,9 +26,74 @@ export function FilterSidebar() {
     rating: true,
     discount: true,
   })
+  
+  // State for real-time MongoDB data
+  const [categoriesData, setCategoriesData] = useState([])
+  const [availableFilters, setAvailableFilters] = useState({})
+  const [isLoading, setIsLoading] = useState(true)
 
-  // Get the available filters for the current category
-  const availableFilters = filterOptions[category] || {}
+  // Fetch categories and filter options from MongoDB
+  useEffect(() => {
+    const loadCategoriesData = async () => {
+      try {
+        setIsLoading(true)
+        const categories = getAllCategories()
+        setCategoriesData(categories)
+        
+        // Get current category data
+        if (category) {
+          const currentCategory = getCategoryByName(category)
+          if (currentCategory) {
+            const categoryAttrs = getCategoryAttributes(currentCategory.key)
+            setAvailableFilters(categoryAttrs)
+          }
+        }
+      } catch (error) {
+        console.error('Error loading categories data:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadCategoriesData()
+  }, [])
+
+  // Update available filters when category changes
+  useEffect(() => {
+    if (category && categoriesData.length > 0) {
+      const currentCategory = getCategoryByName(category)
+      if (currentCategory) {
+        const categoryAttrs = getCategoryAttributes(currentCategory.key)
+        setAvailableFilters(categoryAttrs)
+      } else {
+        setAvailableFilters({})
+      }
+    }
+  }, [category, categoriesData])
+
+  // Listen for real-time updates from MongoDB
+  useEffect(() => {
+    const handleCategoriesUpdate = (event) => {
+      const { categories } = event.detail
+      setCategoriesData(categories)
+      
+      // Update current category filters if needed
+      if (category) {
+        const currentCategory = categories.find(cat => cat.name === category)
+        if (currentCategory) {
+          const categoryAttrs = getCategoryAttributes(currentCategory.key)
+          setAvailableFilters(categoryAttrs)
+        }
+      }
+    }
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('categoriesUpdated', handleCategoriesUpdate)
+      return () => {
+        window.removeEventListener('categoriesUpdated', handleCategoriesUpdate)
+      }
+    }
+  }, [category])
 
   // Reset filters when category changes
   useEffect(() => {
@@ -343,11 +185,15 @@ export function FilterSidebar() {
           value={category}
           onChange={(e) => handleCategoryChange(e.target.value)}
         >
-          {Object.keys(filterOptions).map((cat) => (
-            <option key={cat} value={cat}>
-              {cat}
-            </option>
-          ))}
+          {isLoading ? (
+            <option value="">Loading categories...</option>
+          ) : (
+            categoriesData.map((cat) => (
+              <option key={cat.key} value={cat.name}>
+                {cat.name}
+              </option>
+            ))
+          )}
         </select>
       </div>
 
