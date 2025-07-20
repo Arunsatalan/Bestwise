@@ -31,7 +31,7 @@ export default function CategoryFilters({
   
   // Debug currentSelectedFilters changes
   useEffect(() => {
-    console.log("🔍 currentSelectedFilters changed:", currentSelectedFilters);
+    console.log(" currentSelectedFilters changed:", currentSelectedFilters);
   }, [currentSelectedFilters])
   const [editingItems, setEditingItems] = useState({})
   const [newItemInputs, setNewItemInputs] = useState({})
@@ -68,9 +68,9 @@ export default function CategoryFilters({
   }, [category])
 
   useEffect(() => {
-    console.log("🔍 CategoryFilters received selectedFilters:", selectedFilters);
+    console.log(" CategoryFilters received selectedFilters:", selectedFilters);
     if (selectedFilters && Object.keys(selectedFilters).length > 0) {
-      console.log("🔍 Setting currentSelectedFilters to:", selectedFilters);
+      console.log(" Setting currentSelectedFilters to:", selectedFilters);
       setCurrentSelectedFilters(selectedFilters)
       
       // Also initialize selectedAttributeValues for editing products
@@ -82,7 +82,7 @@ export default function CategoryFilters({
           attributeValues[key] = [values];
         }
       });
-      console.log("🔍 Initializing selectedAttributeValues for editing:", attributeValues);
+      console.log(" Initializing selectedAttributeValues for editing:", attributeValues);
       setSelectedAttributeValues(attributeValues);
     }
   }, [selectedFilters])
@@ -103,8 +103,8 @@ export default function CategoryFilters({
       const previousFiltersString = JSON.stringify(currentSelectedFilters);
       
       if (currentFiltersString !== previousFiltersString) {
-        console.log("🔍 Selected Attribute Values Changed:", selectedAttributeValues);
-        console.log("🔍 Converted Filters:", filters);
+        console.log(" Selected Attribute Values Changed:", selectedAttributeValues);
+        console.log(" Converted Filters:", filters);
         onFiltersChange(filters);
       }
     }
@@ -121,7 +121,7 @@ export default function CategoryFilters({
   // Initialize selectedAttributeValues when category system loads and we have selectedFilters
   useEffect(() => {
     if (Object.keys(categorySystem).length > 0 && selectedFilters && Object.keys(selectedFilters).length > 0 && isProductForm) {
-      console.log("🔍 Category system loaded, initializing selectedAttributeValues from selectedFilters:", selectedFilters);
+      console.log(" Category system loaded, initializing selectedAttributeValues from selectedFilters:", selectedFilters);
       const attributeValues = {};
       Object.entries(selectedFilters).forEach(([key, values]) => {
         if (Array.isArray(values) && values.length > 0) {
@@ -130,7 +130,7 @@ export default function CategoryFilters({
           attributeValues[key] = [values];
         }
       });
-      console.log("🔍 Setting selectedAttributeValues:", attributeValues);
+      console.log(" Setting selectedAttributeValues:", attributeValues);
       setSelectedAttributeValues(attributeValues);
     }
   }, [categorySystem, selectedFilters, isProductForm])
@@ -317,21 +317,42 @@ export default function CategoryFilters({
   const addItemToAttribute = (attributeIndex, item) => {
     if (!item || !item.trim()) return
 
-    const trimmedItem = item.trim()
+    // Split by comma and process each item
+    const items = item.split(',').map(i => i.trim()).filter(i => i.length > 0)
     const currentAttribute = newCategoryForm.attributes[attributeIndex]
+    const newItems = []
+    const duplicates = []
 
-    // Check for duplicates
-    if (currentAttribute.items.includes(trimmedItem)) {
-      showError("Validation Error", "This item already exists in this attribute!")
-      return
+    // Check each item for duplicates
+    items.forEach(trimmedItem => {
+      if (currentAttribute.items.includes(trimmedItem)) {
+        duplicates.push(trimmedItem)
+      } else {
+        newItems.push(trimmedItem)
+      }
+    })
+
+    // Show warning for duplicates if any
+    if (duplicates.length > 0) {
+      showError("Duplicate Items", `The following items already exist: ${duplicates.join(', ')}`)
     }
 
-    setNewCategoryForm((prev) => ({
-      ...prev,
-      attributes: prev.attributes.map((attr, index) =>
-        index === attributeIndex ? { ...attr, items: [...attr.items, trimmedItem] } : attr,
-      ),
-    }))
+    // Add only new items
+    if (newItems.length > 0) {
+      setNewCategoryForm((prev) => ({
+        ...prev,
+        attributes: prev.attributes.map((attr, index) =>
+          index === attributeIndex ? { ...attr, items: [...attr.items, ...newItems] } : attr,
+        ),
+      }))
+      
+      // Show success message for added items
+      if (newItems.length === 1) {
+        console.log(`Added item: ${newItems[0]}`)
+      } else {
+        console.log(`Added ${newItems.length} items: ${newItems.join(', ')}`)
+      }
+    }
   }
 
   // Remove item from attribute in form
@@ -386,7 +407,7 @@ export default function CategoryFilters({
     
     // If we're editing a product and have selectedFilters, try to match them to the new category
     if (isProductForm && selectedFilters && Object.keys(selectedFilters).length > 0) {
-      console.log("🔍 Category changed, checking if selectedFilters match new category:", categoryKey);
+      console.log(" Category changed, checking if selectedFilters match new category:", categoryKey);
       // The selectedFilters will be re-processed by the useEffect above
     }
   }
