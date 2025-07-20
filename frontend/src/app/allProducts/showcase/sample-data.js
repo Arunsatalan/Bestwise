@@ -181,32 +181,63 @@ export const fetchFilteredProductsFromDB = async (filters = {}) => {
         
         // Apply other filters
         if (filters.filters) {
+          console.log('Applying attribute filters:', filters.filters);
+          console.log('Product attributes for', product.name, ':', product.attributes);
+          console.log('Product filters for', product.name, ':', product.filters);
+          
           for (const [filterKey, filterValues] of Object.entries(filters.filters)) {
             if (!filterValues || (Array.isArray(filterValues) && filterValues.length === 0)) continue;
             
+            console.log(`Checking filter ${filterKey} with values:`, filterValues);
+            
             if (filterKey === 'price') {
               const [min, max] = filterValues;
-              if (product.price < min || product.price > max) return false;
+              if (product.price < min || product.price > max) {
+                console.log(`Product ${product.name} filtered out by price: ${product.price} not in range [${min}, ${max}]`);
+                return false;
+              }
             } else if (filterKey === 'discount') {
               const hasDiscount = product.discount > 0;
               if (filterValues.includes('yes') || filterValues.includes(true)) {
-                if (!hasDiscount) return false;
+                if (!hasDiscount) {
+                  console.log(`Product ${product.name} filtered out by discount: no discount available`);
+                  return false;
+                }
               }
             } else if (filterKey === 'rating') {
               if (filterValues.length > 0) {
                 const minRating = Math.min(...filterValues);
-                if (product.rating < minRating) return false;
+                if (product.rating < minRating) {
+                  console.log(`Product ${product.name} filtered out by rating: ${product.rating} < ${minRating}`);
+                  return false;
+                }
               }
             } else {
               // Handle attribute filters
-              const productValue = product.attributes?.[filterKey];
-              if (!productValue) return false;
+              // Try both product.attributes and product.filters (MongoDB data uses filters)
+              const productValue = product.attributes?.[filterKey] || product.filters?.[filterKey];
+              console.log(`Product ${product.name} has ${filterKey}:`, productValue, 'vs filter values:', filterValues);
+              console.log(`Checking in product.attributes:`, product.attributes?.[filterKey]);
+              console.log(`Checking in product.filters:`, product.filters?.[filterKey]);
+              
+              if (!productValue) {
+                console.log(`Product ${product.name} filtered out: no ${filterKey} attribute`);
+                return false;
+              }
               
               if (Array.isArray(productValue)) {
-                if (!filterValues.some(v => productValue.includes(v))) return false;
+                if (!filterValues.some(v => productValue.includes(v))) {
+                  console.log(`Product ${product.name} filtered out: ${filterKey} array ${JSON.stringify(productValue)} doesn't include any of ${JSON.stringify(filterValues)}`);
+                  return false;
+                }
               } else {
-                if (!filterValues.includes(productValue)) return false;
+                if (!filterValues.includes(productValue)) {
+                  console.log(`Product ${product.name} filtered out: ${filterKey} value '${productValue}' not in ${JSON.stringify(filterValues)}`);
+                  return false;
+                }
               }
+              
+              console.log(`Product ${product.name} passes ${filterKey} filter`);
             }
           }
         }
