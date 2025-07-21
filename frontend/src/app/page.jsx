@@ -32,6 +32,7 @@ export default function FancyCarousel() {
   const dispatch = useDispatch()
     
   const [loading, setLoading] = useState(true);
+  const [showMoreCategories, setShowMoreCategories] = useState(false);
 
   useEffect(() => {
     dispatch(getProducts())
@@ -123,6 +124,11 @@ export default function FancyCarousel() {
     router.push(`/allProducts/showcase?category=${encodeURIComponent(categoryName)}`);
   };
 
+  // Handle explore more functionality
+  const handleExploreMore = () => {
+    setShowMoreCategories(!showMoreCategories);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
@@ -149,26 +155,35 @@ export default function FancyCarousel() {
         {/* Categories Section */}
         <section className="space-y-6">
           <div className="flex justify-between items-center">
-            <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">Categories</h2>
-            <Button variant="ghost" className="text-purple-600 hover:text-purple-700">
-              Explore more <ChevronRight className="ml-1 h-4 w-4" />
+            <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">Shop by Categories</h2>
+            <Button 
+              variant="ghost" 
+              className="text-purple-600 hover:text-purple-700 hover:bg-purple-50 transition-all duration-200"
+              onClick={handleExploreMore}
+            >
+              {showMoreCategories ? 'Show Less' : 'Explore more'} 
+              <ChevronRight className={`ml-1 h-4 w-4 transition-transform duration-200 ${showMoreCategories ? 'rotate-90' : ''}`} />
             </Button>
           </div>
 
           <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 gap-4">
             {categories && categories.length > 0 ? (
-              categories.map((category, index) => (
-                <div key={category._id || index} className="flex flex-col items-center space-y-2 group cursor-pointer">
-                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-2 border-gray-200 overflow-hidden group-hover:border-purple-400 transition-colors">
+              categories.slice(0, showMoreCategories ? categories.length : 6).map((category, index) => (
+                <div 
+                  key={category._id || index} 
+                  className="flex flex-col items-center space-y-2 group cursor-pointer transform hover:scale-105 transition-all duration-300"
+                  onClick={() => handleCategoryClick(category.name)}
+                >
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-2 border-gray-200 overflow-hidden group-hover:border-purple-400 group-hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-purple-50 to-pink-50">
                     <Image
                       src={getCategoryImage(category)}
                       alt={category.name}
                       width={80}
                       height={80}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                     />
                   </div>
-                  <span className="text-xs sm:text-sm text-center text-gray-700 group-hover:text-purple-600 transition-colors">
+                  <span className="text-xs sm:text-sm text-center text-gray-700 group-hover:text-purple-600 transition-colors font-medium">
                     {category.name}
                   </span>
                 </div>
@@ -180,18 +195,26 @@ export default function FancyCarousel() {
                 { name: "Mugs", image: "/mug.svg" },
                 { name: "Birthday Cards", image: "/birthday-invitation.svg" },
                 { name: "Home & Living", image: "/home.svg" },
-              ].map((category, index) => (
-                <div key={index} className="flex flex-col items-center space-y-2 group cursor-pointer">
-                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-2 border-gray-200 overflow-hidden group-hover:border-purple-400 transition-colors">
+                { name: "Party Supplies", image: "/party.svg" },
+                { name: "Decorations", image: "/decoration.svg" },
+                { name: "Gifts", image: "/gift.svg" },
+                { name: "Keychains", image: "/keychain.svg" },
+              ].slice(0, showMoreCategories ? 8 : 6).map((category, index) => (
+                <div 
+                  key={index} 
+                  className="flex flex-col items-center space-y-2 group cursor-pointer transform hover:scale-105 transition-all duration-300"
+                  onClick={() => handleCategoryClick(category.name)}
+                >
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-2 border-gray-200 overflow-hidden group-hover:border-purple-400 group-hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-purple-50 to-pink-50">
                     <Image
                       src={category.image}
                       alt={category.name}
                       width={80}
                       height={80}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                     />
                   </div>
-                  <span className="text-xs sm:text-sm text-center text-gray-700 group-hover:text-purple-600 transition-colors">
+                  <span className="text-xs sm:text-sm text-center text-gray-700 group-hover:text-purple-600 transition-colors font-medium">
                     {category.name}
                   </span>
                 </div>
