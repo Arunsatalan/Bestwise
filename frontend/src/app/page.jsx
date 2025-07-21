@@ -32,6 +32,9 @@ export default function FancyCarousel() {
   const dispatch = useDispatch()
     
   const [loading, setLoading] = useState(true);
+  const [showMoreCategories, setShowMoreCategories] = useState(false);
+
+  const router = useRouter();
 
   useEffect(() => {
     dispatch(getProducts())
@@ -115,12 +118,14 @@ export default function FancyCarousel() {
     ],
   }
 
-  const router = useRouter();
-
   // Handle category click navigation
   const handleCategoryClick = (categoryName) => {
-    // Navigate to showcase page with category parameter
     router.push(`/allProducts/showcase?category=${encodeURIComponent(categoryName)}`);
+  };
+
+  // Handle explore more functionality
+  const handleExploreMore = () => {
+    setShowMoreCategories(!showMoreCategories);
   };
 
   return (
@@ -149,26 +154,35 @@ export default function FancyCarousel() {
         {/* Categories Section */}
         <section className="space-y-6">
           <div className="flex justify-between items-center">
-            <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">Categories</h2>
-            <Button variant="ghost" className="text-purple-600 hover:text-purple-700">
-              Explore more <ChevronRight className="ml-1 h-4 w-4" />
+            <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">Shop by Categories</h2>
+            <Button 
+              variant="ghost" 
+              className="text-purple-600 hover:text-purple-700 hover:bg-purple-50 transition-all duration-200"
+              onClick={handleExploreMore}
+            >
+              {showMoreCategories ? 'Show Less' : 'Explore more'} 
+              <ChevronRight className={`ml-1 h-4 w-4 transition-transform duration-200 ${showMoreCategories ? 'rotate-90' : ''}`} />
             </Button>
           </div>
 
           <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 gap-4">
             {categories && categories.length > 0 ? (
-              categories.map((category, index) => (
-                <div key={category._id || index} className="flex flex-col items-center space-y-2 group cursor-pointer">
-                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-2 border-gray-200 overflow-hidden group-hover:border-purple-400 transition-colors">
+              categories.slice(0, showMoreCategories ? categories.length : 7).map((category, index) => (
+                <div 
+                  key={category._id || index} 
+                  className="flex flex-col items-center space-y-2 group cursor-pointer transform hover:scale-105 transition-all duration-300"
+                  onClick={() => handleCategoryClick(category.name)}
+                >
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-2 border-gray-200 overflow-hidden group-hover:border-purple-400 group-hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-purple-50 to-pink-50">
                     <Image
                       src={getCategoryImage(category)}
                       alt={category.name}
                       width={80}
                       height={80}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                     />
                   </div>
-                  <span className="text-xs sm:text-sm text-center text-gray-700 group-hover:text-purple-600 transition-colors">
+                  <span className="text-xs sm:text-sm text-center text-gray-700 group-hover:text-purple-600 transition-colors font-medium">
                     {category.name}
                   </span>
                 </div>
@@ -180,24 +194,135 @@ export default function FancyCarousel() {
                 { name: "Mugs", image: "/mug.svg" },
                 { name: "Birthday Cards", image: "/birthday-invitation.svg" },
                 { name: "Home & Living", image: "/home.svg" },
-              ].map((category, index) => (
-                <div key={index} className="flex flex-col items-center space-y-2 group cursor-pointer">
-                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-2 border-gray-200 overflow-hidden group-hover:border-purple-400 transition-colors">
+                { name: "Party Supplies", image: "/party.svg" },
+                { name: "Decorations", image: "/decoration.svg" },
+                { name: "Gifts", image: "/gift.svg" },
+              ].slice(0, showMoreCategories ? 7 : 4).map((category, index) => (
+                <div 
+                  key={index} 
+                  className="flex flex-col items-center space-y-2 group cursor-pointer transform hover:scale-105 transition-all duration-300"
+                  onClick={() => handleCategoryClick(category.name)}
+                >
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-2 border-gray-200 overflow-hidden group-hover:border-purple-400 group-hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-purple-50 to-pink-50">
                     <Image
                       src={category.image}
                       alt={category.name}
                       width={80}
                       height={80}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                     />
                   </div>
-                  <span className="text-xs sm:text-sm text-center text-gray-700 group-hover:text-purple-600 transition-colors">
+                  <span className="text-xs sm:text-sm text-center text-gray-700 group-hover:text-purple-600 transition-colors font-medium">
                     {category.name}
                   </span>
                 </div>
               ))
             )}
           </div>
+
+          {/* Additional Products Section when Explore More is clicked */}
+          {showMoreCategories && (
+            <div className="mt-8 space-y-4">
+              <h3 className="text-lg font-semibold text-gray-900">Featured Products</h3>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                {allProducts && allProducts.length > 0 ? (
+                  allProducts.slice(12, 18).map((product) => {
+                    const imageSrc = getProductImage(product);
+                    const isExternal = isExternalImage(imageSrc);
+                    
+                    return (
+                      <Link key={product._id} href={`/productDetail/${product._id}`} className="block">
+                        <Card className="group hover:shadow-lg transition-all duration-300 hover:scale-105">
+                          <CardContent className="p-0 border-1 border-[#D9D9D9] rounded-[10px]">
+                            <div className="relative">
+                              {isExternal ? (
+                                <img
+                                  src={imageSrc}
+                                  alt={product.name}
+                                  className="w-full aspect-square object-cover rounded-t-lg"
+                                  onError={(e) => {
+                                    e.target.src = '/placeholder.svg';
+                                  }}
+                                />
+                              ) : (
+                                <Image
+                                  src={imageSrc}
+                                  alt={product.name}
+                                  width={200}
+                                  height={200}
+                                  className="w-full aspect-square object-cover rounded-t-lg"
+                                  onError={(e) => {
+                                    e.target.src = '/placeholder.svg';
+                                  }}
+                                />
+                              )}
+                              <div className="absolute top-2 left-2 bg-red-100 rounded-full p-1">
+                                <Flame className="text-red-500 w-3 h-3 sm:w-4 sm:h-4" />
+                              </div>
+                              <div className="absolute top-2 right-2 bg-purple-100 rounded-full p-1 cursor-pointer hover:bg-purple-200 transition-colors"
+                                onClick={e => {
+                                  e.preventDefault();
+                                  if (!isAuthenticated) return alert('Please login to add to wishlist');
+                                  dispatch(addToWishlist(product));
+                                  toast.success('Added to wishlist!');
+                                }}
+                              >
+                                <Heart className="text-purple-500 w-3 h-3 sm:w-4 sm:h-4" />
+                              </div>
+                            </div>
+                            <div className="p-3">
+                              <h3 className="font-medium text-sm truncate">{product.name}</h3>
+                              <p className="font-semibold text-purple-600 text-sm">US ${product.price || product.retailPrice}</p>
+                              <div className="flex text-yellow-400 text-xs mt-1">
+                                {Array.from({ length: 5 }, (_, i) => {
+                                  const fullStars = Math.floor(product.rating || 0);
+                                  const hasHalfStar = (product.rating || 0) - fullStars >= 0.5;
+                                  if (i < fullStars) {
+                                    return <AiFillStar key={i} />;
+                                  } else if (i === fullStars && hasHalfStar) {
+                                    return <AiTwotoneStar key={i} />;
+                                  } else {
+                                    return <AiOutlineStar key={i} />;
+                                  }
+                                })}
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </Link>
+                    );
+                  })
+                ) : (
+                  // Fallback products
+                  [1, 2, 3, 4, 5, 6].map((item) => (
+                    <Card key={item} className="group hover:shadow-lg transition-all duration-300 hover:scale-105">
+                      <CardContent className="p-0">
+                        <div className="relative">
+                          <Image
+                            src="/mug.jpg"
+                            alt="Featured Product"
+                            width={200}
+                            height={200}
+                            className="w-full aspect-square object-cover rounded-t-lg"
+                          />
+                          <div className="absolute top-2 left-2 bg-red-100 rounded-full p-1">
+                            <Flame className="text-red-500 w-3 h-3 sm:w-4 sm:h-4" />
+                          </div>
+                        </div>
+                        <div className="p-3">
+                          <h3 className="font-medium text-sm">Featured Product {item}</h3>
+                          <p className="font-semibold text-purple-600 text-sm">US $19.99</p>
+                          <div className="flex text-yellow-400 text-xs mt-1">
+                            <span>★★★★★</span>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
         </section>
 
         {/* Hot Sales Section */}
