@@ -14,6 +14,7 @@ import {
   getAllProducts
 } from "./sample-data"
 import React from "react"
+import { useSearchParams } from "next/navigation"
 
 // NO STATIC DATA - All filter options fetched from MongoDB in real-time
 
@@ -27,10 +28,14 @@ import React from "react"
  * @typedef {object} Category
  * @property {string} key
  * @property {string} name
+ * @property {any[]} [attributes]
  */
 
-export function FilterSidebar({ initialCategory }) {
+export function FilterSidebar() {
   const dispatch = useDispatch()
+  const searchParams = useSearchParams()
+  const initialCategory = searchParams.get('category')
+  
   const { category, filters } = useSelector(/** @param {RootState} state */(state) => state.products.filters)
   const [selectedFilters, setSelectedFilters] = useState({})
   const [priceRange, setPriceRange] = useState([0, 200])
@@ -132,10 +137,9 @@ export function FilterSidebar({ initialCategory }) {
   // Set initial category from URL parameter
   useEffect(() => {
     if (initialCategory && initialCategory !== category) {
-      console.log('Setting initial category from URL:', initialCategory)
       handleCategoryChange(initialCategory)
     }
-  }, [initialCategory])
+  }, [initialCategory, categoriesData])
 
   // Function to fetch filtered products from database
   const fetchFilteredProducts = async (filterParams) => {
@@ -163,17 +167,16 @@ export function FilterSidebar({ initialCategory }) {
   };
 
   // Handle category change with real-time database filtering
-  const handleCategoryChange = async (newCategoryKey) => {
-    console.log('Category key changed to:', newCategoryKey)
+  const handleCategoryChange = async (newCategoryName) => {
+    // Note: The logic expects a category NAME, not a key.
+    console.log('Category name changed to:', newCategoryName)
     
-    let mainCategoryKey = newCategoryKey;
+    let mainCategoryKey = categoriesData.find(c => c.name === newCategoryName)?.key || ""
     let initialFilters = {};
     
-    const categoryObject = categoriesData.find(c => c.key === newCategoryKey);
-    
-    if (!categoryObject) {
+    if (!mainCategoryKey) {
       // It might be a subcategory, so find its parent
-      const { parent, attribute, value } = findParentCategory(newCategoryKey);
+      const { parent, attribute, value } = findParentCategory(newCategoryName);
       if (parent) {
         mainCategoryKey = parent.key;
         initialFilters = { [attribute]: [value] };
@@ -183,8 +186,7 @@ export function FilterSidebar({ initialCategory }) {
       }
     }
     
-    const categoryName = categoriesData.find(c => c.key === mainCategoryKey)?.name || ''
-    dispatch(setCategory(categoryName)) // Keep sending name to store for display
+    dispatch(setCategory(newCategoryName)) // Keep sending name to store for display
     
     // Fetch products for the new category from database
     await fetchFilteredProducts({
@@ -297,7 +299,7 @@ export function FilterSidebar({ initialCategory }) {
         <h3 className="font-medium mb-2">Category</h3>
         <select
           className="w-full p-2 border rounded"
-          value={categoriesData.find(c => c.name === category)?.key || ""}
+          value={category || ""}
           onChange={(e) => handleCategoryChange(e.target.value)}
         >
           {isLoading ? (
@@ -306,7 +308,7 @@ export function FilterSidebar({ initialCategory }) {
             <>
               <option value="">All Categories</option>
               {categoriesData.map((cat) => (
-                <option key={cat.key} value={cat.key}>
+                <option key={cat.key} value={cat.name}>
                   {cat.name}
                 </option>
               ))}
