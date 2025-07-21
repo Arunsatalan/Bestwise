@@ -42,7 +42,7 @@ export default function CategoryFilters({
   const [filteredProducts, setFilteredProducts] = useState(/** @type {any[]} */ ([]))
   const [showProducts, setShowProducts] = useState(false)
   const [editingMainCategory, setEditingMainCategory] = useState(null)
-  const [mainCategoryEditForm, setMainCategoryEditForm] = useState({ name: "", key: "", description: "" })
+  const [mainCategoryEditForm, setMainCategoryEditForm] = useState({ name: "", key: "", description: "", icon: "" })
 
   const { isOpen, config, showDelete, showSuccess, showError, closeModal } = useConfirmModal()
 
@@ -807,12 +807,13 @@ export default function CategoryFilters({
     setMainCategoryEditForm({
       name: categorySystem[categoryKey].name,
       key: categoryKey,
-      description: categorySystem[categoryKey].description || ""
+      description: categorySystem[categoryKey].description || "",
+      icon: categorySystem[categoryKey].icon || ""
     })
   }
   const cancelEditMainCategory = () => {
     setEditingMainCategory(null)
-    setMainCategoryEditForm({ name: "", key: "", description: "" })
+    setMainCategoryEditForm({ name: "", key: "", description: "", icon: "" })
   }
   const saveEditMainCategory = async (oldKey) => {
     try {
@@ -833,6 +834,7 @@ export default function CategoryFilters({
         name: mainCategoryEditForm.name,
         key: mainCategoryEditForm.key,
         description: mainCategoryEditForm.description,
+        icon: mainCategoryEditForm.icon,
         attributes: categorySystem[oldKey].attributes || []
       };
 
@@ -869,7 +871,7 @@ export default function CategoryFilters({
         
         // Clear editing state
         setEditingMainCategory(null);
-        setMainCategoryEditForm({ name: "", key: "", description: "" });
+        setMainCategoryEditForm({ name: "", key: "", description: "", icon: "" });
         
         showSuccess("Success", `Category "${mainCategoryEditForm.name}" updated successfully!`, () => {
           // Stay on the same page - no navigation
@@ -1405,9 +1407,18 @@ export default function CategoryFilters({
                 </div>
                 {editingMainCategory === categoryKey ? (
                   <div className="space-y-2">
-                    <Input value={mainCategoryEditForm.name} onChange={e => setMainCategoryEditForm(f => ({ ...f, name: e.target.value }))} placeholder="Category Name" className="mb-1" />
-                    <Input value={mainCategoryEditForm.key} onChange={e => setMainCategoryEditForm(f => ({ ...f, key: e.target.value }))} placeholder="Category Key" className="mb-1" />
-                    <Input value={mainCategoryEditForm.description} onChange={e => setMainCategoryEditForm(f => ({ ...f, description: e.target.value }))} placeholder="Description" className="mb-1" />
+                    <Input value={mainCategoryEditForm.name} onChange={e => setMainCategoryEditForm(f => ({ ...f, name: (e.target).value }))} placeholder="Category Name" className="mb-1" />
+                    <Input value={mainCategoryEditForm.key} onChange={e => setMainCategoryEditForm(f => ({ ...f, key: (e.target).value }))} placeholder="Category Key" className="mb-1" />
+                    <Input value={mainCategoryEditForm.description} onChange={e => setMainCategoryEditForm(f => ({ ...f, description: (e.target).value }))} placeholder="Description" className="mb-1" />
+                    <Input value={mainCategoryEditForm.icon} onChange={e => setMainCategoryEditForm(f => ({ ...f, icon: (e.target).value }))} placeholder="Icon URL" className="mb-1" />
+                    {mainCategoryEditForm.icon && (
+                      <img 
+                        src={mainCategoryEditForm.icon} 
+                        alt="Icon Preview" 
+                        className="w-16 h-16 mt-2 rounded border object-contain"
+                        onError={(e) => ((e.target).style.display = "none")}
+                      />
+                    )}
                     <div className="flex gap-2">
                       <Button type="button" size="sm" onClick={e => { e.stopPropagation(); saveEditMainCategory(categoryKey) }}>Save</Button>
                       <Button type="button" size="sm" variant="outline" onClick={e => { e.stopPropagation(); cancelEditMainCategory() }}>Cancel</Button>
