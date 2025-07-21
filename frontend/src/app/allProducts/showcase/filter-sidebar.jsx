@@ -13,6 +13,7 @@ import {
   fetchFilteredProductsFromDB,
   getAllProducts
 } from "./sample-data"
+import React from "react"
 
 // NO STATIC DATA - All filter options fetched from MongoDB in real-time
 
@@ -118,7 +119,7 @@ export function FilterSidebar({ initialCategory }) {
       console.log('Setting initial category from URL:', initialCategory)
       handleCategoryChange(initialCategory)
     }
-  }, [initialCategory, category])
+  }, [initialCategory])
 
   // Function to fetch filtered products from database
   const fetchFilteredProducts = async (filterParams) => {
@@ -138,17 +139,10 @@ export function FilterSidebar({ initialCategory }) {
     dispatch(setCategory(newCategory))
     
     // Fetch products for the new category from database
-    if (newCategory === "") {
-      // For "All Categories", fetch all products
-      const allProducts = getAllProducts()
-      dispatch(setFilteredProducts(allProducts))
-    } else {
-      // For specific category, fetch filtered products
-      await fetchFilteredProducts({
-        category: newCategory,
-        filters: {} // Reset filters when category changes
-      })
-    }
+    await fetchFilteredProducts({
+      category: newCategory,
+      filters: {} // Reset filters when category changes
+    })
   }
 
   // Handle filter change with real-time database filtering

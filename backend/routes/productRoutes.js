@@ -22,6 +22,7 @@ const { validateProduct } = require("../middleware/validation");
 // console.log("validateProduct:", validateProduct);
 // console.log("createProduct:", createProduct);
 router.get("/", getAllProducts);
+router.get("/filter", getAllProducts);
 router.get("/:id", getProduct);
 router.post("/", validateProduct, createProduct);
 router.put("/:id", validateProduct, updateProduct);

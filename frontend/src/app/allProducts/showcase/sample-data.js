@@ -78,194 +78,51 @@ export const fetchProductsFromDB = async () => {
 // Function to fetch filtered products from MongoDB based on applied filters
 export const fetchFilteredProductsFromDB = async (filters = {}) => {
   try {
-    console.log('Fetching filtered products from database with filters:', filters);
+    // Build query parameters
+    const queryParams = new URLSearchParams();
     
-    // First try the filter endpoint
-    try {
-      // Build query parameters
-      const queryParams = new URLSearchParams();
-      
-      // Add category filter
-      if (filters.category && filters.category !== '') {
-        queryParams.append('category', filters.category);
-      }
-      
-      // Add attribute filters
-      if (filters.filters) {
-        Object.entries(filters.filters).forEach(([key, values]) => {
-          if (values && Array.isArray(values) && values.length > 0) {
-            if (key === 'price') {
-              queryParams.append('minPrice', values[0]);
-              queryParams.append('maxPrice', values[1]);
-            } else if (key === 'rating') {
-              queryParams.append('minRating', Math.min(...values));
-            } else if (key === 'discount') {
-              if (values.includes('yes') || values.includes(true)) {
-                queryParams.append('hasDiscount', 'true');
-              }
-            } else {
-              // Attribute filters (color, size, brand, etc.)
-              values.forEach(value => {
-                queryParams.append(`attributes.${key}`, value);
-              });
+    // Add category filter
+    if (filters.category && filters.category !== '') {
+      queryParams.append('category', filters.category);
+    }
+    
+    // Add attribute filters
+    if (filters.filters) {
+      Object.entries(filters.filters).forEach(([key, values]) => {
+        if (values && Array.isArray(values) && values.length > 0) {
+          if (key === 'price') {
+            queryParams.append('minPrice', String(values[0]));
+            queryParams.append('maxPrice', String(values[1]));
+          } else if (key === 'rating') {
+            queryParams.append('minRating', String(Math.min(...values)));
+          } else if (key === 'discount') {
+            if (values.includes('yes') || values.includes(true)) {
+              queryParams.append('hasDiscount', 'true');
             }
-          }
-        });
-      }
-      
-      const url = `${API_BASE_URL}/products/filter?${queryParams.toString()}`;
-      console.log('Fetching from URL:', url);
-      
-      const response = await fetch(url);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const result = await response.json();
-      
-      if (result.success) {
-        const filteredProducts = result.data || [];
-        console.log('Filtered products fetched from MongoDB:', filteredProducts);
-        
-        // Trigger update event for UI components
-        if (typeof window !== 'undefined') {
-          window.dispatchEvent(new CustomEvent('filteredProductsUpdated', { 
-            detail: { products: filteredProducts, filters }
-          }));
-        }
-        
-        return filteredProducts;
-      } else {
-        console.warn('API returned success:false, falling back to local filtering:', result.message);
-        throw new Error(result.message || 'Failed to fetch filtered products');
-      }
-    } catch (apiError) {
-      console.warn('Filter API endpoint failed, falling back to local filtering:', apiError.message);
-      
-      // Fallback: Get all products and filter locally
-      const allProducts = await fetchProductsFromDB();
-      if (!allProducts || allProducts.length === 0) {
-        console.error('No products available for local filtering');
-        return [];
-      }
-      
-      console.log('Applying local filtering to', allProducts.length, 'products');
-      
-      // Apply local filtering
-      console.log('Available product categories:', allProducts.map(p => ({ name: p.name, category: p.category, mainCategory: p.mainCategory })));
-      console.log('Filtering for category:', filters.category);
-      
-      const filteredProducts = allProducts.filter(product => {
-        // Filter by category
-        if (filters.category && filters.category !== '') {
-          // Normalize category names for comparison
-          const normalizeCategory = (cat) => cat.toLowerCase()
-            .replace(/\s*&\s*/g, '-')  // Replace & with hyphen
-            .replace(/\s+/g, '-')      // Replace spaces with hyphens
-            .replace(/[^a-z0-9-]/g, '') // Remove special chars except hyphens
-            .replace(/-+/g, '-')       // Replace multiple hyphens with single
-            .replace(/^-|-$/g, '');    // Remove leading/trailing hyphens
-          const filterCategory = normalizeCategory(filters.category);
-          
-          const productCategory = normalizeCategory(product.category || '');
-          const productMainCategory = normalizeCategory(product.mainCategory || '');
-          
-          // Multiple matching strategies for flexibility
-          const exactMatch = productCategory === filterCategory || 
-                            productMainCategory === filterCategory ||
-                            product.category === filters.category || 
-                            product.mainCategory === filters.category;
-          
-          // Flexible matching for plural/singular and partial matches (more precise)
-          const flexibleMatch = !exactMatch && (
-            // Only allow partial matches if they're substantial (at least 4 chars and 70% match)
-            (filterCategory.length >= 4 && productCategory.length >= 4 && 
-             (productCategory.includes(filterCategory) || filterCategory.includes(productCategory))) ||
-            (filterCategory.length >= 4 && productMainCategory.length >= 4 && 
-             (productMainCategory.includes(filterCategory) || filterCategory.includes(productMainCategory))) ||
-            // Handle plural/singular (remove 's' from end) - but only if substantial match
-            (filterCategory.length >= 4 && productCategory.replace(/s$/, '') === filterCategory.replace(/s$/, '')) ||
-            (filterCategory.length >= 4 && productMainCategory.replace(/s$/, '') === filterCategory.replace(/s$/, ''))
-          );
-          
-          const categoryMatch = exactMatch || flexibleMatch;
-          
-          if (!categoryMatch) {
-            console.log(`Product "${product.name}" doesn't match category "${filters.category}" (normalized: "${filterCategory}") - product.category: "${product.category}" (normalized: "${productCategory}"), product.mainCategory: "${product.mainCategory}" (normalized: "${productMainCategory}")`);
-            return false;
           } else {
-            console.log(`Product "${product.name}" matches category "${filters.category}" ${exactMatch ? '(exact)' : '(flexible)'}`);
+            // Attribute filters (color, size, brand, etc.)
+            values.forEach(value => {
+              queryParams.append(`attributes.${key}`, value);
+            });
           }
         }
-        
-        // Apply other filters
-        if (filters.filters) {
-          console.log('Applying attribute filters:', filters.filters);
-          console.log('Product attributes for', product.name, ':', product.attributes);
-          console.log('Product filters for', product.name, ':', product.filters);
-          
-          for (const [filterKey, filterValues] of Object.entries(filters.filters)) {
-            if (!filterValues || (Array.isArray(filterValues) && filterValues.length === 0)) continue;
-            
-            console.log(`Checking filter ${filterKey} with values:`, filterValues);
-            
-            if (filterKey === 'price') {
-              const [min, max] = filterValues;
-              if (product.price < min || product.price > max) {
-                console.log(`Product ${product.name} filtered out by price: ${product.price} not in range [${min}, ${max}]`);
-                return false;
-              }
-            } else if (filterKey === 'discount') {
-              const hasDiscount = product.discount > 0;
-              if (filterValues.includes('yes') || filterValues.includes(true)) {
-                if (!hasDiscount) {
-                  console.log(`Product ${product.name} filtered out by discount: no discount available`);
-                  return false;
-                }
-              }
-            } else if (filterKey === 'rating') {
-              if (filterValues.length > 0) {
-                const minRating = Math.min(...filterValues);
-                if (product.rating < minRating) {
-                  console.log(`Product ${product.name} filtered out by rating: ${product.rating} < ${minRating}`);
-                  return false;
-                }
-              }
-            } else {
-              // Handle attribute filters
-              // Try both product.attributes and product.filters (MongoDB data uses filters)
-              const productValue = product.attributes?.[filterKey] || product.filters?.[filterKey];
-              console.log(`Product ${product.name} has ${filterKey}:`, productValue, 'vs filter values:', filterValues);
-              console.log(`Checking in product.attributes:`, product.attributes?.[filterKey]);
-              console.log(`Checking in product.filters:`, product.filters?.[filterKey]);
-              
-              if (!productValue) {
-                console.log(`Product ${product.name} filtered out: no ${filterKey} attribute`);
-                return false;
-              }
-              
-              if (Array.isArray(productValue)) {
-                if (!filterValues.some(v => productValue.includes(v))) {
-                  console.log(`Product ${product.name} filtered out: ${filterKey} array ${JSON.stringify(productValue)} doesn't include any of ${JSON.stringify(filterValues)}`);
-                  return false;
-                }
-              } else {
-                if (!filterValues.includes(productValue)) {
-                  console.log(`Product ${product.name} filtered out: ${filterKey} value '${productValue}' not in ${JSON.stringify(filterValues)}`);
-                  return false;
-                }
-              }
-              
-              console.log(`Product ${product.name} passes ${filterKey} filter`);
-            }
-          }
-        }
-        
-        return true;
       });
-      
-      console.log('Local filtering result:', filteredProducts.length, 'products');
+    }
+    
+    const url = `${API_BASE_URL}/products/filter?${queryParams.toString()}`;
+    console.log('Fetching from URL:', url);
+    
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const result = await response.json();
+    
+    if (result.success) {
+      const filteredProducts = result.data || [];
+      console.log('Filtered products fetched from MongoDB:', filteredProducts);
       
       // Trigger update event for UI components
       if (typeof window !== 'undefined') {
@@ -275,6 +132,9 @@ export const fetchFilteredProductsFromDB = async (filters = {}) => {
       }
       
       return filteredProducts;
+    } else {
+      console.warn('API returned success:false, throwing an error:', result.message);
+      throw new Error(result.message || 'Failed to fetch filtered products');
     }
   } catch (error) {
     console.error('Error in fetchFilteredProductsFromDB:', error);
@@ -473,12 +333,12 @@ export const getUniqueAttributeValues = (categoryKey, attributeName) => {
 const setupEventListeners = () => {
   if (typeof window !== 'undefined') {
     window.addEventListener('categoriesUpdated', (event) => {
-      console.log('Real Categories data updated from MongoDB:', event.detail);
+      console.log('Real Categories data updated from MongoDB:', (event).detail);
       // Trigger UI updates here
     });
     
     window.addEventListener('productsUpdated', (event) => {
-      console.log('Real Products data updated from MongoDB:', event.detail);
+      console.log('Real Products data updated from MongoDB:', (event).detail);
       // Trigger UI updates here
     });
   }
