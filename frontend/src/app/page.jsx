@@ -121,7 +121,7 @@ export default function FancyCarousel() {
   // Handle category click navigation
   const handleCategoryClick = (categoryName) => {
     // Navigate to showcase page with category parameter
-    router.push(`/allProducts/showcase?category=${encodeURIComponent(categoryName)}`);
+    router.push(`/allProducts/showcase`);
   };
 
   // Handle explore more functionality
