@@ -16,7 +16,7 @@ import { addToCart } from '../../slices/cartSlice';
 import { AiFillStar, AiOutlineStar, AiTwotoneStar } from 'react-icons/ai';
 import axios from 'axios';
 import { toast, Toaster } from 'sonner';
-
+import CollaborativeGiftModal from '../../modal/CollaborativeGiftModal/page';
 
 function ProductDetailPage() {
   const { id } = useParams();
@@ -26,6 +26,8 @@ function ProductDetailPage() {
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [isCollaborativeModalOpen, setIsCollaborativeModalOpen] = useState(false);
+
 
   // Fetch specific product by ID
   useEffect(() => {
@@ -118,6 +120,13 @@ function ProductDetailPage() {
 
   const thumbnailImages = getThumbnailImages();
 
+  const openCollaborativeModal = () => setIsCollaborativeModalOpen(true);
+  const closeCollaborativeModal = () => setIsCollaborativeModalOpen(false);
+  const acceptCollaborativeGuidelines = () => {
+    setIsCollaborativeModalOpen(false);
+    toast.success("Guidelines accepted. Proceed to invite friends.");
+  };
+
   return (
 
     <div className='w-full justify-center flex-co px-4 sm:px-8 md:px-16 lg:px-24'>  <Navbar />
@@ -125,9 +134,9 @@ function ProductDetailPage() {
         {/* Left Section - Image & Description */}
         <div className='flex-col justify-center w-full lg:w-[60%]'>
           <div className='w-full h-[300px] sm:h-[400px] md:h-[500px] bg-gray-300 rounded-[10px] overflow-hidden'>
-            <img 
-              src={getMainImage()} 
-              alt={product.name} 
+            <img
+              src={getMainImage()}
+              alt={product.name}
               className="w-full h-full object-cover rounded-[10px]"
               onError={(e) => {
                 e.target.src = '/placeholder.svg';
@@ -137,15 +146,14 @@ function ProductDetailPage() {
           {thumbnailImages.length > 0 && (
             <div className='flex space-x-1 pt-[10px]'>
               {thumbnailImages.map((imageUrl, index) => (
-                <div 
-                  key={index} 
-                  className={`w-[72px] h-[72px] rounded-[5px] overflow-hidden cursor-pointer border-2 ${
-                    selectedImageIndex === index ? 'border-purple-500' : 'border-gray-300'
-                  }`}
+                <div
+                  key={index}
+                  className={`w-[72px] h-[72px] rounded-[5px] overflow-hidden cursor-pointer border-2 ${selectedImageIndex === index ? 'border-purple-500' : 'border-gray-300'
+                    }`}
                   onClick={() => setSelectedImageIndex(index)}
                 >
-                  <img 
-                    src={imageUrl} 
+                  <img
+                    src={imageUrl}
                     alt={`${product.name} ${index + 1}`}
                     className="w-full h-full object-cover"
                     onError={(e) => {
@@ -194,7 +202,7 @@ function ProductDetailPage() {
               Get now
             </button>
             <div className='w-full flex flex-col sm:flex-row gap-[15px]'>
-              <button className='border text-[#822BE2] rounded-[8px] w-full sm:w-[50%] h-[50px] font-semibold'>
+              <button onClick={openCollaborativeModal} className='border text-[#822BE2] rounded-[8px] w-full sm:w-[50%] h-[50px] font-semibold'>
                 Apply Collaborative
               </button>
               <button className='border text-[#822BE2] rounded-[8px] w-full sm:w-[50%] h-[50px] font-semibold'>
@@ -297,6 +305,14 @@ function ProductDetailPage() {
           <p className="text-red-500">Server currently busy!</p>
         )}
       </div>
+      <CollaborativeGiftModal
+        isOpen={isCollaborativeModalOpen}
+        onClose={closeCollaborativeModal}
+        onAccept={acceptCollaborativeGuidelines}
+        productName={product?.name}
+        productPrice={product?.retailPrice}
+      />
+
       <Toaster position="top-center" richColors closeButton />
     </div>
   );

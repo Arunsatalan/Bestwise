@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { ArrowLeft, Clock, RefreshCw } from 'lucide-react'
 import logo from '../../assets/logo.png'
+import axios from 'axios'
 
 export default function OTPPage() {
   const router = useRouter()
@@ -14,7 +15,14 @@ export default function OTPPage() {
   const [isResendDisabled, setIsResendDisabled] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
+  const [email, setEmail] = useState('')
   const inputRefs = useRef([])
+
+  useEffect(() => {
+    // Try to get email from localStorage (set during signup)
+    const storedEmail = localStorage.getItem('signupEmail')
+    if (storedEmail) setEmail(storedEmail)
+  }, [])
 
   // Timer effect
   useEffect(() => {
@@ -94,35 +102,52 @@ export default function OTPPage() {
   // Handle OTP submission
   const handleSubmit = async (e) => {
     e.preventDefault()
-    
     const otpString = otp.join('')
     if (otpString.length !== 4) {
       setError('Please enter the complete 4-digit OTP')
       return
     }
-
-    if (!/^\d{4}$/.test(otpString)) {
+    if (!/^[0-9]{4}$/.test(otpString)) {
       setError('Please enter a valid 4-digit OTP')
       return
     }
-
+    if (!email) {
+      setError('Email not found. Please sign up again.')
+      return
+    }
     try {
       setIsSubmitting(true)
       setError('')
-      
-      // Here you would typically call your API to verify OTP
-      // const response = await axios.post('/api/verify-otp', { otp: otpString })
-      
-      console.log('OTP verified:', otpString)
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      // Redirect to dashboard or next step
-      router.push('/login')
-      
+      // Call backend to verify OTP
+      const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/verify-otp`, {
+        email,
+        otp: otpString
+      }, { withCredentials: true })
+      if (response.data.success) {
+        // Enable twoFactor for the user
+        await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/twoFactor`, {
+          email,
+          twoFactorEnabled: true
+        }, { withCredentials: true })
+        // Redirect to login
+        router.push('/login')
+      } else {
+        setError('Invalid OTP. Please try again.')
+        // Disable twoFactor for the user
+        await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/twoFactor`, {
+          email,
+          twoFactorEnabled: false
+        }, { withCredentials: true })
+      }
     } catch (error) {
       setError('Invalid OTP. Please try again.')
+      // Disable twoFactor for the user
+      try {
+        await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/twoFactor`, {
+          email,
+          twoFactorEnabled: false
+        }, { withCredentials: true })
+      } catch {}
     } finally {
       setIsSubmitting(false)
     }

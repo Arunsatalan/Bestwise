@@ -143,12 +143,18 @@ export default function Component() {
         });
 
 
+        // Store email in localStorage for OTP verification
+        localStorage.setItem('signupEmail', formData.email);
+
+
+
         await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/twoFactor`, {
           email: formData.email,
           twoFactorEnabled: true
         }, {
           withCredentials: true
         });
+
 
         toast.success(`Hi ${formData.firstName} ,OTP sent your Email`);
 

@@ -21,6 +21,10 @@ const eventReminderSchema = new mongoose.Schema({
   time: {
     type: String,
     required: true
+  },
+  sent: {
+    type: Boolean,
+    default: false
   }
 }, { timestamps: true });
 
