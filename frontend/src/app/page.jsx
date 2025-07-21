@@ -58,6 +58,9 @@ export default function FancyCarousel() {
 
   // Helper function to get category image
   const getCategoryImage = (category) => {
+    if (category?.icon) {
+      return category.icon;
+    }
     if (category?.image) {
       return category.image;
     }
