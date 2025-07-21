@@ -32,46 +32,6 @@ export default function FancyCarousel() {
   const dispatch = useDispatch()
     
   const [loading, setLoading] = useState(true);
-  const [showAllCategories, setShowAllCategories] = useState(false);
-
-  // Calculate how many categories to show initially (one row)
-  const getCategoriesPerRow = () => {
-    if (typeof window !== 'undefined') {
-      if (window.innerWidth >= 1024) return 7; // lg: grid-cols-7
-      if (window.innerWidth >= 768) return 5;  // md: grid-cols-5
-      if (window.innerWidth >= 640) return 4;  // sm: grid-cols-4
-      return 3; // grid-cols-3
-    }
-    return 7; // default
-  };
-
-  const [categoriesPerRow, setCategoriesPerRow] = useState(7);
-
-  useEffect(() => {
-    const handleResize = () => {
-      setCategoriesPerRow(getCategoriesPerRow());
-    };
-
-    handleResize(); // Set initial value
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  // Get categories to display
-  const getDisplayCategories = () => {
-    const allCats = categories && categories.length > 0 ? categories : [
-      { name: "Balloons", image: "/balloon.svg" },
-      { name: "Mugs", image: "/mug.svg" },
-      { name: "Birthday Cards", image: "/birthday-invitation.svg" },
-      { name: "Home & Living", image: "/home.svg" },
-    ];
-    
-    return showAllCategories ? allCats : allCats.slice(0, categoriesPerRow);
-  };
-
-  const displayCategories = getDisplayCategories();
-  const hasMoreCategories = (categories && categories.length > categoriesPerRow) || 
-                           (!categories && 4 > categoriesPerRow);
 
   useEffect(() => {
     dispatch(getProducts())
@@ -190,40 +150,54 @@ export default function FancyCarousel() {
         <section className="space-y-6">
           <div className="flex justify-between items-center">
             <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">Categories</h2>
-            {/* <Button variant="ghost" className="text-purple-600 hover:text-purple-700">
+            <Button variant="ghost" className="text-purple-600 hover:text-purple-700">
               Explore more <ChevronRight className="ml-1 h-4 w-4" />
-            </Button> */}
+            </Button>
           </div>
 
           <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 gap-4">
-            {displayCategories.map((category, index) => (
-              <div key={category._id || index} className="flex flex-col items-center space-y-2 group cursor-pointer hover:transform hover:scale-105 transition-all duration-200" onClick={() => handleCategoryClick(category.name)}>
-                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-2 border-gray-200 overflow-hidden group-hover:border-purple-400 transition-colors">
-                  <Image
-                    src={getCategoryImage(category)}
-                    alt={category.name}
-                    width={80}
-                    height={80}
-                    className="w-full h-full object-cover"
-                  />
+            {categories && categories.length > 0 ? (
+              categories.map((category, index) => (
+                <div key={category._id || index} className="flex flex-col items-center space-y-2 group cursor-pointer">
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-2 border-gray-200 overflow-hidden group-hover:border-purple-400 transition-colors">
+                    <Image
+                      src={getCategoryImage(category)}
+                      alt={category.name}
+                      width={80}
+                      height={80}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <span className="text-xs sm:text-sm text-center text-gray-700 group-hover:text-purple-600 transition-colors">
+                    {category.name}
+                  </span>
                 </div>
-                <span className="text-xs sm:text-sm text-center text-gray-700 group-hover:text-purple-600 transition-colors">
-                  {category.name}
-                </span>
-              </div>
-            ))}
+              ))
+            ) : (
+              // Fallback categories if database is empty
+              [
+                { name: "Balloons", image: "/balloon.svg" },
+                { name: "Mugs", image: "/mug.svg" },
+                { name: "Birthday Cards", image: "/birthday-invitation.svg" },
+                { name: "Home & Living", image: "/home.svg" },
+              ].map((category, index) => (
+                <div key={index} className="flex flex-col items-center space-y-2 group cursor-pointer">
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-2 border-gray-200 overflow-hidden group-hover:border-purple-400 transition-colors">
+                    <Image
+                      src={category.image}
+                      alt={category.name}
+                      width={80}
+                      height={80}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <span className="text-xs sm:text-sm text-center text-gray-700 group-hover:text-purple-600 transition-colors">
+                    {category.name}
+                  </span>
+                </div>
+              ))
+            )}
           </div>
-          {hasMoreCategories && (
-            <div className="text-center">
-              <Button
-                variant="outline"
-                className="text-purple-600 hover:text-purple-700"
-                onClick={() => setShowAllCategories(!showAllCategories)}
-              >
-                {showAllCategories ? 'Show Less' : 'Show More'}
-              </Button>
-            </div>
-          )}
         </section>
 
         {/* Hot Sales Section */}
