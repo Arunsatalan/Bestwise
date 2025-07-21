@@ -18,7 +18,15 @@ import React from "react"
 // NO STATIC DATA - All filter options fetched from MongoDB in real-time
 
 /**
- * @typedef {import('./store').RootState} RootState
+ * @typedef {import('./store').productSlice.reducer} ProductsReducer
+ * @typedef {ReturnType<ProductsReducer>} ProductsState
+ * @typedef {{products: ProductsState}} RootState
+ */
+
+/**
+ * @typedef {object} Category
+ * @property {string} key
+ * @property {string} name
  */
 
 export function FilterSidebar({ initialCategory }) {
@@ -26,7 +34,7 @@ export function FilterSidebar({ initialCategory }) {
   const { category, filters } = useSelector(/** @param {RootState} state */(state) => state.products.filters)
   const [selectedFilters, setSelectedFilters] = useState({})
   const [priceRange, setPriceRange] = useState([0, 200])
-  /** @type {[string[], React.Dispatch<React.SetStateAction<string[]>>]} */
+  /** @type {[number[], React.Dispatch<React.SetStateAction<number[]>>]} */
   const [ratingFilter, setRatingFilter] = useState([])
   /** @type {[string[], React.Dispatch<React.SetStateAction<string[]>>]} */
   const [discountFilter, setDiscountFilter] = useState([])
@@ -37,6 +45,7 @@ export function FilterSidebar({ initialCategory }) {
   })
   
   // State for real-time MongoDB data
+  /** @type {[Category[], React.Dispatch<React.SetStateAction<Category[]>>]} */
   const [categoriesData, setCategoriesData] = useState([])
   const [availableFilters, setAvailableFilters] = useState({})
   const [isLoading, setIsLoading] = useState(true)
@@ -48,6 +57,7 @@ export function FilterSidebar({ initialCategory }) {
         setIsLoading(true)
         const categories = getAllCategories()
         setCategoriesData(categories)
+        console.log("DEBUG: categoriesData structure", JSON.stringify(categories, null, 2));
         
         // Get current category data
         if (category) {
@@ -138,16 +148,48 @@ export function FilterSidebar({ initialCategory }) {
     }
   }
 
+  // Find the parent category of a given subcategory key
+  const findParentCategory = (subcategoryKey) => {
+    for (const category of categoriesData) {
+      if (category.attributes) {
+        for (const attribute of category.attributes) {
+          if (attribute.items.includes(subcategoryKey)) {
+            return { parent: category, attribute: attribute.name, value: subcategoryKey };
+          }
+        }
+      }
+    }
+    return { parent: null, attribute: null, value: null };
+  };
+
   // Handle category change with real-time database filtering
   const handleCategoryChange = async (newCategoryKey) => {
     console.log('Category key changed to:', newCategoryKey)
-    const categoryName = categoriesData.find(c => c.key === newCategoryKey)?.name || ''
+    
+    let mainCategoryKey = newCategoryKey;
+    let initialFilters = {};
+    
+    const categoryObject = categoriesData.find(c => c.key === newCategoryKey);
+    
+    if (!categoryObject) {
+      // It might be a subcategory, so find its parent
+      const { parent, attribute, value } = findParentCategory(newCategoryKey);
+      if (parent) {
+        mainCategoryKey = parent.key;
+        initialFilters = { [attribute]: [value] };
+        setSelectedFilters(initialFilters);
+        dispatch(setFilter({ key: attribute, values: [value] }));
+        console.log(`It's a subcategory. Parent: ${mainCategoryKey}, Filter: ${attribute}=${value}`);
+      }
+    }
+    
+    const categoryName = categoriesData.find(c => c.key === mainCategoryKey)?.name || ''
     dispatch(setCategory(categoryName)) // Keep sending name to store for display
     
     // Fetch products for the new category from database
     await fetchFilteredProducts({
-      category: newCategoryKey, // Use the key for filtering
-      filters: {} // Reset filters when category changes
+      category: mainCategoryKey, // Use the key for filtering
+      filters: initialFilters // Reset filters or apply subcategory filter
     })
   }
 
@@ -384,7 +426,7 @@ export function FilterSidebar({ initialCategory }) {
                 <input
                   type="checkbox"
                   className="mr-2 h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
-                  checked={ratingFilter.includes(rating.toString())}
+                  checked={ratingFilter.includes(rating)}
                   onChange={() => handleRatingChange(rating)}
                 />
                 <div className="flex items-center">

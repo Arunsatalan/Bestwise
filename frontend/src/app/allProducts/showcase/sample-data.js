@@ -101,9 +101,7 @@ export const fetchFilteredProductsFromDB = async (filters = {}) => {
             }
           } else {
             // Attribute filters (color, size, brand, etc.)
-            values.forEach(value => {
-              queryParams.append(`attributes.${key}`, value);
-            });
+            queryParams.append(`attributes.${key}`, values.join(','));
           }
         }
       });

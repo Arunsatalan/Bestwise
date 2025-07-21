@@ -132,7 +132,8 @@ exports.getAllProducts = async (req, res) => {
     Object.keys(attributes).forEach(key => {
       if (key.startsWith('attributes.')) {
         const attributeKey = key.replace('attributes.', 'filters.');
-        query[attributeKey] = { $in: Array.isArray(attributes[key]) ? attributes[key] : [attributes[key]] };
+        const values = Array.isArray(attributes[key]) ? attributes[key] : attributes[key].split(',');
+        query[attributeKey] = { $in: values };
       }
     });
 
