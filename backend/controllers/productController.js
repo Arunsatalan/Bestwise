@@ -124,7 +124,7 @@ exports.getAllProducts = async (req, res) => {
         { tags: { $regex: search, $options: "i" } },
       ];
     }
-    if (category) query.mainCategory = category;
+    if (category) query.mainCategory = { $regex: `^${category}$`, $options: "i" };
     if (status) query.status = status;
 
     const sort = {};
