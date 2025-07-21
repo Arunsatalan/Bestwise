@@ -288,3 +288,22 @@ exports.updateUserProfile = async (req, res) => {
     });
   }
 };
+
+// Verify OTP - {base_url}/api/verify-otp
+exports.verifyOtp = async (req, res) => {
+  const { email, otp } = req.body;
+  if (!email || !otp) {
+    return res.status(400).json({ success: false, message: 'Email and OTP are required' });
+  }
+  try {
+    const otpRecord = await Otp.findOne({ email, otp });
+    if (!otpRecord) {
+      return res.status(400).json({ success: false, message: 'Invalid or expired OTP' });
+    }
+    // OTP is valid, delete it so it can't be reused
+    await Otp.deleteOne({ _id: otpRecord._id });
+    return res.status(200).json({ success: true, message: 'OTP verified successfully' });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
