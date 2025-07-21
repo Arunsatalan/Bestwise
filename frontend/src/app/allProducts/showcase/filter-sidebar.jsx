@@ -17,12 +17,18 @@ import React from "react"
 
 // NO STATIC DATA - All filter options fetched from MongoDB in real-time
 
+/**
+ * @typedef {import('./store').RootState} RootState
+ */
+
 export function FilterSidebar({ initialCategory }) {
   const dispatch = useDispatch()
-  const { category, filters } = useSelector((state) => state.products.filters)
+  const { category, filters } = useSelector(/** @param {RootState} state */(state) => state.products.filters)
   const [selectedFilters, setSelectedFilters] = useState({})
   const [priceRange, setPriceRange] = useState([0, 200])
+  /** @type {[string[], React.Dispatch<React.SetStateAction<string[]>>]} */
   const [ratingFilter, setRatingFilter] = useState([])
+  /** @type {[string[], React.Dispatch<React.SetStateAction<string[]>>]} */
   const [discountFilter, setDiscountFilter] = useState([])
   const [expandedSections, setExpandedSections] = useState({
     price: true,
@@ -163,10 +169,7 @@ export function FilterSidebar({ initialCategory }) {
     // Fetch filtered products from database
     await fetchFilteredProducts({
       category,
-      filters: {
-        ...filters,
-        [filterKey]: newValues
-      }
+      filters: updatedFilters
     })
   }
 
@@ -377,7 +380,7 @@ export function FilterSidebar({ initialCategory }) {
                 <input
                   type="checkbox"
                   className="mr-2 h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
-                  checked={ratingFilter.includes(rating)}
+                  checked={ratingFilter.includes(rating.toString())}
                   onChange={() => handleRatingChange(rating)}
                 />
                 <div className="flex items-center">
