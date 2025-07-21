@@ -33,30 +33,8 @@ import { Modal, useConfirmModal } from "../../../components/ui/modal"
  * @property {string} key - Category key
  */
 
-// Type definitions for JSDoc
-/**
- * @typedef {Object} Product
- * @property {string} [_id] - MongoDB ObjectId
- * @property {string} [id] - Alternative ID
- * @property {string} name - Product name
- * @property {string} sku - Product SKU
- * @property {string} [mainCategory] - Main category
- * @property {string} [category] - Category
- * @property {number} price - Product price
- * @property {number} stock - Stock quantity
- * @property {string} status - Product status
- * @property {Array<{url: string}>} [images] - Product images
- */
-
-/**
- * @typedef {Object} Category
- * @property {string} [_id] - MongoDB ObjectId
- * @property {string} [id] - Alternative ID
- * @property {string} name - Category name
- * @property {string} key - Category key
- */
-
 export default function ProductDashboard() {
+  /** @type {[Product[], React.Dispatch<React.SetStateAction<Product[]>>]} */
   const [products, setProducts] = useState([])
   const [searchTerm, setSearchTerm] = useState("")
   const [filterCategory, setFilterCategory] = useState("")
@@ -157,6 +135,11 @@ export default function ProductDashboard() {
     }
     return '/placeholder.svg';
   };
+  
+  /** @param {React.SyntheticEvent<HTMLImageElement, Event>} e */
+  const handleImageError = (e) => {
+    e.currentTarget.src = '/placeholder.svg';
+  }
 
   if (loading) {
     return (
@@ -299,9 +282,7 @@ export default function ProductDashboard() {
                   src={getProductImage(product)}
                   alt={product.name}
                   className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.target.src = '/placeholder.svg';
-                  }}
+                  onError={handleImageError}
                 />
                 <Badge variant={stockStatus.color} className="absolute top-2 right-2">
                   {stockStatus.label}
@@ -356,6 +337,7 @@ export default function ProductDashboard() {
       <Modal
         isOpen={isOpen}
         onClose={closeModal}
+        onCancel={closeModal}
         title={config.title}
         message={config.message}
         type={config.type}
