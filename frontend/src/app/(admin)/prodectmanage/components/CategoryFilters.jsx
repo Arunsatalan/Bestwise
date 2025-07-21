@@ -12,6 +12,7 @@ import { Plus, X, Folder, Edit2, Save, Settings, Trash2, Eye, Package, Search, E
 import Link from "next/link"
 import { Modal, useConfirmModal } from "../../../../components/ui/modal"
 import { useParams } from "next/navigation"
+import MediaUpload from "./MediaUpload";
 
 export default function CategoryFilters({
   category = "",
@@ -31,7 +32,7 @@ export default function CategoryFilters({
   
   // Debug currentSelectedFilters changes
   useEffect(() => {
-    console.log("🔍 currentSelectedFilters changed:", currentSelectedFilters);
+    console.log(" currentSelectedFilters changed:", currentSelectedFilters);
   }, [currentSelectedFilters])
   const [editingItems, setEditingItems] = useState({})
   const [newItemInputs, setNewItemInputs] = useState({})
@@ -42,7 +43,7 @@ export default function CategoryFilters({
   const [filteredProducts, setFilteredProducts] = useState(/** @type {any[]} */ ([]))
   const [showProducts, setShowProducts] = useState(false)
   const [editingMainCategory, setEditingMainCategory] = useState(null)
-  const [mainCategoryEditForm, setMainCategoryEditForm] = useState({ name: "", key: "", description: "" })
+  const [mainCategoryEditForm, setMainCategoryEditForm] = useState({ name: "", key: "", description: "", icon: "" })
 
   const { isOpen, config, showDelete, showSuccess, showError, closeModal } = useConfirmModal()
 
@@ -57,6 +58,7 @@ export default function CategoryFilters({
     name: "",
     key: "",
     description: "",
+    icon: "",
     attributes: /** @type {any[]} */ ([{ name: "subcategories", displayName: "Subcategories", items: [] }])
   })
 
@@ -68,9 +70,9 @@ export default function CategoryFilters({
   }, [category])
 
   useEffect(() => {
-    console.log("🔍 CategoryFilters received selectedFilters:", selectedFilters);
+    console.log(" CategoryFilters received selectedFilters:", selectedFilters);
     if (selectedFilters && Object.keys(selectedFilters).length > 0) {
-      console.log("🔍 Setting currentSelectedFilters to:", selectedFilters);
+      console.log(" Setting currentSelectedFilters to:", selectedFilters);
       setCurrentSelectedFilters(selectedFilters)
       
       // Also initialize selectedAttributeValues for editing products
@@ -82,7 +84,7 @@ export default function CategoryFilters({
           attributeValues[key] = [values];
         }
       });
-      console.log("🔍 Initializing selectedAttributeValues for editing:", attributeValues);
+      console.log(" Initializing selectedAttributeValues for editing:", attributeValues);
       setSelectedAttributeValues(attributeValues);
     }
   }, [selectedFilters])
@@ -103,8 +105,8 @@ export default function CategoryFilters({
       const previousFiltersString = JSON.stringify(currentSelectedFilters);
       
       if (currentFiltersString !== previousFiltersString) {
-        console.log("🔍 Selected Attribute Values Changed:", selectedAttributeValues);
-        console.log("🔍 Converted Filters:", filters);
+        console.log(" Selected Attribute Values Changed:", selectedAttributeValues);
+        console.log(" Converted Filters:", filters);
         onFiltersChange(filters);
       }
     }
@@ -121,7 +123,7 @@ export default function CategoryFilters({
   // Initialize selectedAttributeValues when category system loads and we have selectedFilters
   useEffect(() => {
     if (Object.keys(categorySystem).length > 0 && selectedFilters && Object.keys(selectedFilters).length > 0 && isProductForm) {
-      console.log("🔍 Category system loaded, initializing selectedAttributeValues from selectedFilters:", selectedFilters);
+      console.log(" Category system loaded, initializing selectedAttributeValues from selectedFilters:", selectedFilters);
       const attributeValues = {};
       Object.entries(selectedFilters).forEach(([key, values]) => {
         if (Array.isArray(values) && values.length > 0) {
@@ -130,7 +132,7 @@ export default function CategoryFilters({
           attributeValues[key] = [values];
         }
       });
-      console.log("🔍 Setting selectedAttributeValues:", attributeValues);
+      console.log(" Setting selectedAttributeValues:", attributeValues);
       setSelectedAttributeValues(attributeValues);
     }
   }, [categorySystem, selectedFilters, isProductForm])
@@ -273,6 +275,7 @@ export default function CategoryFilters({
       name: "",
       key: "",
       description: "",
+      icon: "",
       attributes: /** @type {any[]} */ ([{ name: "subcategories", displayName: "Subcategories", items: [] }])
     })
     setShowCreateCategoryForm(false)
@@ -317,21 +320,42 @@ export default function CategoryFilters({
   const addItemToAttribute = (attributeIndex, item) => {
     if (!item || !item.trim()) return
 
-    const trimmedItem = item.trim()
+    // Split by comma and process each item
+    const items = item.split(',').map(i => i.trim()).filter(i => i.length > 0)
     const currentAttribute = newCategoryForm.attributes[attributeIndex]
+    const newItems = []
+    const duplicates = []
 
-    // Check for duplicates
-    if (currentAttribute.items.includes(trimmedItem)) {
-      showError("Validation Error", "This item already exists in this attribute!")
-      return
+    // Check each item for duplicates
+    items.forEach(trimmedItem => {
+      if (currentAttribute.items.includes(trimmedItem)) {
+        duplicates.push(trimmedItem)
+      } else {
+        newItems.push(trimmedItem)
+      }
+    })
+
+    // Show warning for duplicates if any
+    if (duplicates.length > 0) {
+      showError("Duplicate Items", `The following items already exist: ${duplicates.join(', ')}`)
     }
 
-    setNewCategoryForm((prev) => ({
-      ...prev,
-      attributes: prev.attributes.map((attr, index) =>
-        index === attributeIndex ? { ...attr, items: [...attr.items, trimmedItem] } : attr,
-      ),
-    }))
+    // Add only new items
+    if (newItems.length > 0) {
+      setNewCategoryForm((prev) => ({
+        ...prev,
+        attributes: prev.attributes.map((attr, index) =>
+          index === attributeIndex ? { ...attr, items: [...attr.items, ...newItems] } : attr,
+        ),
+      }))
+      
+      // Show success message for added items
+      if (newItems.length === 1) {
+        console.log(`Added item: ${newItems[0]}`)
+      } else {
+        console.log(`Added ${newItems.length} items: ${newItems.join(', ')}`)
+      }
+    }
   }
 
   // Remove item from attribute in form
@@ -386,7 +410,7 @@ export default function CategoryFilters({
     
     // If we're editing a product and have selectedFilters, try to match them to the new category
     if (isProductForm && selectedFilters && Object.keys(selectedFilters).length > 0) {
-      console.log("🔍 Category changed, checking if selectedFilters match new category:", categoryKey);
+      console.log(" Category changed, checking if selectedFilters match new category:", categoryKey);
       // The selectedFilters will be re-processed by the useEffect above
     }
   }
@@ -446,7 +470,7 @@ export default function CategoryFilters({
 
             // Clear any editing states
             setEditingMainCategory(null);
-            setMainCategoryEditForm({ name: "", key: "", description: "" });
+            setMainCategoryEditForm({ name: "", key: "", description: "", icon: "" });
 
           alert(`Category "${deletedCategoryName}" deleted successfully!`);
         } else {
@@ -784,12 +808,13 @@ export default function CategoryFilters({
     setMainCategoryEditForm({
       name: categorySystem[categoryKey].name,
       key: categoryKey,
-      description: categorySystem[categoryKey].description || ""
+      description: categorySystem[categoryKey].description || "",
+      icon: categorySystem[categoryKey].icon || ""
     })
   }
   const cancelEditMainCategory = () => {
     setEditingMainCategory(null)
-    setMainCategoryEditForm({ name: "", key: "", description: "" })
+    setMainCategoryEditForm({ name: "", key: "", description: "", icon: "" })
   }
   const saveEditMainCategory = async (oldKey) => {
     try {
@@ -810,6 +835,7 @@ export default function CategoryFilters({
         name: mainCategoryEditForm.name,
         key: mainCategoryEditForm.key,
         description: mainCategoryEditForm.description,
+        icon: mainCategoryEditForm.icon,
         attributes: categorySystem[oldKey].attributes || []
       };
 
@@ -846,7 +872,7 @@ export default function CategoryFilters({
         
         // Clear editing state
         setEditingMainCategory(null);
-        setMainCategoryEditForm({ name: "", key: "", description: "" });
+        setMainCategoryEditForm({ name: "", key: "", description: "", icon: "" });
         
         showSuccess("Success", `Category "${mainCategoryEditForm.name}" updated successfully!`, () => {
           // Stay on the same page - no navigation
@@ -904,14 +930,12 @@ export default function CategoryFilters({
               onChange={(e) =>
                 setNewItemInputs((prev) => ({
                   ...prev,
-                  [`${categoryKey}-${filterType}`]: e.target.value,
+                  [`${categoryKey}-${filterType}`]: e.currentTarget.value,
                 }))
               }
               onKeyDown={(e) => {
-                // @ts-ignore
-                const target = e.target;
-                if (e.key === "Enter" && target.value && target.value.trim()) {
-                  addItem(categoryKey, filterType, target.value.trim())
+                if (e.key === "Enter" && e.currentTarget.value && e.currentTarget.value.trim()) {
+                  addItem(categoryKey, filterType, e.currentTarget.value.trim())
                 }
                 if (e.key === "Escape") {
                   setShowAddInput((prev) => ({ ...prev, [`${categoryKey}-${filterType}`]: false }))
@@ -923,7 +947,12 @@ export default function CategoryFilters({
             <Button
               type="button"
               size="sm"
-              onClick={() => addItem(categoryKey, filterType, newItemInputs[`${categoryKey}-${filterType}`])}
+              onClick={() => {
+                  const value = newItemInputs[`${categoryKey}-${filterType}`];
+                  if(value && value.trim()) {
+                    addItem(categoryKey, filterType, value.trim());
+                  }
+              }}
             >
               <Save className="w-4 h-4" />
             </Button>
@@ -949,15 +978,13 @@ export default function CategoryFilters({
                     onChange={(e) =>
                       setEditingItems((prev) => ({
                         ...prev,
-                        [`${categoryKey}-${filterType}-${item}`]: e.target.value,
+                        [`${categoryKey}-${filterType}-${item}`]: e.currentTarget.value,
                       }))
                     }
                     className="h-6 text-sm border-0 p-0 w-24"
                     onKeyDown={(e) => {
-                      // @ts-ignore
-                      const target = e.target;
-                      if (e.key === "Enter" && target.value && target.value.trim()) {
-                        editItem(categoryKey, filterType, item, target.value.trim())
+                      if (e.key === "Enter" && e.currentTarget.value && e.currentTarget.value.trim()) {
+                        editItem(categoryKey, filterType, item, e.currentTarget.value.trim())
                       }
                       if (e.key === "Escape") {
                         cancelEditing(categoryKey, filterType, item)
@@ -970,10 +997,11 @@ export default function CategoryFilters({
                     size="sm"
                     variant="ghost"
                     className="h-5 w-5 p-0"
-                    onClick={(e) => {
-                      // @ts-ignore
-                      const target = e.target;
-                      editItem(categoryKey, filterType, item, target.value && target.value.trim())
+                    onClick={() => {
+                      const newValue = editingItems[`${categoryKey}-${filterType}-${item}`];
+                      if(newValue && newValue.trim()){
+                        editItem(categoryKey, filterType, item, newValue.trim());
+                      }
                     }}
                   >
                     <Save className="w-3 h-3" />
@@ -1204,6 +1232,18 @@ export default function CategoryFilters({
             </div>
 
             <div>
+              <Label htmlFor="categoryIcon">Icon</Label>
+              <MediaUpload
+                onImagesChange={(urls) => {
+                  setNewCategoryForm((prev) => ({ ...prev, icon: urls?.[0] || "" }));
+                }}
+                images={newCategoryForm.icon ? [newCategoryForm.icon] : []}
+                onVideosChange={() => {}} 
+                videos={[]}
+              />
+            </div>
+
+            <div>
               <Label htmlFor="categoryDescription">Description</Label>
               <Textarea
                 id="categoryDescription"
@@ -1254,11 +1294,9 @@ export default function CategoryFilters({
                       <Input
                         placeholder={`Add ${attribute.displayName.toLowerCase()} item (e.g., Red, Large, Cotton)`}
                         onKeyDown={(e) => {
-                          // @ts-ignore
-                          const target = e.target;
-                          if (e.key === "Enter" && target.value && target.value.trim()) {
-                            addItemToAttribute(attributeIndex, target.value.trim())
-                            target.value = ""
+                          if (e.key === "Enter" && e.currentTarget.value.trim()) {
+                            addItemToAttribute(attributeIndex, e.currentTarget.value.trim())
+                            e.currentTarget.value = ""
                           }
                         }}
                       />
@@ -1266,8 +1304,7 @@ export default function CategoryFilters({
                         type="button"
                         size="sm"
                         onClick={(e) => {
-                          // @ts-ignore
-                          const input = (e.target && e.target.parentElement && e.target.parentElement.querySelector("input")) || null;
+                          const input = e.currentTarget.parentElement?.querySelector("input")
                           if (input && input.value.trim()) {
                             addItemToAttribute(attributeIndex, input.value.trim())
                             input.value = ""
@@ -1367,9 +1404,19 @@ export default function CategoryFilters({
                 </div>
                 {editingMainCategory === categoryKey ? (
                   <div className="space-y-2">
-                    <Input value={mainCategoryEditForm.name} onChange={e => setMainCategoryEditForm(f => ({ ...f, name: e.target.value }))} placeholder="Category Name" className="mb-1" />
-                    <Input value={mainCategoryEditForm.key} onChange={e => setMainCategoryEditForm(f => ({ ...f, key: e.target.value }))} placeholder="Category Key" className="mb-1" />
-                    <Input value={mainCategoryEditForm.description} onChange={e => setMainCategoryEditForm(f => ({ ...f, description: e.target.value }))} placeholder="Description" className="mb-1" />
+                    <Input value={mainCategoryEditForm.name} onChange={e => setMainCategoryEditForm(f => ({ ...f, name: e.currentTarget.value }))} placeholder="Category Name" className="mb-1" />
+                    <Input value={mainCategoryEditForm.key} onChange={e => setMainCategoryEditForm(f => ({ ...f, key: e.currentTarget.value }))} placeholder="Category Key" className="mb-1" />
+                    <Input value={mainCategoryEditForm.description} onChange={e => setMainCategoryEditForm(f => ({ ...f, description: e.currentTarget.value }))} placeholder="Description" className="mb-1" />
+                    <div className="mt-2">
+                        <Label className="text-sm font-medium">Icon</Label>
+                        <MediaUpload
+                            onImagesChange={(urls) => {
+                                setMainCategoryEditForm((prev) => ({ ...prev, icon: urls?.[0] || "" }));
+                            }}
+                            images={mainCategoryEditForm.icon ? [mainCategoryEditForm.icon] : []}
+                            onVideosChange={() => {}}
+                        />
+                    </div>
                     <div className="flex gap-2">
                       <Button type="button" size="sm" onClick={e => { e.stopPropagation(); saveEditMainCategory(categoryKey) }}>Save</Button>
                       <Button type="button" size="sm" variant="outline" onClick={e => { e.stopPropagation(); cancelEditMainCategory() }}>Cancel</Button>
@@ -1377,6 +1424,13 @@ export default function CategoryFilters({
                   </div>
                 ) : (
                   <div className={`text-center ${!isProductForm ? "pr-8" : ""} flex flex-col items-center relative`}>
+                    {categorySystem[categoryKey].icon && (
+                      <img
+                        src={categorySystem[categoryKey].icon}
+                        alt={`${categorySystem[categoryKey].name} icon`}
+                        className="w-12 h-12 mb-2 object-contain"
+                      />
+                    )}
                     <div className="flex items-center gap-2 justify-center w-full mb-1">
                       <h3 className="font-medium text-lg">{categorySystem[categoryKey].name}</h3>
                       {!isProductForm && (
@@ -1403,7 +1457,7 @@ export default function CategoryFilters({
                       )}
                     </div>
                     <p className="text-sm text-gray-500 mt-1">{categorySystem[categoryKey].description || "No description"}</p>
-                    <p className="text-xs text-gray-400 mt-1">{Object.keys(categorySystem[categoryKey]).length - 2} attributes</p>
+                    <p className="text-xs text-gray-400 mt-1">{Array.isArray(categorySystem[categoryKey].attributes) ? categorySystem[categoryKey].attributes.length : 0} attributes</p>
                     {selectedMainCategory === categoryKey && (
                       <Badge variant="default" className="mt-2">Selected</Badge>
                     )}
@@ -1460,11 +1514,9 @@ export default function CategoryFilters({
                     padding: "0.5rem 0.75rem"
                   }}
                   onKeyDown={(e) => {
-                    // @ts-ignore
-                    const target = e.target;
-                    if (e.key === "Enter" && target.value && target.value.trim()) {
-                      addAttributeValue(attr.name, target.value.trim());
-                      target.value = "";
+                    if (e.key === "Enter" && e.currentTarget.value.trim()) {
+                      addAttributeValue(attr.name, e.currentTarget.value.trim());
+                      e.currentTarget.value = "";
                     }
                   }}
                 />
@@ -1472,8 +1524,7 @@ export default function CategoryFilters({
                   type="button"
                   size="sm"
                   onClick={(e) => {
-                    // @ts-ignore
-                    const input = (e.target && e.target.parentElement && e.target.parentElement.querySelector("input")) || null;
+                    const input = e.currentTarget.parentElement.querySelector("input");
                     if (input && input.value.trim()) {
                       addAttributeValue(attr.name, input.value.trim());
                       input.value = "";
@@ -1495,12 +1546,12 @@ export default function CategoryFilters({
                     boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
                   }}
                   onMouseEnter={(e) => {
-                    e.target.style.transform = "translateY(-1px)";
-                    e.target.style.boxShadow = "0 4px 8px rgba(0,0,0,0.15)";
+                    e.currentTarget.style.transform = "translateY(-1px)";
+                    e.currentTarget.style.boxShadow = "0 4px 8px rgba(0,0,0,0.15)";
                   }}
                   onMouseLeave={(e) => {
-                    e.target.style.transform = "translateY(0)";
-                    e.target.style.boxShadow = "0 2px 4px rgba(0,0,0,0.1)";
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.boxShadow = "0 2px 4px rgba(0,0,0,0.1)";
                   }}
                 >
                   <Plus size={16} />
@@ -1545,10 +1596,8 @@ export default function CategoryFilters({
                               marginRight: "0.5rem"
                             }}
                             onKeyDown={(e) => {
-                              // @ts-ignore
-                              const target = e.target;
-                              if (e.key === "Enter" && target.value && target.value.trim()) {
-                                saveEditedAttributeValue(attr.name, item, target.value.trim());
+                              if (e.key === "Enter") {
+                                saveEditedAttributeValue(attr.name, item, e.currentTarget.value);
                               } else if (e.key === "Escape") {
                                 cancelEditingAttributeValue(attr.name, item);
                               }
@@ -1557,7 +1606,7 @@ export default function CategoryFilters({
                               // Update the editing state with the new value
                               setEditingAttributeValues(prev => ({
                                 ...prev,
-                                [`${attr.name}-${item}`]: e.target.value
+                                [`${attr.name}-${item}`]: e.currentTarget.value
                               }));
                             }}
                             autoFocus
@@ -1824,11 +1873,9 @@ export default function CategoryFilters({
                         padding: "0.5rem 0.75rem"
                       }}
                       onKeyDown={(e) => {
-                        // @ts-ignore
-                        const target = e.target;
-                        if (e.key === "Enter" && target.value && target.value.trim()) {
-                          addAttributeValueToCategory(attr.name, target.value.trim());
-                          target.value = "";
+                        if (e.key === "Enter" && e.currentTarget.value.trim()) {
+                          addAttributeValueToCategory(attr.name, e.currentTarget.value.trim());
+                          e.currentTarget.value = "";
                         }
                       }}
                     />
@@ -1836,8 +1883,7 @@ export default function CategoryFilters({
                       type="button"
                       size="sm"
                       onClick={(e) => {
-                        // @ts-ignore
-                        const input = (e.target && e.target.parentElement && e.target.parentElement.querySelector("input")) || null;
+                        const input = e.currentTarget.parentElement.querySelector("input");
                         if (input && input.value.trim()) {
                           addAttributeValueToCategory(attr.name, input.value.trim());
                           input.value = "";
@@ -1859,12 +1905,12 @@ export default function CategoryFilters({
                         boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
                       }}
                       onMouseEnter={(e) => {
-                        e.target.style.transform = "translateY(-1px)";
-                        e.target.style.boxShadow = "0 4px 8px rgba(0,0,0,0.15)";
+                        e.currentTarget.style.transform = "translateY(-1px)";
+                        e.currentTarget.style.boxShadow = "0 4px 8px rgba(0,0,0,0.15)";
                       }}
                       onMouseLeave={(e) => {
-                        e.target.style.transform = "translateY(0)";
-                        e.target.style.boxShadow = "0 2px 4px rgba(0,0,0,0.1)";
+                        e.currentTarget.style.transform = "translateY(0)";
+                        e.currentTarget.style.boxShadow = "0 2px 4px rgba(0,0,0,0.1)";
                       }}
                     >
                       <Plus size={16} />
@@ -1909,10 +1955,8 @@ export default function CategoryFilters({
                                   marginRight: "0.5rem"
                                 }}
                                 onKeyDown={(e) => {
-                                  // @ts-ignore
-                                  const target = e.target;
-                                  if (e.key === "Enter" && target.value && target.value.trim()) {
-                                    saveEditedAttributeValue(attr.name, item, target.value.trim());
+                                  if (e.key === "Enter") {
+                                    saveEditedAttributeValue(attr.name, item, e.currentTarget.value);
                                   } else if (e.key === "Escape") {
                                     cancelEditingAttributeValue(attr.name, item);
                                   }
@@ -1921,7 +1965,7 @@ export default function CategoryFilters({
                                   // Update the editing state with the new value
                                   setEditingAttributeValues(prev => ({
                                     ...prev,
-                                    [`${attr.name}-${item}`]: e.target.value
+                                    [`${attr.name}-${item}`]: e.currentTarget.value
                                   }));
                                 }}
                                 autoFocus
@@ -2120,6 +2164,7 @@ export default function CategoryFilters({
       <Modal
         isOpen={isOpen}
         onClose={closeModal}
+        onCancel={closeModal}
         title={config.title}
         message={config.message}
         type={config.type}

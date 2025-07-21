@@ -2,256 +2,122 @@
 
 import { useState, useEffect } from "react"
 import { useDispatch, useSelector } from "react-redux"
-import { setFilter, setCategory } from "./store"
+import { setFilter, setCategory, setFilteredProducts } from "./store"
+import { 
+  getAllCategories, 
+  getCategoryByName, 
+  getCategoryAttributes, 
+  getAttributeValues,
+  getUniqueAttributeValues,
+  refreshAllData,
+  fetchFilteredProductsFromDB,
+  getAllProducts
+} from "./sample-data"
+import React from "react"
+import { useSearchParams } from "next/navigation"
 
-// Define filter options for each category with more examples
-const filterOptions = {
-  Balloons: {
-    occasion: [
-      "Birthday",
-      "Wedding",
-      "Anniversary",
-      "Valentine's Day",
-      "Graduation",
-      "Baby Shower",
-      "Halloween",
-      "Christmas",
-      "New Year",
-      "Retirement",
-      "Engagement",
-      "Hen Party",
-      "Stag Do",
-      "Christening",
-    ],
-    type: [
-      "Latex",
-      "Foil",
-      "Bubble",
-      "Number/Letter",
-      "Confetti",
-      "LED",
-      "Helium-filled",
-      "Air-filled",
-      "Biodegradable",
-      "Shaped",
-    ],
-    size: ["Mini", "Standard", "Large", "Giant", "Jumbo", "Custom"],
-    color: [
-      "Red",
-      "Pink",
-      "Blue",
-      "Gold",
-      "Silver",
-      "Multi-color",
-      "Green",
-      "Purple",
-      "Black",
-      "White",
-      "Yellow",
-      "Orange",
-      "Rose Gold",
-      "Teal",
-      "Navy",
-      "Pastel Mix",
-    ],
-    finish: ["Matte", "Metallic", "Chrome", "Confetti", "Glitter", "Pearlescent", "Transparent", "Opaque"],
-  },
-  Cards: {
-    occasion: [
-      "Birthday",
-      "Wedding",
-      "Anniversary",
-      "Sympathy",
-      "Congratulations",
-      "Thank You",
-      "Get Well",
-      "New Baby",
-      "Retirement",
-      "Graduation",
-      "New Home",
-      "Engagement",
-      "Valentine's Day",
-      "Christmas",
-      "Easter",
-    ],
-    recipient: [
-      "Friend",
-      "Family",
-      "Partner",
-      "Colleague",
-      "Child",
-      "Parent",
-      "Grandparent",
-      "Teacher",
-      "Boss",
-      "Sibling",
-      "Cousin",
-      "Aunt/Uncle",
-      "Niece/Nephew",
-    ],
-    style: [
-      "Funny",
-      "Sentimental",
-      "Artistic",
-      "Photo",
-      "Pop-up",
-      "Musical",
-      "Handmade",
-      "Vintage",
-      "Modern",
-      "Minimalist",
-      "Luxury",
-      "Illustrated",
-      "Personalized",
-      "Letterpress",
-      "Foil",
-    ],
-  },
-  "Home & Living": {
-    subcategory: [
-      "Clocks",
-      "Frames",
-      "Candles",
-      "Decor",
-      "Garden",
-      "Cushions",
-      "Throws",
-      "Wall Art",
-      "Vases",
-      "Lamps",
-      "Rugs",
-      "Storage",
-      "Mirrors",
-      "Artificial Plants",
-      "Ornaments",
-    ],
-    color: [
-      "White",
-      "Black",
-      "Natural",
-      "Gold",
-      "Silver",
-      "Blue",
-      "Green",
-      "Pink",
-      "Multi-color",
-      "Wood",
-      "Grey",
-      "Beige",
-      "Copper",
-      "Brass",
-      "Terracotta",
-    ],
-    size: ["Small", "Medium", "Large", "Extra Large", "Mini", "Oversized", "Standard"],
-    brand: [
-      "HomeStyle",
-      "LivingCo",
-      "DecorPlus",
-      "FrameIt",
-      "ArtHome",
-      "GardenLife",
-      "LuxDecor",
-      "CozyHome",
-      "ModernLiving",
-      "NaturalHome",
-    ],
-  },
-  "Kitchen & Dining": {
-    type: [
-      "Mugs",
-      "Plates",
-      "Cutlery",
-      "Glasses",
-      "Cookware",
-      "Bakeware",
-      "Serveware",
-      "Storage",
-      "Gadgets",
-      "Textiles",
-      "Teapots",
-      "Coffee Makers",
-      "Coasters",
-      "Placemats",
-      "Trays",
-    ],
-    material: [
-      "Ceramic",
-      "Glass",
-      "Stainless Steel",
-      "Wood",
-      "Plastic",
-      "Silicone",
-      "Porcelain",
-      "Bamboo",
-      "Cast Iron",
-      "Copper",
-      "Marble",
-      "Melamine",
-      "Enamel",
-      "Crystal",
-    ],
-    brand: [
-      "KitchenPro",
-      "DineWell",
-      "CeramicArt",
-      "GlassWorks",
-      "ChefChoice",
-      "HomeCook",
-      "TableTop",
-      "GourmetKitchen",
-      "CulinaryDelight",
-      "DiningElegance",
-    ],
-  },
-  "Toys, Novelties & Collectibles": {
-    ageGroup: ["0-2 years", "3-5 years", "6-8 years", "9-12 years", "13+ years", "Adult", "All Ages"],
-    type: [
-      "Puzzle",
-      "Plush",
-      "Action Figure",
-      "Board Game",
-      "Collectible",
-      "Educational",
-      "Outdoor",
-      "Electronic",
-      "Building",
-      "Arts & Crafts",
-      "Vehicles",
-      "Dolls",
-      "Science Kits",
-      "Musical",
-      "Role Play",
-    ],
-    brand: [
-      "ToyWorld",
-      "CollectMore",
-      "PlayTime",
-      "GameMaster",
-      "KidZone",
-      "LearnPlay",
-      "FunToys",
-      "CollectiblesInc",
-      "CreativeToys",
-      "BrainGames",
-    ],
-  },
-}
+// NO STATIC DATA - All filter options fetched from MongoDB in real-time
+
+/**
+ * @typedef {import('./store').productSlice.reducer} ProductsReducer
+ * @typedef {ReturnType<ProductsReducer>} ProductsState
+ * @typedef {{products: ProductsState}} RootState
+ */
+
+/**
+ * @typedef {object} Category
+ * @property {string} key
+ * @property {string} name
+ * @property {any[]} [attributes]
+ */
 
 export function FilterSidebar() {
   const dispatch = useDispatch()
-  const { category, filters } = useSelector((state) => state.products.filters)
+  const searchParams = useSearchParams()
+  const initialCategory = searchParams.get('category')
+  
+  const { category, filters } = useSelector(/** @param {RootState} state */(state) => state.products.filters)
   const [selectedFilters, setSelectedFilters] = useState({})
   const [priceRange, setPriceRange] = useState([0, 200])
+  /** @type {[number[], React.Dispatch<React.SetStateAction<number[]>>]} */
   const [ratingFilter, setRatingFilter] = useState([])
+  /** @type {[string[], React.Dispatch<React.SetStateAction<string[]>>]} */
   const [discountFilter, setDiscountFilter] = useState([])
   const [expandedSections, setExpandedSections] = useState({
     price: true,
     rating: true,
     discount: true,
   })
+  
+  // State for real-time MongoDB data
+  /** @type {[Category[], React.Dispatch<React.SetStateAction<Category[]>>]} */
+  const [categoriesData, setCategoriesData] = useState([])
+  const [availableFilters, setAvailableFilters] = useState({})
+  const [isLoading, setIsLoading] = useState(true)
 
-  // Get the available filters for the current category
-  const availableFilters = filterOptions[category] || {}
+  // Fetch categories and filter options from MongoDB
+  useEffect(() => {
+    const loadCategoriesData = async () => {
+      try {
+        setIsLoading(true)
+        const categories = getAllCategories()
+        setCategoriesData(categories)
+        console.log("DEBUG: categoriesData structure", JSON.stringify(categories, null, 2));
+        
+        // Get current category data
+        if (category) {
+          const currentCategory = getCategoryByName(category)
+          if (currentCategory) {
+            const categoryAttrs = getCategoryAttributes(currentCategory.key)
+            setAvailableFilters(categoryAttrs)
+          }
+        }
+      } catch (error) {
+        console.error('Error loading categories data:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadCategoriesData()
+  }, [])
+
+  // Update available filters when category changes
+  useEffect(() => {
+    if (category && categoriesData.length > 0) {
+      const currentCategory = getCategoryByName(category)
+      if (currentCategory) {
+        const categoryAttrs = getCategoryAttributes(currentCategory.key)
+        setAvailableFilters(categoryAttrs)
+      } else {
+        setAvailableFilters({})
+      }
+    }
+  }, [category, categoriesData])
+
+  // Listen for real-time updates from MongoDB
+  useEffect(() => {
+    const handleCategoriesUpdate = (event) => {
+      const { categories } = event.detail
+      setCategoriesData(categories)
+      
+      // Update current category filters if needed
+      if (category) {
+        const currentCategory = categories.find(cat => cat.name === category)
+        if (currentCategory) {
+          const categoryAttrs = getCategoryAttributes(currentCategory.key)
+          setAvailableFilters(categoryAttrs)
+        }
+      }
+    }
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('categoriesUpdated', handleCategoriesUpdate)
+      return () => {
+        window.removeEventListener('categoriesUpdated', handleCategoriesUpdate)
+      }
+    }
+  }, [category])
 
   // Reset filters when category changes
   useEffect(() => {
@@ -266,15 +132,71 @@ export function FilterSidebar() {
       newExpandedSections[key] = true
     })
     setExpandedSections(newExpandedSections)
-  }, [category])
+  }, [category, availableFilters, dispatch])
 
-  // Handle category change
-  const handleCategoryChange = (newCategory) => {
-    dispatch(setCategory(newCategory))
+  // Set initial category from URL parameter
+  useEffect(() => {
+    if (initialCategory && initialCategory !== category) {
+      handleCategoryChange(initialCategory)
+    }
+  }, [initialCategory, categoriesData])
+
+  // Function to fetch filtered products from database
+  const fetchFilteredProducts = async (filterParams) => {
+    try {
+      console.log('Fetching filtered products with params:', filterParams)
+      const filteredProducts = await fetchFilteredProductsFromDB(filterParams)
+      dispatch(setFilteredProducts(filteredProducts))
+    } catch (error) {
+      console.error('Error fetching filtered products:', error)
+    }
   }
 
-  // Handle filter change
-  const handleFilterChange = (filterKey, value) => {
+  // Find the parent category of a given subcategory key
+  const findParentCategory = (subcategoryKey) => {
+    for (const category of categoriesData) {
+      if (category.attributes) {
+        for (const attribute of category.attributes) {
+          if (attribute.items.includes(subcategoryKey)) {
+            return { parent: category, attribute: attribute.name, value: subcategoryKey };
+          }
+        }
+      }
+    }
+    return { parent: null, attribute: null, value: null };
+  };
+
+  // Handle category change with real-time database filtering
+  const handleCategoryChange = async (newCategoryName) => {
+    // Note: The logic expects a category NAME, not a key.
+    console.log('Category name changed to:', newCategoryName)
+    
+    let mainCategoryKey = categoriesData.find(c => c.name === newCategoryName)?.key || ""
+    let initialFilters = {};
+    
+    if (!mainCategoryKey) {
+      // It might be a subcategory, so find its parent
+      const { parent, attribute, value } = findParentCategory(newCategoryName);
+      if (parent) {
+        mainCategoryKey = parent.key;
+        initialFilters = { [attribute]: [value] };
+        setSelectedFilters(initialFilters);
+        dispatch(setFilter({ key: attribute, values: [value] }));
+        console.log(`It's a subcategory. Parent: ${mainCategoryKey}, Filter: ${attribute}=${value}`);
+      }
+    }
+    
+    dispatch(setCategory(newCategoryName)) // Keep sending name to store for display
+    
+    // Fetch products for the new category from database
+    await fetchFilteredProducts({
+      category: mainCategoryKey, // Use the key for filtering
+      filters: initialFilters // Reset filters or apply subcategory filter
+    })
+  }
+
+  // Handle filter change with real-time database filtering
+  const handleFilterChange = async (filterKey, value) => {
     const currentValues = selectedFilters[filterKey] || []
     const newValues = currentValues.includes(value)
       ? currentValues.filter((v) => v !== value)
@@ -287,6 +209,13 @@ export function FilterSidebar() {
 
     setSelectedFilters(updatedFilters)
     dispatch(setFilter({ key: filterKey, values: newValues }))
+    
+    // Fetch filtered products from database
+    const currentCategoryKey = categoriesData.find(c => c.name === category)?.key || ""
+    await fetchFilteredProducts({
+      category: currentCategoryKey,
+      filters: updatedFilters
+    })
   }
 
   // Handle price range change
@@ -301,26 +230,56 @@ export function FilterSidebar() {
     }
   }
 
-  // Apply price range when slider interaction ends
-  const handlePriceChangeEnd = () => {
+  // Apply price range when slider interaction ends with database filtering
+  const handlePriceChangeEnd = async () => {
     dispatch(setFilter({ key: "price", values: priceRange }))
+    
+    // Fetch filtered products from database
+    const currentCategoryKey = categoriesData.find(c => c.name === category)?.key || ""
+    await fetchFilteredProducts({
+      category: currentCategoryKey,
+      filters: {
+        ...selectedFilters,
+        price: priceRange
+      }
+    })
   }
 
-  // Handle rating filter
-  const handleRatingChange = (rating) => {
+  // Handle rating filter with database filtering
+  const handleRatingChange = async (rating) => {
     const newRatings = ratingFilter.includes(rating)
       ? ratingFilter.filter((r) => r !== rating)
       : [...ratingFilter, rating]
 
     setRatingFilter(newRatings)
     dispatch(setFilter({ key: "rating", values: newRatings }))
+    
+    // Fetch filtered products from database
+    const currentCategoryKey = categoriesData.find(c => c.name === category)?.key || ""
+    await fetchFilteredProducts({
+      category: currentCategoryKey,
+      filters: {
+        ...selectedFilters,
+        rating: newRatings
+      }
+    })
   }
 
-  // Handle discount filter
-  const handleDiscountChange = (hasDiscount) => {
+  // Handle discount filter with database filtering
+  const handleDiscountChange = async (hasDiscount) => {
     const newValue = discountFilter.includes(hasDiscount) ? [] : [hasDiscount]
     setDiscountFilter(newValue)
     dispatch(setFilter({ key: "discount", values: newValue }))
+    
+    // Fetch filtered products from database
+    const currentCategoryKey = categoriesData.find(c => c.name === category)?.key || ""
+    await fetchFilteredProducts({
+      category: currentCategoryKey,
+      filters: {
+        ...selectedFilters,
+        discount: newValue
+      }
+    })
   }
 
   // Toggle section expansion
@@ -340,14 +299,21 @@ export function FilterSidebar() {
         <h3 className="font-medium mb-2">Category</h3>
         <select
           className="w-full p-2 border rounded"
-          value={category}
+          value={category || ""}
           onChange={(e) => handleCategoryChange(e.target.value)}
         >
-          {Object.keys(filterOptions).map((cat) => (
-            <option key={cat} value={cat}>
-              {cat}
-            </option>
-          ))}
+          {isLoading ? (
+            <option value="">Loading categories...</option>
+          ) : (
+            <>
+              <option value="">All Categories</option>
+              {categoriesData.map((cat) => (
+                <option key={cat.key} value={cat.name}>
+                  {cat.name}
+                </option>
+              ))}
+            </>
+          )}
         </select>
       </div>
 

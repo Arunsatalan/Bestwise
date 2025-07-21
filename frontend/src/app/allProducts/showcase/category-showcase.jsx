@@ -7,7 +7,7 @@ import { ProductGrid } from "./product-grid"
 import { CategorySelector } from "./category-selector"
 import { MobileFilterDrawer } from "./mobile-filter-drawer"
 import { setCategory, setProducts, setLoading } from "./store"
-import { sampleProducts } from "./sample-data"
+import { getAllProducts } from "./sample-data"
 
 export function CategoryShowcase({ categoryName }) {
   const dispatch = useDispatch()
@@ -17,12 +17,21 @@ export function CategoryShowcase({ categoryName }) {
   useEffect(() => {
     dispatch(setLoading(true))
 
-    // Simulate API call with sample data
-    setTimeout(() => {
-      dispatch(setProducts(sampleProducts))
-      dispatch(setCategory(categoryName))
-      dispatch(setLoading(false))
-    }, 500)
+    // Load products from MongoDB
+    const loadProducts = async () => {
+      try {
+        const products = await getAllProducts()
+        dispatch(setProducts(products || []))
+        dispatch(setCategory(categoryName))
+        dispatch(setLoading(false))
+      } catch (error) {
+        console.error('Error loading products:', error)
+        dispatch(setProducts([]))
+        dispatch(setLoading(false))
+      }
+    }
+    
+    loadProducts()
   }, [dispatch, categoryName])
 
   // Get products from other categories for the "Shop Other Categories" section

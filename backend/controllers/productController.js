@@ -111,6 +111,7 @@ exports.getAllProducts = async (req, res) => {
       status,
       sortBy = "createdAt",
       sortOrder = "desc",
+      ...attributes
     } = req.query;
 
     const query = {};
@@ -124,8 +125,17 @@ exports.getAllProducts = async (req, res) => {
         { tags: { $regex: search, $options: "i" } },
       ];
     }
-    if (category) query.mainCategory = category;
+    if (category) query.mainCategory = { $regex: `^${category}$`, $options: "i" };
     if (status) query.status = status;
+
+    // Add attribute filters to the query
+    Object.keys(attributes).forEach(key => {
+      if (key.startsWith('attributes.')) {
+        const attributeKey = key.replace('attributes.', 'filters.');
+        const values = Array.isArray(attributes[key]) ? attributes[key] : attributes[key].split(',');
+        query[attributeKey] = { $in: values };
+      }
+    });
 
     const sort = {};
     sort[sortBy] = sortOrder === "desc" ? -1 : 1;

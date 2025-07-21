@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { FilterSidebar } from "./filter-sidebar"
 import { useSelector } from "react-redux"
 
-export function MobileFilterDrawer() {
+export function MobileFilterDrawer({ initialCategory }) {
   const [isOpen, setIsOpen] = useState(false)
   const { filters } = useSelector((state) => state.products)
   const [activeFiltersCount, setActiveFiltersCount] = useState(0)
@@ -103,7 +103,7 @@ export function MobileFilterDrawer() {
             </button>
           </div>
           <div className="p-4">
-            <FilterSidebar />
+            <FilterSidebar initialCategory={initialCategory} />
           </div>
           <div className="p-4 border-t sticky bottom-0 bg-white">
             <button
