@@ -57,6 +57,7 @@ export default function CategoryFilters({
     name: "",
     key: "",
     description: "",
+    icon: "",
     attributes: /** @type {any[]} */ ([{ name: "subcategories", displayName: "Subcategories", items: [] }])
   })
 
@@ -273,6 +274,7 @@ export default function CategoryFilters({
       name: "",
       key: "",
       description: "",
+      icon: "",
       attributes: /** @type {any[]} */ ([{ name: "subcategories", displayName: "Subcategories", items: [] }])
     })
     setShowCreateCategoryForm(false)
@@ -1225,6 +1227,24 @@ export default function CategoryFilters({
             </div>
 
             <div>
+              <Label htmlFor="categoryIcon">Icon URL</Label>
+              <Input
+                id="categoryIcon"
+                value={newCategoryForm.icon}
+                onChange={(e) => setNewCategoryForm((prev) => ({ ...prev, icon: e.target.value }))}
+                placeholder="e.g., /icons/jewelry.svg"
+              />
+              {newCategoryForm.icon && (
+                <img 
+                  src={newCategoryForm.icon} 
+                  alt="Icon Preview" 
+                  className="w-16 h-16 mt-2 rounded border object-contain"
+                  onError={(e) => ((e.target).style.display = "none")}
+                />
+              )}
+            </div>
+
+            <div>
               <Label htmlFor="categoryDescription">Description</Label>
               <Textarea
                 id="categoryDescription"
@@ -1395,6 +1415,13 @@ export default function CategoryFilters({
                   </div>
                 ) : (
                   <div className={`text-center ${!isProductForm ? "pr-8" : ""} flex flex-col items-center relative`}>
+                    {categorySystem[categoryKey].icon && (
+                      <img
+                        src={categorySystem[categoryKey].icon}
+                        alt={`${categorySystem[categoryKey].name} icon`}
+                        className="w-12 h-12 mb-2 object-contain"
+                      />
+                    )}
                     <div className="flex items-center gap-2 justify-center w-full mb-1">
                       <h3 className="font-medium text-lg">{categorySystem[categoryKey].name}</h3>
                       {!isProductForm && (
