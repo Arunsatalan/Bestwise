@@ -139,14 +139,14 @@ export function FilterSidebar({ initialCategory }) {
   }
 
   // Handle category change with real-time database filtering
-  const handleCategoryChange = async (newCategory) => {
-    console.log('Category changed to:', newCategory)
-    console.log('Available categories:', categoriesData)
-    dispatch(setCategory(newCategory))
+  const handleCategoryChange = async (newCategoryKey) => {
+    console.log('Category key changed to:', newCategoryKey)
+    const categoryName = categoriesData.find(c => c.key === newCategoryKey)?.name || ''
+    dispatch(setCategory(categoryName)) // Keep sending name to store for display
     
     // Fetch products for the new category from database
     await fetchFilteredProducts({
-      category: newCategory,
+      category: newCategoryKey, // Use the key for filtering
       filters: {} // Reset filters when category changes
     })
   }
@@ -167,8 +167,9 @@ export function FilterSidebar({ initialCategory }) {
     dispatch(setFilter({ key: filterKey, values: newValues }))
     
     // Fetch filtered products from database
+    const currentCategoryKey = categoriesData.find(c => c.name === category)?.key || ""
     await fetchFilteredProducts({
-      category,
+      category: currentCategoryKey,
       filters: updatedFilters
     })
   }
@@ -190,10 +191,11 @@ export function FilterSidebar({ initialCategory }) {
     dispatch(setFilter({ key: "price", values: priceRange }))
     
     // Fetch filtered products from database
+    const currentCategoryKey = categoriesData.find(c => c.name === category)?.key || ""
     await fetchFilteredProducts({
-      category,
+      category: currentCategoryKey,
       filters: {
-        ...filters,
+        ...selectedFilters,
         price: priceRange
       }
     })
@@ -209,10 +211,11 @@ export function FilterSidebar({ initialCategory }) {
     dispatch(setFilter({ key: "rating", values: newRatings }))
     
     // Fetch filtered products from database
+    const currentCategoryKey = categoriesData.find(c => c.name === category)?.key || ""
     await fetchFilteredProducts({
-      category,
+      category: currentCategoryKey,
       filters: {
-        ...filters,
+        ...selectedFilters,
         rating: newRatings
       }
     })
@@ -225,10 +228,11 @@ export function FilterSidebar({ initialCategory }) {
     dispatch(setFilter({ key: "discount", values: newValue }))
     
     // Fetch filtered products from database
+    const currentCategoryKey = categoriesData.find(c => c.name === category)?.key || ""
     await fetchFilteredProducts({
-      category,
+      category: currentCategoryKey,
       filters: {
-        ...filters,
+        ...selectedFilters,
         discount: newValue
       }
     })
@@ -251,7 +255,7 @@ export function FilterSidebar({ initialCategory }) {
         <h3 className="font-medium mb-2">Category</h3>
         <select
           className="w-full p-2 border rounded"
-          value={category}
+          value={categoriesData.find(c => c.name === category)?.key || ""}
           onChange={(e) => handleCategoryChange(e.target.value)}
         >
           {isLoading ? (
@@ -260,7 +264,7 @@ export function FilterSidebar({ initialCategory }) {
             <>
               <option value="">All Categories</option>
               {categoriesData.map((cat) => (
-                <option key={cat.key} value={cat.name}>
+                <option key={cat.key} value={cat.key}>
                   {cat.name}
                 </option>
               ))}
