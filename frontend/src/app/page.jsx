@@ -39,6 +39,7 @@ const images = ["/1.jpg", "/2.jpg", "/3.jpg"]
 
 export default function FancyCarousel() {
   const { allProducts } = useSelector((state) => state.productsState)
+  const { categories } = useSelector((state) => state.categoriesState)
   const { isAuthenticated } = useSelector((state) => state.userState)
   const dispatch = useDispatch()
   const [categories, setCategories] = useState([]);
@@ -232,12 +233,46 @@ export default function FancyCarousel() {
                     )}
                   </div>
                   <span className="text-xs sm:text-sm text-center text-gray-700 group-hover:text-purple-600 transition-colors">
+
                     {category.name}
                   </span>
                 </div>
               ))
             ) : (
+
+              // Fallback categories if database is empty
+              [
+                { name: "Balloons", image: "/balloon.svg" },
+                { name: "Mugs", image: "/mug.svg" },
+                { name: "Birthday Cards", image: "/birthday-invitation.svg" },
+                { name: "Home & Living", image: "/home.svg" },
+                { name: "Party Supplies", image: "/party.svg" },
+                { name: "Decorations", image: "/decoration.svg" },
+                { name: "Gifts", image: "/gift.svg" },
+                { name: "Keychains", image: "/keychain.svg" },
+              ].slice(0, showMoreCategories ? 8 : 6).map((category, index) => (
+                <div 
+                  key={index} 
+                  className="flex flex-col items-center space-y-2 group cursor-pointer transform hover:scale-105 transition-all duration-300"
+                  onClick={() => handleCategoryClick(category.name)}
+                >
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-2 border-gray-200 overflow-hidden group-hover:border-purple-400 group-hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-purple-50 to-pink-50">
+                    <Image
+                      src={category.image}
+                      alt={category.name}
+                      width={80}
+                      height={80}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                    />
+                  </div>
+                  <span className="text-xs sm:text-sm text-center text-gray-700 group-hover:text-purple-600 transition-colors font-medium">
+                    {category.name}
+                  </span>
+                </div>
+              ))
+
               <div className="col-span-full text-center py-4 text-gray-400">No categories found.</div>
+
             )}
           </div>
         </section>

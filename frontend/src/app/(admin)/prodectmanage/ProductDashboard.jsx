@@ -14,7 +14,10 @@ import { Search, Plus, Edit, Trash2, Eye } from "lucide-react"
 import { getAllCategories } from "../../allProducts/showcase/sample-data"
 
 export default function ProductDashboard() {
+  /** @type {[Product[], React.Dispatch<React.SetStateAction<Product[]>>]} */
   const [products, setProducts] = useState([])
+  /** @type {[Category[], React.Dispatch<React.SetStateAction<Category[]>>]} */
+  const [categories, setCategories] = useState([])
   const [searchTerm, setSearchTerm] = useState("")
   const [filterCategory, setFilterCategory] = useState("")
   const [filterStatus, setFilterStatus] = useState("")
@@ -37,6 +40,7 @@ export default function ProductDashboard() {
   }, [])
 
   const fetchProducts = async () => {
+    setLoading(true)
     try {
       const response = await fetch("http://localhost:5000/api/products?limit=1000")
       const result = await response.json()
