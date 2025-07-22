@@ -22,6 +22,7 @@ import Loader from "./components/loader/page"
 import { addToCart } from "./slices/cartSlice";
 import { addToWishlist } from "./slices/wishlistSlice";
 import { toast, Toaster } from 'sonner';
+import useIsMobile from "./hooks/useIsMobile";
 
 const images = ["/1.jpg", "/2.jpg", "/3.jpg"]
 
