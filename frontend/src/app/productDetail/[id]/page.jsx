@@ -27,6 +27,9 @@ function ProductDetailPage() {
   const [quantity, setQuantity] = useState(1);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [isCollaborativeModalOpen, setIsCollaborativeModalOpen] = useState(false);
+  const [mainImageError, setMainImageError] = useState(false);
+  const [thumbnailErrors, setThumbnailErrors] = useState({});
+  const [productImageErrors, setProductImageErrors] = useState({});
 
 
   // Fetch specific product by ID
@@ -34,7 +37,7 @@ function ProductDetailPage() {
     const fetchProduct = async () => {
       try {
         setLoading(true);
-        const response = await axios.get(`http://localhost:5000/api/products/${id}`);
+        const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/products/${id}`);
         if (response.data.success) {
           setProduct(response.data.data);
         } else {
@@ -77,6 +80,7 @@ function ProductDetailPage() {
 
   // Get the main product image
   const getMainImage = () => {
+    if (mainImageError) return '/placeholder.svg';
     if (product?.images && product.images.length > 0) {
       // If images array contains objects with url property
       if (typeof product.images[0] === 'object' && product.images[0].url) {
@@ -138,8 +142,8 @@ function ProductDetailPage() {
               src={getMainImage()}
               alt={product.name}
               className="w-full h-full object-cover rounded-[10px]"
-              onError={(e) => {
-                e.target.src = '/placeholder.svg';
+              onError={() => {
+                if (!mainImageError) setMainImageError(true);
               }}
             />
           </div>
@@ -153,11 +157,13 @@ function ProductDetailPage() {
                   onClick={() => setSelectedImageIndex(index)}
                 >
                   <img
-                    src={imageUrl}
+                    src={thumbnailErrors[index] ? '/placeholder.svg' : imageUrl}
                     alt={`${product.name} ${index + 1}`}
                     className="w-full h-full object-cover"
-                    onError={(e) => {
-                      e.target.src = '/placeholder.svg';
+                    onError={() => {
+                      if (!thumbnailErrors[index]) {
+                        setThumbnailErrors(prev => ({ ...prev, [index]: true }));
+                      }
                     }}
                   />
                 </div>
@@ -180,9 +186,9 @@ function ProductDetailPage() {
               <span>(27 Ratings)</span>
             </div>
             <div className='flex items-center space-x-[15px]'>
-              <span className='font-extra-large font-bold'>US ${product.retailPrice}</span>
+              <span className='font-extra-large font-bold'>US ${product.salePrice}</span>
               {product.salePrice > 0 && (
-                <span className='font-content line-through'>US ${product.salePrice}</span>
+                <span className='font-content line-through'>US ${product.retailPrice}</span>
               )}
             </div>
             <div className='flex items-center space-x-[10px]'>
@@ -241,8 +247,8 @@ function ProductDetailPage() {
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 mt-8 md:mt-[100px]">
         {allProducts && allProducts.length > 0 ? (
           allProducts.slice(0, 9).map((product) => {
-            // Get product image
             const getProductImage = () => {
+              if (productImageErrors[product._id]) return '/placeholder.svg';
               if (product?.images && product.images.length > 0) {
                 if (typeof product.images[0] === 'object' && product.images[0].url) {
                   return product.images[0].url;
@@ -265,8 +271,10 @@ function ProductDetailPage() {
                     width={172}
                     height={172}
                     className="rounded-lg object-cover w-full h-auto"
-                    onError={(e) => {
-                      e.target.src = '/placeholder.svg';
+                    onError={() => {
+                      if (!productImageErrors[product._id]) {
+                        setProductImageErrors(prev => ({ ...prev, [product._id]: true }));
+                      }
                     }}
                   />
                   <div className="absolute top-2 left-2 bg-red-100 rounded-full p-1">
@@ -310,7 +318,8 @@ function ProductDetailPage() {
         onClose={closeCollaborativeModal}
         onAccept={acceptCollaborativeGuidelines}
         productName={product?.name}
-        productPrice={product?.retailPrice}
+        productPrice={product?.salePrice}
+        productId={product._id}
       />
 
       <Toaster position="top-center" richColors closeButton />

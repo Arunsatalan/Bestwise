@@ -1,3 +1,4 @@
+// next.config.js
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
@@ -22,6 +23,7 @@ const nextConfig: NextConfig = {
         pathname: "/**",
       },
     ],
+    domains: ['res.cloudinary.com', 'cloudinary.com', 'example.com'],
   },
 };
 

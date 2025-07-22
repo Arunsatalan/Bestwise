@@ -5,13 +5,16 @@ import { X } from 'lucide-react';
 import { FaRegTrashAlt } from "react-icons/fa";
 import { IoWarningOutline } from "react-icons/io5";
 import { useSelector } from "react-redux";
+import axios from 'axios';
+import { toast } from 'sonner';
 
 export default function CollaborativeGiftModal({ 
   isOpen, 
   onClose, 
   onAccept, 
   productName, 
-  productPrice 
+  productPrice, 
+  productId
 }) {
   const [isChecked, setIsChecked] = useState(false);
   const [emails, setEmails] = useState(['']);
@@ -19,7 +22,6 @@ export default function CollaborativeGiftModal({
   const { user } = useSelector(state => state.userState);
   const selfEmailIncluded = emails.some(email => email.trim().toLowerCase() === user?.email?.toLowerCase());
 
-  // Check for duplicate emails ignoring case and trimming
   const emailCounts = emails.reduce((acc, email) => {
     const e = email.trim().toLowerCase();
     if (e) acc[e] = (acc[e] || 0) + 1;
@@ -27,7 +29,6 @@ export default function CollaborativeGiftModal({
   }, {});
   const hasDuplicateEmails = Object.values(emailCounts).some(count => count > 1);
 
-  // Prevent background scrolling when modal is open
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -57,33 +58,47 @@ export default function CollaborativeGiftModal({
     setEmails(updated);
   };
 
-  const handleAccept = () => {
+  const handleAccept = async () => {
     if (
       isChecked && 
       !selfEmailIncluded && 
       emails.every(email => email.trim() !== '') &&
       !hasDuplicateEmails
     ) {
-      onAccept(emails);
-      setIsChecked(false);
-      setEmails(['']);
+      try {
+        const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/gift`, {
+          productId,
+          productName,
+          productPrice,
+          participants: emails.map(e => e.trim()).filter(e => e)
+        }, {
+          withCredentials: true
+        });
+
+        onAccept(emails);
+        setIsChecked(false);
+        setEmails(['']);
+
+        toast.success(res.data.message || 'Gift contribution created successfully');
+      } catch (err) {
+        console.error(err.response?.data);
+        toast.error(err.response?.data?.message || 'Failed to create gift contribution');
+      }
     }
   };
 
-  const participantsCount = 1 + emails.length; // user + invited friends
+  const participantsCount = 1 + emails.length;
   const share = (productPrice / participantsCount).toFixed(2);
 
   return (
     <div className="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm flex justify-center items-center p-4">
       <div className="bg-white w-full max-w-xl p-6 rounded-2xl shadow-xl relative max-h-[90vh] overflow-y-auto">
-        {/* Close Icon */}
         <button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-black">
           <X size={24} />
         </button>
 
         <h2 className="text-2xl font-bold text-purple-700 mb-4">🎁 Collaborative Gift Guidelines</h2>
 
-        {/* Product Info */}
         <div className="mb-6 text-gray-700 border border-purple-500 rounded p-4 space-y-1">
           <p><strong>Product:</strong> <span className='text-purple-500'>{productName.length > 35 ? productName.slice(0, 35) + '...' : productName}</span></p>
           <p><strong>Total Price:</strong> <span className='text-purple-500'>${productPrice.toFixed(2)}</span></p>
@@ -100,7 +115,6 @@ export default function CollaborativeGiftModal({
           <li>Notifications will be sent to all participants on every update.</li>
         </ul>
 
-        {/* Email Inputs */}
         <div className="mb-6">
           <label className="block font-medium text-gray-700 mb-2">Invite Friends (up to 3):</label>
           {emails.map((email, index) => (
@@ -129,7 +143,6 @@ export default function CollaborativeGiftModal({
           )}
         </div>
 
-        {/* Checkbox */}
         <div className="flex items-start gap-2 mb-4">
           <input
             type="checkbox"
@@ -143,7 +156,6 @@ export default function CollaborativeGiftModal({
           </label>
         </div>
 
-        {/* Self Email Warning */}
         {isChecked && selfEmailIncluded && (
           <div className='flex items-center gap-2 text-orange-600 border border-orange-600 rounded p-2 mb-4 text-sm'>
             <IoWarningOutline size={18} />
@@ -151,7 +163,6 @@ export default function CollaborativeGiftModal({
           </div>
         )}
 
-        {/* Duplicate Emails Warning */}
         {hasDuplicateEmails && (
           <div className='flex items-center gap-2 text-red-600 border border-red-600 rounded p-2 mb-4 text-sm'>
             <IoWarningOutline size={18} />
@@ -159,7 +170,6 @@ export default function CollaborativeGiftModal({
           </div>
         )}
 
-        {/* Buttons */}
         <div className="flex justify-end gap-3">
           <button
             onClick={onClose}

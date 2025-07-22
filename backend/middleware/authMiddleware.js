@@ -1,6 +1,3 @@
-
-
-
 // middleware/authMiddleware.js
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
@@ -21,7 +18,6 @@ exports.isAuthenticated = async (req, res, next) => {
   }
 };
 
-
 // Middleware to restrict access based on roles
 exports.authorizeRoles = (...roles) => {
   return (req, res, next) => {
@@ -33,5 +29,3 @@ exports.authorizeRoles = (...roles) => {
     next();
   };
 };
-
-
