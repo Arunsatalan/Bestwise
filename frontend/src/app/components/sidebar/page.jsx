@@ -212,7 +212,7 @@ const getNavigationData = (role) => {
             {
               title: "Homepage Banners",
               icon: ImageIcon,
-              href: "/admin/homepage/banners",
+              href: "/homepage_ads",
             },
             {
               title: "Featured Products",
