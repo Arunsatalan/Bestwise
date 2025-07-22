@@ -22,60 +22,24 @@ import Loader from "./components/loader/page"
 import { addToCart } from "./slices/cartSlice";
 import { addToWishlist } from "./slices/wishlistSlice";
 import { toast, Toaster } from 'sonner';
-import { useRouter } from "next/navigation";
 
 const images = ["/1.jpg", "/2.jpg", "/3.jpg"]
 
 export default function FancyCarousel() {
   const { allProducts } = useSelector((state) => state.productsState)
-  const { categories } = useSelector((state) => state.categoriesState)
   const { isAuthenticated } = useSelector((state) => state.userState)
   const dispatch = useDispatch()
-    
-  const [loading, setLoading] = useState(true);
-
-  const [showMoreCategories, setShowMoreCategories] = useState(false);
-
-  useEffect(() => {
-    dispatch(getProducts())
-    dispatch(getCategories())
-    console.log("checkig",allProducts)
-
   const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showMoreCategories, setShowMoreCategories] = useState(false);
   const router = useRouter();
 
   // Event data for Upcoming Events section
   const events = [
-    {
-      name: "Father's Day",
-      key: "fathers-day",
-      image: "/fatherday.jpg", // Add this image to public if not present
-    },
-    {
-      name: "Mother's Day",
-      key: "mothers-day",
-      image: "/motherday.jpg",
-    },
-    {
-      name: "Birthday",
-      key: "birthday",
-      image: "/birthday-invitation.svg",
-    },
-    {
-      name: "Brother's Day",
-      key: "brothers-day",
-      image: "/profile-avatar.png", // Use a suitable image or add one
-    },
-    {
-      name: "Christmas",
-      key: "christmas",
-      image: "/christmas.jpg", // Add this image to public if not present
-    },
-    {
-      name: "New Year",
-      key: "newyear",
-      image: "/newyear.jpg", // Add this image to public if not present
-    },
+    { key: "birthday", name: "Birthday Party" },
+    { key: "anniversary", name: "Anniversary Celebration" },
+    { key: "holiday", name: "Holiday Gift Guide" },
+    { key: "new-year", name: "New Year's Eve" },
   ];
 
   useEffect(() => {
@@ -85,7 +49,6 @@ export default function FancyCarousel() {
       try {
         const res = await fetch("/api/categories");
         const data = await res.json();
-        // If data is an array, use it directly; if wrapped in {data: []}, unwrap
         const cats = Array.isArray(data) ? data : data.data;
         setCategories(cats || []);
       } catch (err) {
@@ -93,8 +56,7 @@ export default function FancyCarousel() {
       }
     };
     fetchCategories();
-
-  }, [dispatch])
+  }, [dispatch]);
 
   // Helper function to get product image
   const getProductImage = (product) => {
