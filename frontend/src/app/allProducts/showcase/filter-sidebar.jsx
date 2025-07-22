@@ -18,8 +18,15 @@ import React from "react"
 // NO STATIC DATA - All filter options fetched from MongoDB in real-time
 
 /**
- * @typedef {import('./store').productSlice.reducer} ProductsReducer
- * @typedef {ReturnType<ProductsReducer>} ProductsState
+ * @typedef {object} ProductsState
+ * @property {Array} products
+ * @property {Array} filteredProducts
+ * @property {object} filters
+ * @property {boolean} loading
+ * @property {string|null} error
+ */
+
+/**
  * @typedef {{products: ProductsState}} RootState
  */
 
@@ -27,6 +34,7 @@ import React from "react"
  * @typedef {object} Category
  * @property {string} key
  * @property {string} name
+ * @property {Array} attributes
  */
 
 export function FilterSidebar({ initialCategory }) {
@@ -34,10 +42,8 @@ export function FilterSidebar({ initialCategory }) {
   const { category, filters } = useSelector(/** @param {RootState} state */(state) => state.products.filters)
   const [selectedFilters, setSelectedFilters] = useState({})
   const [priceRange, setPriceRange] = useState([0, 200])
-  /** @type {[number[], React.Dispatch<React.SetStateAction<number[]>>]} */
-  const [ratingFilter, setRatingFilter] = useState([])
-  /** @type {[string[], React.Dispatch<React.SetStateAction<string[]>>]} */
-  const [discountFilter, setDiscountFilter] = useState([])
+  const [ratingFilter, setRatingFilter] = useState(/** @type {number[]} */([]))
+  const [discountFilter, setDiscountFilter] = useState(/** @type {string[]} */([]))
   const [expandedSections, setExpandedSections] = useState({
     price: true,
     rating: true,
@@ -45,8 +51,7 @@ export function FilterSidebar({ initialCategory }) {
   })
   
   // State for real-time MongoDB data
-  /** @type {[Category[], React.Dispatch<React.SetStateAction<Category[]>>]} */
-  const [categoriesData, setCategoriesData] = useState([])
+  const [categoriesData, setCategoriesData] = useState(/** @type {Category[]} */([]))
   const [availableFilters, setAvailableFilters] = useState({})
   const [isLoading, setIsLoading] = useState(true)
 
@@ -57,7 +62,7 @@ export function FilterSidebar({ initialCategory }) {
         setIsLoading(true)
         const categories = getAllCategories()
         setCategoriesData(categories)
-        console.log("DEBUG: categoriesData structure", JSON.stringify(categories, null, 2));
+        // console.log("DEBUG: categoriesData structure", JSON.stringify(categories, null, 2));
         
         // Get current category data
         if (category) {
@@ -114,28 +119,47 @@ export function FilterSidebar({ initialCategory }) {
     }
   }, [category])
 
-  // Reset filters when category changes
+  // Reset filters when category changes (but not on initial load)
   useEffect(() => {
-    setSelectedFilters({})
-    setPriceRange([0, 200])
-    setRatingFilter([])
-    setDiscountFilter([])
+    if (category && categoriesData.length > 0) {
+      // Only reset filters if this is not the initial category setting
+      const isInitialLoad = !selectedFilters || Object.keys(selectedFilters).length === 0
+      
+      if (!isInitialLoad) {
+        console.log('Category changed, resetting filters and fetching products for:', category)
+        setSelectedFilters({})
+        setPriceRange([0, 200])
+        setRatingFilter([])
+        setDiscountFilter([])
+      }
 
-    // Set all filter sections to expanded for the new category
-    const newExpandedSections = { price: true, rating: true, discount: true }
-    Object.keys(availableFilters).forEach((key) => {
-      newExpandedSections[key] = true
-    })
-    setExpandedSections(newExpandedSections)
-  }, [category, availableFilters, dispatch])
-
-  // Set initial category from URL parameter
-  useEffect(() => {
-    if (initialCategory && initialCategory !== category) {
-      console.log('Setting initial category from URL:', initialCategory)
-      handleCategoryChange(initialCategory)
+      // Fetch products for the current category
+      const categoryObject = categoriesData.find(c => c.name === category)
+      if (categoryObject) {
+        fetchFilteredProducts({
+          category: categoryObject.key,
+          filters: isInitialLoad ? selectedFilters : {},
+          priceRange: isInitialLoad ? priceRange : [0, 200],
+          rating: isInitialLoad ? ratingFilter : [],
+          discount: isInitialLoad ? discountFilter : []
+        })
+      }
     }
-  }, [initialCategory])
+  }, [category, categoriesData])
+
+  // Handle initial category from URL
+  useEffect(() => {
+    if (initialCategory && categoriesData.length > 0) {
+      console.log('Setting initial category from URL:', initialCategory)
+      // Check if the initial category is different from current category
+      const currentCategoryKey = categoriesData.find(cat => cat.name === category)?.key
+      const initialCategoryKey = categoriesData.find(cat => cat.key === initialCategory || cat.name === initialCategory)?.key
+      
+      if (!category || currentCategoryKey !== initialCategoryKey) {
+        handleCategoryChange(initialCategory)
+      }
+    }
+  }, [initialCategory, categoriesData])
 
   // Function to fetch filtered products from database
   const fetchFilteredProducts = async (filterParams) => {
@@ -169,7 +193,14 @@ export function FilterSidebar({ initialCategory }) {
     let mainCategoryKey = newCategoryKey;
     let initialFilters = {};
     
-    const categoryObject = categoriesData.find(c => c.key === newCategoryKey);
+    // Try to find by key first, then by name
+    let categoryObject = categoriesData.find(c => c.key === newCategoryKey);
+    if (!categoryObject) {
+      categoryObject = categoriesData.find(c => c.name === newCategoryKey);
+      if (categoryObject) {
+        mainCategoryKey = categoryObject.key;
+      }
+    }
     
     if (!categoryObject) {
       // It might be a subcategory, so find its parent
@@ -181,15 +212,24 @@ export function FilterSidebar({ initialCategory }) {
         dispatch(setFilter({ key: attribute, values: [value] }));
         console.log(`It's a subcategory. Parent: ${mainCategoryKey}, Filter: ${attribute}=${value}`);
       }
+    } else {
+      // Reset filters when changing to a new main category
+      setSelectedFilters({})
+      setPriceRange([0, 200])
+      setRatingFilter([])
+      setDiscountFilter([])
     }
     
-    const categoryName = categoriesData.find(c => c.key === mainCategoryKey)?.name || ''
+    const categoryName = categoriesData.find(c => c.key === mainCategoryKey)?.name || newCategoryKey
     dispatch(setCategory(categoryName)) // Keep sending name to store for display
     
     // Fetch products for the new category from database
     await fetchFilteredProducts({
       category: mainCategoryKey, // Use the key for filtering
-      filters: initialFilters // Reset filters or apply subcategory filter
+      filters: initialFilters, // Reset filters or apply subcategory filter
+      priceRange: [0, 200],
+      rating: [],
+      discount: []
     })
   }
 
@@ -197,23 +237,28 @@ export function FilterSidebar({ initialCategory }) {
   const handleFilterChange = async (filterKey, value) => {
     const currentValues = selectedFilters[filterKey] || []
     const newValues = currentValues.includes(value)
-      ? currentValues.filter((v) => v !== value)
+      ? currentValues.filter(v => v !== value)
       : [...currentValues, value]
 
-    const updatedFilters = {
-      ...selectedFilters,
-      [filterKey]: newValues,
+    const newFilters = { ...selectedFilters, [filterKey]: newValues }
+    if (newValues.length === 0) {
+      delete newFilters[filterKey]
     }
 
-    setSelectedFilters(updatedFilters)
+    setSelectedFilters(newFilters)
     dispatch(setFilter({ key: filterKey, values: newValues }))
-    
-    // Fetch filtered products from database
-    const currentCategoryKey = categoriesData.find(c => c.name === category)?.key || ""
-    await fetchFilteredProducts({
-      category: currentCategoryKey,
-      filters: updatedFilters
-    })
+
+    // Fetch filtered products from database with all current filters
+    const currentCategory = categoriesData.find(c => c.name === category)
+    if (currentCategory) {
+      await fetchFilteredProducts({
+        category: currentCategory.key,
+        filters: newFilters,
+        priceRange: priceRange,
+        rating: ratingFilter,
+        discount: discountFilter
+      })
+    }
   }
 
   // Handle price range change
@@ -232,52 +277,58 @@ export function FilterSidebar({ initialCategory }) {
   const handlePriceChangeEnd = async () => {
     dispatch(setFilter({ key: "price", values: priceRange }))
     
-    // Fetch filtered products from database
-    const currentCategoryKey = categoriesData.find(c => c.name === category)?.key || ""
-    await fetchFilteredProducts({
-      category: currentCategoryKey,
-      filters: {
-        ...selectedFilters,
-        price: priceRange
-      }
-    })
+    // Fetch filtered products from database with all current filters
+    const currentCategory = categoriesData.find(c => c.name === category)
+    if (currentCategory) {
+      await fetchFilteredProducts({
+        category: currentCategory.key,
+        filters: selectedFilters,
+        priceRange: priceRange,
+        rating: ratingFilter,
+        discount: discountFilter
+      })
+    }
   }
 
   // Handle rating filter with database filtering
   const handleRatingChange = async (rating) => {
-    const newRatings = ratingFilter.includes(rating)
-      ? ratingFilter.filter((r) => r !== rating)
+    const newRatingFilter = ratingFilter.includes(rating)
+      ? ratingFilter.filter(r => r !== rating)
       : [...ratingFilter, rating]
 
-    setRatingFilter(newRatings)
-    dispatch(setFilter({ key: "rating", values: newRatings }))
+    setRatingFilter(newRatingFilter)
+    dispatch(setFilter({ key: "rating", values: newRatingFilter }))
     
-    // Fetch filtered products from database
-    const currentCategoryKey = categoriesData.find(c => c.name === category)?.key || ""
-    await fetchFilteredProducts({
-      category: currentCategoryKey,
-      filters: {
-        ...selectedFilters,
-        rating: newRatings
-      }
-    })
+    // Fetch filtered products from database with all current filters
+    const currentCategory = categoriesData.find(c => c.name === category)
+    if (currentCategory) {
+      await fetchFilteredProducts({
+        category: currentCategory.key,
+        filters: selectedFilters,
+        priceRange: priceRange,
+        rating: newRatingFilter,
+        discount: discountFilter
+      })
+    }
   }
 
   // Handle discount filter with database filtering
   const handleDiscountChange = async (hasDiscount) => {
-    const newValue = discountFilter.includes(hasDiscount) ? [] : [hasDiscount]
-    setDiscountFilter(newValue)
-    dispatch(setFilter({ key: "discount", values: newValue }))
+    const newDiscountFilter = hasDiscount ? ["true"] : []
+    setDiscountFilter(newDiscountFilter)
+    dispatch(setFilter({ key: "discount", values: newDiscountFilter }))
     
-    // Fetch filtered products from database
-    const currentCategoryKey = categoriesData.find(c => c.name === category)?.key || ""
-    await fetchFilteredProducts({
-      category: currentCategoryKey,
-      filters: {
-        ...selectedFilters,
-        discount: newValue
-      }
-    })
+    // Fetch filtered products from database with all current filters
+    const currentCategory = categoriesData.find(c => c.name === category)
+    if (currentCategory) {
+      await fetchFilteredProducts({
+        category: currentCategory.key,
+        filters: selectedFilters,
+        priceRange: priceRange,
+        rating: ratingFilter,
+        discount: newDiscountFilter
+      })
+    }
   }
 
   // Toggle section expansion

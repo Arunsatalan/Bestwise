@@ -3,16 +3,18 @@
 import { useDispatch, useSelector } from "react-redux"
 import { useRouter } from "next/navigation"
 import { setCategory } from "./store"
+import { useMemo } from "react"
 
 export function CategorySelector() {
   const dispatch = useDispatch()
   const router = useRouter()
   const { category } = useSelector((state) => state.products.filters)
 
-  // Get unique categories from products
-  const categories = useSelector((state) => {
-    return [...new Set(state.products.products.map((p) => p.category))]
-  })
+  // Memoized unique categories from products
+  const categories = useSelector((state) => state.products.products)
+  const uniqueCategories = useMemo(() => {
+    return [...new Set(categories.map((p) => p.category))]
+  }, [categories])
 
   const handleCategoryChange = (newCategory) => {
     dispatch(setCategory(newCategory))
@@ -22,12 +24,12 @@ export function CategorySelector() {
 
   return (
     <div className="flex flex-wrap gap-2">
-      {categories.map((cat) => (
+      {uniqueCategories.map((cat) => (
         <button
-          key={cat}
+          key={cat?.toLowerCase() || cat}
           onClick={() => handleCategoryChange(cat)}
           className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-            category === cat ? "bg-purple-600 text-white" : "bg-gray-100 text-gray-800 hover:bg-gray-200"
+            category && category.toLowerCase() === cat?.toLowerCase() ? "bg-purple-600 text-white" : "bg-gray-100 text-gray-800 hover:bg-gray-200"
           }`}
         >
           {cat}

@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, Suspense } from "react"
+import { useEffect, Suspense, useMemo } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { FilterSidebar } from "./filter-sidebar"
 import { ProductGrid } from "./product-grid"
@@ -34,22 +34,19 @@ export function CategoryShowcase({ categoryName }) {
     loadProducts()
   }, [dispatch, categoryName])
 
-  // Get products from other categories for the "Shop Other Categories" section
-  const otherCategoriesProducts = useSelector((state) => {
-    const categories = [...new Set(state.products.products.map((p) => p.category))].filter(
-      (cat) => cat !== categoryName,
+  // Memoized selector for other categories' products
+  const otherCategoriesProducts = useMemo(() => {
+    const categories = [...new Set(products.map((p) => p.category))].filter(
+      (cat) => cat.toLowerCase() !== categoryName.toLowerCase(),
     )
-
     const result = {}
-
     categories.forEach((cat) => {
-      const catProducts = state.products.products.filter((p) => p.category === cat)
+      const catProducts = products.filter((p) => p.category.toLowerCase() === cat.toLowerCase())
       // Get up to 3 random products from this category
       result[cat] = catProducts.sort(() => 0.5 - Math.random()).slice(0, 3)
     })
-
     return result
-  })
+  }, [products, categoryName]);
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -119,7 +116,7 @@ export function CategoryShowcase({ categoryName }) {
                 </div>
               }
             >
-              <ProductGrid products={filteredProducts} />
+              <ProductGrid products={filteredProducts.filter((p) => p.category && p.category.toLowerCase() === categoryName.toLowerCase())} />
             </Suspense>
           </section>
 

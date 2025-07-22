@@ -1,5 +1,6 @@
 "use client"
 
+import React from 'react';
 import { useEffect, useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import Image from "next/image"
@@ -11,6 +12,13 @@ import {
 } from "./sample-data"
 
 // NO STATIC DATA - All products fetched from MongoDB in real-time
+
+function getValidImageUrl(url) {
+  if (!url || url.includes('example.com') || url.includes('placeholder')) {
+    return '/placeholder.svg';
+  }
+  return url;
+}
 
 export function ProductShowcase({ filtered }) {
   const dispatch = useDispatch()
@@ -161,7 +169,13 @@ export function ProductShowcase({ filtered }) {
           className="bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow"
         >
           <div className="relative h-48">
-            <Image src={product.image || "/placeholder.svg"} alt={product.name} fill className="object-contain p-4" />
+            <Image 
+              src={getValidImageUrl(product.image)} 
+              alt={product.name} 
+              fill 
+              className="object-contain p-4"
+              unoptimized={getValidImageUrl(product.image) === '/placeholder.svg'}
+            />
 
             {/* Improved discount tag design */}
             {product.discount > 0 && (

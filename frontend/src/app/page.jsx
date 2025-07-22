@@ -23,6 +23,18 @@ import { addToCart } from "./slices/cartSlice";
 import { addToWishlist } from "./slices/wishlistSlice";
 import { toast, Toaster } from 'sonner';
 
+// Responsive hook for mobile/desktop
+function useIsMobile(breakpoint = 640) {
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < breakpoint);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, [breakpoint]);
+  return isMobile;
+}
+
 const images = ["/1.jpg", "/2.jpg", "/3.jpg"]
 
 export default function FancyCarousel() {
@@ -33,6 +45,9 @@ export default function FancyCarousel() {
   const [loading, setLoading] = useState(true);
   const [showMoreCategories, setShowMoreCategories] = useState(false);
   const router = useRouter();
+  const isMobile = useIsMobile();
+  const initialCount = isMobile ? 4 : 6;
+  const categoriesToShow = showMoreCategories ? categories : categories.slice(0, initialCount);
 
   // Event data for Upcoming Events section
   const events = [
@@ -187,12 +202,12 @@ export default function FancyCarousel() {
 
           <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 gap-4">
             {categories && categories.length > 0 ? (
-              categories.map((category, index) => (
+              categoriesToShow.map((category, index) => (
                 <div
                   key={category._id || category.key || index}
                   className="flex flex-col items-center space-y-2 group cursor-pointer"
                   onClick={() => {
-                    router.push(`/allProducts/showcase/${category.key || category.name}`)
+                    router.push(`/allProducts/showcase?category=${encodeURIComponent(category.key || category.name)}`)
                   }}
                 >
                   <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-2 border-gray-200 overflow-hidden group-hover:border-purple-400 transition-colors bg-white flex items-center justify-center">
