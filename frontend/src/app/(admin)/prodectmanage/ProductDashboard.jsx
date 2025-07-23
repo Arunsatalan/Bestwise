@@ -77,7 +77,7 @@ export default function ProductDashboard() {
         stock: filterStock,
         limit: "1000",
       })
-      const response = await fetch(`http://localhost:5000/api/products?${queryParams.toString()}`)
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products?${queryParams.toString()}`)
       const result = await response.json()
       console.log("Fetched data:", result)
       setProducts(Array.isArray(result.data) ? result.data : [])
@@ -90,7 +90,7 @@ export default function ProductDashboard() {
 
   const fetchCategories = async () => {
     try {
-      const response = await fetch("http://localhost:5000/api/categories")
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/categories`)
       const result = await response.json()
       if (result.success) {
         setCategories(Array.isArray(result.data) ? result.data : [])
@@ -113,7 +113,7 @@ export default function ProductDashboard() {
       "Are you sure you want to delete this product? This action cannot be undone.",
       async () => {
         try {
-          const response = await fetch(`http://localhost:5000/api/products/${id}`, { method: "DELETE" })
+          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products/${id}`, { method: "DELETE" })
           if (response.ok) {
             showSuccess("Success", "Product deleted successfully!", () => {
               // Stay on the same page and refresh the product list
