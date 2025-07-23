@@ -2,6 +2,8 @@
 
 const GiftContribution = require('../models/GiftContribution');
 const mongoose = require('mongoose');
+const Emailhandler = require('../utils/sendEmail');
+
 
 
 const createContribution = async (req, res) => {
@@ -39,7 +41,7 @@ const createContribution = async (req, res) => {
 
     // Send Email Invitations
     for (const email of participants) {
-      await sendEmail({
+      await Emailhandler({
         to: email,
         subject: `🎁 You're Invited to Contribute a Gift!`,
         html: `
