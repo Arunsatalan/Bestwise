@@ -14,7 +14,9 @@ import Footer from "./components/footer/page"
 import Navbar from "./components/navBar/page"
 import { useDispatch, useSelector } from "react-redux"
 import { getProducts } from "./actions/productAction"
+import { getCategories } from "./actions/categoryAction"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { AiFillStar, AiOutlineStar, AiTwotoneStar } from 'react-icons/ai';
 import Loader from "./components/loader/page"
 import { addToCart } from "./slices/cartSlice";
@@ -26,6 +28,7 @@ const images = ["/1.jpg", "/2.jpg", "/3.jpg"]
 
 export default function FancyCarousel() {
   const { allProducts } = useSelector((state) => state.productsState)
+  const { categories } = useSelector((state) => state.categoriesState)
   const { isAuthenticated } = useSelector((state) => state.userState)
   const dispatch = useDispatch()
     
@@ -67,8 +70,55 @@ export default function FancyCarousel() {
     },
   ];
 
+  const [showMoreCategories, setShowMoreCategories] = useState(false);
+
   useEffect(() => {
     dispatch(getProducts())
+<<<<<<< HEAD
+=======
+    dispatch(getCategories())
+    console.log("checkig",allProducts)
+
+  const [categories, setCategories] = useState([]);
+  const router = useRouter();
+
+  // Event data for Upcoming Events section
+  const events = [
+    {
+      name: "Father's Day",
+      key: "fathers-day",
+      image: "/fatherday.jpg", // Add this image to public if not present
+    },
+    {
+      name: "Mother's Day",
+      key: "mothers-day",
+      image: "/motherday.jpg",
+    },
+    {
+      name: "Birthday",
+      key: "birthday",
+      image: "/birthday-invitation.svg",
+    },
+    {
+      name: "Brother's Day",
+      key: "brothers-day",
+      image: "/profile-avatar.png", // Use a suitable image or add one
+    },
+    {
+      name: "Christmas",
+      key: "christmas",
+      image: "/christmas.jpg", // Add this image to public if not present
+    },
+    {
+      name: "New Year",
+      key: "newyear",
+      image: "/newyear.jpg", // Add this image to public if not present
+    },
+  ];
+
+  useEffect(() => {
+    dispatch(getProducts())
+>>>>>>> 07841920b3dbb84aed129c16ca5d6aa63c7f9f1f
     // Fetch categories from backend
     const fetchCategories = async () => {
       try {
@@ -82,6 +132,10 @@ export default function FancyCarousel() {
       }
     };
     fetchCategories();
+<<<<<<< HEAD
+=======
+
+>>>>>>> 07841920b3dbb84aed129c16ca5d6aa63c7f9f1f
   }, [dispatch])
 
   // Helper function to get product image
@@ -98,6 +152,23 @@ export default function FancyCarousel() {
   // Helper function to check if image is external
   const isExternalImage = (src) => {
     return src && (src.startsWith('http://') || src.startsWith('https://'));
+  };
+
+  // Helper function to get category image
+  const getCategoryImage = (category) => {
+    if (category?.icon) {
+      return category.icon;
+    }
+    if (category?.image) {
+      return category.image;
+    }
+    // Fallback to icon or default image based on category name
+    const categoryName = category?.name?.toLowerCase();
+    if (categoryName?.includes('balloon')) return '/balloon.svg';
+    if (categoryName?.includes('mug')) return '/mug.svg';
+    if (categoryName?.includes('birthday') || categoryName?.includes('card')) return '/birthday-invitation.svg';
+    if (categoryName?.includes('home') || categoryName?.includes('living')) return '/home.svg';
+    return '/placeholder.svg';
   };
 
   const cards = [
@@ -146,6 +217,19 @@ export default function FancyCarousel() {
     ],
   }
 
+  const router = useRouter();
+
+  // Handle category click navigation
+  const handleCategoryClick = (categoryName) => {
+    // Navigate to showcase page with category parameter
+    router.push(`/allProducts/showcase?category=${encodeURIComponent(categoryName)}`);
+  };
+
+  // Handle explore more functionality
+  const handleExploreMore = () => {
+    setShowMoreCategories(!showMoreCategories);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
@@ -172,14 +256,46 @@ export default function FancyCarousel() {
         {/* Categories Section */}
         <section className="space-y-6">
           <div className="flex justify-between items-center">
+
+            <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">Shop by Categories</h2>
+            <Button 
+              variant="ghost" 
+              className="text-purple-600 hover:text-purple-700 hover:bg-purple-50 transition-all duration-200"
+              onClick={handleExploreMore}
+            >
+              {showMoreCategories ? 'Show Less' : 'Explore more'} 
+              <ChevronRight className={`ml-1 h-4 w-4 transition-transform duration-200 ${showMoreCategories ? 'rotate-90' : ''}`} />
+
             <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">Categories</h2>
             <Button variant="ghost" className="text-purple-600 hover:text-purple-700" onClick={() => router.push('/allProducts')}>
               Explore more <ChevronRight className="ml-1 h-4 w-4" />
+
             </Button>
           </div>
 
           <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 gap-4">
             {categories && categories.length > 0 ? (
+<<<<<<< HEAD
+=======
+
+              categories.slice(0, showMoreCategories ? categories.length : 6).map((category, index) => (
+                <div 
+                  key={category._id || index} 
+                  className="flex flex-col items-center space-y-2 group cursor-pointer transform hover:scale-105 transition-all duration-300"
+                  onClick={() => handleCategoryClick(category.name)}
+                >
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-2 border-gray-200 overflow-hidden group-hover:border-purple-400 group-hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-purple-50 to-pink-50">
+                    <Image
+                      src={getCategoryImage(category)}
+                      alt={category.name}
+                      width={80}
+                      height={80}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                    />
+                  </div>
+                  <span className="text-xs sm:text-sm text-center text-gray-700 group-hover:text-purple-600 transition-colors font-medium">
+
+>>>>>>> 07841920b3dbb84aed129c16ca5d6aa63c7f9f1f
               categories.map((category, index) => (
                 <div
                   key={category._id || category.key || index}
@@ -210,12 +326,53 @@ export default function FancyCarousel() {
                     )}
                   </div>
                   <span className="text-xs sm:text-sm text-center text-gray-700 group-hover:text-purple-600 transition-colors">
+<<<<<<< HEAD
+=======
+
+>>>>>>> 07841920b3dbb84aed129c16ca5d6aa63c7f9f1f
                     {category.name}
                   </span>
                 </div>
               ))
             ) : (
+<<<<<<< HEAD
               <div className="col-span-full text-center py-4 text-gray-400">No categories found.</div>
+=======
+
+              // Fallback categories if database is empty
+              [
+                { name: "Balloons", image: "/balloon.svg" },
+                { name: "Mugs", image: "/mug.svg" },
+                { name: "Birthday Cards", image: "/birthday-invitation.svg" },
+                { name: "Home & Living", image: "/home.svg" },
+                { name: "Party Supplies", image: "/party.svg" },
+                { name: "Decorations", image: "/decoration.svg" },
+                { name: "Gifts", image: "/gift.svg" },
+                { name: "Keychains", image: "/keychain.svg" },
+              ].slice(0, showMoreCategories ? 8 : 6).map((category, index) => (
+                <div 
+                  key={index} 
+                  className="flex flex-col items-center space-y-2 group cursor-pointer transform hover:scale-105 transition-all duration-300"
+                  onClick={() => handleCategoryClick(category.name)}
+                >
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-2 border-gray-200 overflow-hidden group-hover:border-purple-400 group-hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-purple-50 to-pink-50">
+                    <Image
+                      src={category.image}
+                      alt={category.name}
+                      width={80}
+                      height={80}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                    />
+                  </div>
+                  <span className="text-xs sm:text-sm text-center text-gray-700 group-hover:text-purple-600 transition-colors font-medium">
+                    {category.name}
+                  </span>
+                </div>
+              ))
+
+              <div className="col-span-full text-center py-4 text-gray-400">No categories found.</div>
+
+>>>>>>> 07841920b3dbb84aed129c16ca5d6aa63c7f9f1f
             )}
           </div>
         </section>

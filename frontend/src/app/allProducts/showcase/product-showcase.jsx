@@ -1,257 +1,132 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import Image from "next/image"
 import { setProducts, setLoading } from "./store"
+import { 
+  getAllProducts, 
+  fetchProductsFromDB, 
+  refreshProductsData 
+} from "./sample-data"
 
-// Sample data with more varied examples
-const sampleProducts = [
-  {
-    id: "balloon-1",
-    name: "Birthday Balloons Pack",
-    category: "Balloons",
-    price: 12.99,
-    discount: 15,
-    image: "/placeholder.svg?height=200&width=200",
-    rating: 4.5,
-    ratingCount: 127,
-    stock: 25,
-    attributes: {
-      occasion: ["Birthday", "Celebration"],
-      type: "Latex",
-      size: "Standard",
-      color: "Multi-color",
-      finish: "Metallic",
-    },
-  },
-  {
-    id: "balloon-2",
-    name: "Giant Number Balloons",
-    category: "Balloons",
-    price: 24.99,
-    discount: 0,
-    image: "/placeholder.svg?height=200&width=200",
-    rating: 4.8,
-    ratingCount: 89,
-    stock: 12,
-    attributes: {
-      occasion: ["Birthday"],
-      type: "Foil",
-      size: "Giant",
-      color: "Gold",
-      finish: "Metallic",
-    },
-  },
-  {
-    id: "balloon-3",
-    name: "Wedding Balloons Set",
-    category: "Balloons",
-    price: 18.5,
-    discount: 20,
-    image: "/placeholder.svg?height=200&width=200",
-    rating: 4.2,
-    ratingCount: 56,
-    stock: 8,
-    attributes: {
-      occasion: ["Wedding"],
-      type: "Latex",
-      size: "Standard",
-      color: "White",
-      finish: "Pearlescent",
-    },
-  },
-  {
-    id: "balloon-4",
-    name: "LED Light-up Balloons",
-    category: "Balloons",
-    price: 15.99,
-    discount: 0,
-    image: "/placeholder.svg?height=200&width=200",
-    rating: 4.7,
-    ratingCount: 42,
-    stock: 15,
-    attributes: {
-      occasion: ["Party", "Celebration"],
-      type: "LED",
-      size: "Standard",
-      color: "Multi-color",
-      finish: "Matte",
-    },
-  },
-  {
-    id: "card-1",
-    name: "Handmade Birthday Card",
-    category: "Cards",
-    price: 4.99,
-    discount: 0,
-    image: "/placeholder.svg?height=200&width=200",
-    rating: 4.9,
-    ratingCount: 215,
-    stock: 50,
-    attributes: {
-      occasion: ["Birthday"],
-      recipient: ["Friend", "Family"],
-      style: "Handmade",
-    },
-  },
-  {
-    id: "card-2",
-    name: "Wedding Congratulations Card",
-    category: "Cards",
-    price: 5.99,
-    discount: 10,
-    image: "/placeholder.svg?height=200&width=200",
-    rating: 4.6,
-    ratingCount: 78,
-    stock: 30,
-    attributes: {
-      occasion: ["Wedding"],
-      recipient: ["Friend", "Family"],
-      style: "Artistic",
-    },
-  },
-  {
-    id: "home-1",
-    name: "Decorative Wall Clock",
-    category: "Home & Living",
-    price: 34.99,
-    discount: 25,
-    image: "/placeholder.svg?height=200&width=200",
-    rating: 4.3,
-    ratingCount: 67,
-    stock: 5,
-    attributes: {
-      subcategory: ["Clocks"],
-      color: "Black",
-      size: "Medium",
-      brand: "HomeStyle",
-    },
-  },
-  {
-    id: "home-2",
-    name: "Photo Frame Set",
-    category: "Home & Living",
-    price: 28.5,
-    discount: 0,
-    image: "/placeholder.svg?height=200&width=200",
-    rating: 4.5,
-    ratingCount: 93,
-    stock: 18,
-    attributes: {
-      subcategory: ["Frames"],
-      color: "White",
-      size: "Medium",
-      brand: "FrameIt",
-    },
-  },
-  {
-    id: "kitchen-1",
-    name: "Ceramic Mug Set",
-    category: "Kitchen & Dining",
-    price: 22.99,
-    discount: 15,
-    image: "/placeholder.svg?height=200&width=200",
-    rating: 4.7,
-    ratingCount: 124,
-    stock: 22,
-    attributes: {
-      type: ["Mugs"],
-      material: "Ceramic",
-      brand: "KitchenPro",
-    },
-  },
-  {
-    id: "kitchen-2",
-    name: "Glass Serving Platter",
-    category: "Kitchen & Dining",
-    price: 32.5,
-    discount: 0,
-    image: "/placeholder.svg?height=200&width=200",
-    rating: 4.4,
-    ratingCount: 56,
-    stock: 7,
-    attributes: {
-      type: ["Serveware"],
-      material: "Glass",
-      brand: "GlassWorks",
-    },
-  },
-  {
-    id: "toy-1",
-    name: "Educational Puzzle Set",
-    category: "Toys, Novelties & Collectibles",
-    price: 19.99,
-    discount: 20,
-    image: "/placeholder.svg?height=200&width=200",
-    rating: 4.8,
-    ratingCount: 87,
-    stock: 14,
-    attributes: {
-      ageGroup: ["3-5 years"],
-      type: ["Puzzle", "Educational"],
-      brand: "LearnPlay",
-    },
-  },
-  {
-    id: "toy-2",
-    name: "Collectible Action Figure",
-    category: "Toys, Novelties & Collectibles",
-    price: 45.99,
-    discount: 0,
-    image: "/placeholder.svg?height=200&width=200",
-    rating: 4.9,
-    ratingCount: 134,
-    stock: 3,
-    attributes: {
-      ageGroup: ["13+ years", "Adult"],
-      type: ["Action Figure", "Collectible"],
-      brand: "CollectiblesInc",
-    },
-  },
-]
+// NO STATIC DATA - All products fetched from MongoDB in real-time
 
 export function ProductShowcase({ filtered }) {
   const dispatch = useDispatch()
   const { products, filteredProducts, loading, error } = useSelector((state) => state.products)
+  const [realProducts, setRealProducts] = useState([])
+  const [isLoadingProducts, setIsLoadingProducts] = useState(true)
+  const [isMounted, setIsMounted] = useState(false)
 
-  // Load products on component mount
+  // Handle client-side mounting to prevent hydration issues
   useEffect(() => {
-    if (products.length === 0) {
-      dispatch(setLoading(true))
+    setIsMounted(true)
+  }, [])
 
-      // Simulate API call with sample data
-      setTimeout(() => {
-        dispatch(setProducts(sampleProducts))
+  // Load real products from MongoDB on component mount (client-side only)
+  useEffect(() => {
+    if (!isMounted) return
+    
+    const loadRealProducts = async () => {
+      try {
+        setIsLoadingProducts(true)
+        dispatch(setLoading(true))
+        
+        // Fetch real products from MongoDB
+        const mongoProducts = await fetchProductsFromDB()
+        if (mongoProducts && mongoProducts.length > 0) {
+          setRealProducts(mongoProducts)
+          dispatch(setProducts(mongoProducts))
+        } else {
+          // Fallback to getAllProducts if fetchProductsFromDB returns empty
+          const allProducts = getAllProducts()
+          setRealProducts(allProducts)
+          dispatch(setProducts(allProducts))
+        }
+      } catch (error) {
+        console.error('Error loading products from MongoDB:', error)
+        // Fallback to getAllProducts on error
+        const allProducts = getAllProducts()
+        setRealProducts(allProducts)
+        dispatch(setProducts(allProducts))
+      } finally {
+        setIsLoadingProducts(false)
         dispatch(setLoading(false))
-      }, 500)
+      }
     }
-  }, [dispatch, products.length])
+
+    loadRealProducts()
+  }, [dispatch, isMounted])
+
+  // Listen for real-time product updates from MongoDB (client-side only)
+  useEffect(() => {
+    if (!isMounted) return
+    
+    const handleProductsUpdate = (event) => {
+      const { products: updatedProducts } = event.detail
+      setRealProducts(updatedProducts)
+      dispatch(setProducts(updatedProducts))
+      console.log('Real Products updated from MongoDB:', updatedProducts)
+    }
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('productsUpdated', handleProductsUpdate)
+      return () => {
+        window.removeEventListener('productsUpdated', handleProductsUpdate)
+      }
+    }
+  }, [dispatch, isMounted])
+
+  // Prevent hydration mismatch by not rendering until mounted
+  if (!isMounted) {
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {Array(8)
+          .fill(null)
+          .map((_, i) => (
+            <div key={i} className="bg-white rounded-lg shadow-sm border animate-pulse">
+              <div className="h-48 bg-gray-200 rounded-t-lg"></div>
+              <div className="p-4">
+                <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                <div className="h-3 bg-gray-200 rounded mb-2 w-3/4"></div>
+                <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+              </div>
+            </div>
+          ))}
+      </div>
+    )
+  }
 
   // Display products based on filtered prop
   const displayProducts = filtered ? filteredProducts : products
 
   // Function to handle add to cart
   const handleAddToCart = (product) => {
-    console.log("Added to cart:", product)
-    // In a real app, this would dispatch an action to add the product to the cart
-    alert(`Added ${product.name} to cart!`)
+    console.log("Adding to cart:", product)
+    // Add your cart logic here
   }
 
   // Function to handle buy now
   const handleBuyNow = (product) => {
     console.log("Buy now:", product)
-    // In a real app, this would redirect to checkout with this product
-    alert(`Proceeding to checkout for ${product.name}!`)
+    // Add your buy now logic here
   }
 
-  if (loading) {
+  if (loading || isLoadingProducts) {
     return (
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {Array(8)
           .fill(null)
           .map((_, i) => (
-            <div key={i} className="bg-gray-100 animate-pulse rounded-lg p-4 h-64"></div>
+            <div key={i} className="bg-white rounded-lg shadow-sm border animate-pulse">
+              <div className="h-48 bg-gray-200 rounded-t-lg"></div>
+              <div className="p-4">
+                <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                <div className="h-3 bg-gray-200 rounded mb-2 w-3/4"></div>
+                <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+              </div>
+            </div>
           ))}
       </div>
     )
@@ -261,7 +136,7 @@ export function ProductShowcase({ filtered }) {
     return <div className="text-red-500">Error: {error}</div>
   }
 
-  if (displayProducts.length === 0) {
+  if (!displayProducts || displayProducts.length === 0) {
     return (
       <div className="text-gray-500 p-8 bg-gray-50 rounded-lg text-center">
         <svg className="w-12 h-12 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -299,7 +174,7 @@ export function ProductShowcase({ filtered }) {
             )}
 
             {/* Size badge */}
-            {product.attributes.size && (
+            {product.attributes?.size && (
               <div className="absolute bottom-2 right-2">
                 <div className="bg-gray-800 bg-opacity-70 text-white text-xs py-1 px-2 rounded">
                   {product.attributes.size}

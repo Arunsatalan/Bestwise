@@ -1,4 +1,5 @@
-export async function GET(request, { params }) {
+export async function GET(request, context) {
+  const params = await context.params;
   const { id } = params;
   try {
     const res = await fetch(`http://localhost:5000/api/products/${id}`);

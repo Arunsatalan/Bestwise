@@ -1,353 +1,346 @@
-export const sampleProducts = [
-  {
-    id: "balloon-1",
-    name: "Birthday Balloons Pack",
-    category: "Balloons",
-    price: 12.99,
-    discount: 15,
-    image: "/placeholder.svg?height=200&width=200",
-    rating: 4.5,
-    ratingCount: 127,
-    stock: 25,
-    attributes: {
-      occasion: ["Birthday", "Celebration"],
-      type: "Latex",
-      size: "Standard",
-      color: "Multi-color",
-      finish: "Metallic",
-    },
-  },
-  {
-    id: "balloon-2",
-    name: "Giant Number Balloons",
-    category: "Balloons",
-    price: 24.99,
-    discount: 0,
-    image: "/placeholder.svg?height=200&width=200",
-    rating: 4.8,
-    ratingCount: 89,
-    stock: 12,
-    attributes: {
-      occasion: ["Birthday"],
-      type: "Foil",
-      size: "Giant",
-      color: "Gold",
-      finish: "Metallic",
-    },
-  },
-  {
-    id: "balloon-3",
-    name: "Wedding Balloons Set",
-    category: "Balloons",
-    price: 18.5,
-    discount: 20,
-    image: "/placeholder.svg?height=200&width=200",
-    rating: 4.2,
-    ratingCount: 56,
-    stock: 8,
-    attributes: {
-      occasion: ["Wedding"],
-      type: "Latex",
-      size: "Standard",
-      color: "White",
-      finish: "Pearlescent",
-    },
-  },
-  {
-    id: "balloon-4",
-    name: "LED Light-up Balloons",
-    category: "Balloons",
-    price: 15.99,
-    discount: 0,
-    image: "/placeholder.svg?height=200&width=200",
-    rating: 4.7,
-    ratingCount: 42,
-    stock: 15,
-    attributes: {
-      occasion: ["Party", "Celebration"],
-      type: "LED",
-      size: "Standard",
-      color: "Multi-color",
-      finish: "Matte",
-    },
-  },
-  {
-    id: "balloon-5",
-    name: "Confetti Balloons Set",
-    category: "Balloons",
-    price: 9.99,
-    discount: 0,
-    image: "/placeholder.svg?height=200&width=200",
-    rating: 4.6,
-    ratingCount: 78,
-    stock: 30,
-    attributes: {
-      occasion: ["Birthday", "Party"],
-      type: "Latex",
-      size: "Standard",
-      color: "Multi-color",
-      finish: "Confetti",
-    },
-  },
-  {
-    id: "balloon-6",
-    name: "Heart-shaped Foil Balloons",
-    category: "Balloons",
-    price: 14.99,
-    discount: 10,
-    image: "/placeholder.svg?height=200&width=200",
-    rating: 4.4,
-    ratingCount: 65,
-    stock: 18,
-    attributes: {
-      occasion: ["Valentine's Day", "Anniversary"],
-      type: "Foil",
-      size: "Standard",
-      color: "Red",
-      finish: "Metallic",
-    },
-  },
-  {
-    id: "card-1",
-    name: "Handmade Birthday Card",
-    category: "Cards",
-    price: 4.99,
-    discount: 0,
-    image: "/placeholder.svg?height=200&width=200",
-    rating: 4.9,
-    ratingCount: 215,
-    stock: 50,
-    attributes: {
-      occasion: ["Birthday"],
-      recipient: ["Friend", "Family"],
-      style: "Handmade",
-    },
-  },
-  {
-    id: "card-2",
-    name: "Wedding Congratulations Card",
-    category: "Cards",
-    price: 5.99,
-    discount: 10,
-    image: "/placeholder.svg?height=200&width=200",
-    rating: 4.6,
-    ratingCount: 78,
-    stock: 30,
-    attributes: {
-      occasion: ["Wedding"],
-      recipient: ["Friend", "Family"],
-      style: "Artistic",
-    },
-  },
-  {
-    id: "card-3",
-    name: "Thank You Cards Pack",
-    category: "Cards",
-    price: 8.99,
-    discount: 0,
-    image: "/placeholder.svg?height=200&width=200",
-    rating: 4.7,
-    ratingCount: 92,
-    stock: 45,
-    attributes: {
-      occasion: ["Thank You"],
-      recipient: ["Anyone"],
-      style: "Modern",
-    },
-  },
-  {
-    id: "card-4",
-    name: "Anniversary Card",
-    category: "Cards",
-    price: 6.99,
-    discount: 0,
-    image: "/placeholder.svg?height=200&width=200",
-    rating: 4.8,
-    ratingCount: 67,
-    stock: 25,
-    attributes: {
-      occasion: ["Anniversary"],
-      recipient: ["Partner"],
-      style: "Romantic",
-    },
-  },
-  {
-    id: "card-5",
-    name: "Get Well Soon Card",
-    category: "Cards",
-    price: 3.99,
-    discount: 0,
-    image: "/placeholder.svg?height=200&width=200",
-    rating: 4.5,
-    ratingCount: 45,
-    stock: 35,
-    attributes: {
-      occasion: ["Get Well"],
-      recipient: ["Friend", "Family"],
-      style: "Cheerful",
-    },
-  },
-  {
-    id: "card-6",
-    name: "New Baby Congratulations Card",
-    category: "Cards",
-    price: 5.49,
-    discount: 0,
-    image: "/placeholder.svg?height=200&width=200",
-    rating: 4.7,
-    ratingCount: 58,
-    stock: 40,
-    attributes: {
-      occasion: ["New Baby"],
-      recipient: ["Friend", "Family"],
-      style: "Cute",
-    },
-  },
-  {
-    id: "home-1",
-    name: "Decorative Wall Clock",
-    category: "Home & Living",
-    price: 34.99,
-    discount: 25,
-    image: "/placeholder.svg?height=200&width=200",
-    rating: 4.3,
-    ratingCount: 67,
-    stock: 5,
-    attributes: {
-      subcategory: ["Clocks"],
-      color: "Black",
-      size: "Medium",
-      brand: "HomeStyle",
-    },
-  },
-  {
-    id: "home-2",
-    name: "Photo Frame Set",
-    category: "Home & Living",
-    price: 28.5,
-    discount: 0,
-    image: "/placeholder.svg?height=200&width=200",
-    rating: 4.5,
-    ratingCount: 93,
-    stock: 18,
-    attributes: {
-      subcategory: ["Frames"],
-      color: "White",
-      size: "Medium",
-      brand: "FrameIt",
-    },
-  },
-  {
-    id: "home-3",
-    name: "Scented Candle Set",
-    category: "Home & Living",
-    price: 19.99,
-    discount: 15,
-    image: "/placeholder.svg?height=200&width=200",
-    rating: 4.6,
-    ratingCount: 112,
-    stock: 22,
-    attributes: {
-      subcategory: ["Candles"],
-      color: "Multi-color",
-      size: "Standard",
-      brand: "AromaHome",
-    },
-  },
-  {
-    id: "kitchen-1",
-    name: "Ceramic Mug Set",
-    category: "Kitchen & Dining",
-    price: 22.99,
-    discount: 15,
-    image: "/placeholder.svg?height=200&width=200",
-    rating: 4.7,
-    ratingCount: 124,
-    stock: 22,
-    attributes: {
-      type: ["Mugs"],
-      material: "Ceramic",
-      brand: "KitchenPro",
-    },
-  },
-  {
-    id: "kitchen-2",
-    name: "Glass Serving Platter",
-    category: "Kitchen & Dining",
-    price: 32.5,
-    discount: 0,
-    image: "/placeholder.svg?height=200&width=200",
-    rating: 4.4,
-    ratingCount: 56,
-    stock: 7,
-    attributes: {
-      type: ["Serveware"],
-      material: "Glass",
-      brand: "GlassWorks",
-    },
-  },
-  {
-    id: "kitchen-3",
-    name: "Stainless Steel Cutlery Set",
-    category: "Kitchen & Dining",
-    price: 45.99,
-    discount: 10,
-    image: "/placeholder.svg?height=200&width=200",
-    rating: 4.8,
-    ratingCount: 87,
-    stock: 15,
-    attributes: {
-      type: ["Cutlery"],
-      material: "Stainless Steel",
-      brand: "DineWell",
-    },
-  },
-  {
-    id: "toy-1",
-    name: "Educational Puzzle Set",
-    category: "Toys, Novelties & Collectibles",
-    price: 19.99,
-    discount: 20,
-    image: "/placeholder.svg?height=200&width=200",
-    rating: 4.8,
-    ratingCount: 87,
-    stock: 14,
-    attributes: {
-      ageGroup: ["3-5 years"],
-      type: ["Puzzle", "Educational"],
-      brand: "LearnPlay",
-    },
-  },
-  {
-    id: "toy-2",
-    name: "Collectible Action Figure",
-    category: "Toys, Novelties & Collectibles",
-    price: 45.99,
-    discount: 0,
-    image: "/placeholder.svg?height=200&width=200",
-    rating: 4.9,
-    ratingCount: 134,
-    stock: 3,
-    attributes: {
-      ageGroup: ["13+ years", "Adult"],
-      type: ["Action Figure", "Collectible"],
-      brand: "CollectiblesInc",
-    },
-  },
-  {
-    id: "toy-3",
-    name: "Plush Teddy Bear",
-    category: "Toys, Novelties & Collectibles",
-    price: 15.99,
-    discount: 0,
-    image: "/placeholder.svg?height=200&width=200",
-    rating: 4.7,
-    ratingCount: 98,
-    stock: 25,
-    attributes: {
-      ageGroup: ["0-2 years", "3-5 years"],
-      type: ["Plush"],
-      brand: "ToyWorld",
-    },
-  },
-]
+// API Configuration
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+
+// Real MongoDB Categories data - NO DUMMY DATA
+let categoriesData = [];
+let attributesData = {};
+let productsData = []; // Real products from MongoDB
+
+// Function to fetch categories from MongoDB
+export const fetchCategoriesFromDB = async () => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/categories/`);
+    const result = await response.json();
+    
+    if (result.success) {
+      categoriesData = result.data;
+      
+      // Process attributes for easy access
+      attributesData = {};
+      categoriesData.forEach(category => {
+        attributesData[category.key] = {};
+        if (category.attributes && Array.isArray(category.attributes)) {
+          category.attributes.forEach(attr => {
+            attributesData[category.key][attr.name] = attr.items || [];
+          });
+        }
+      });
+      
+      console.log('Real Categories fetched from MongoDB:', categoriesData);
+      console.log('Processed attributes data:', attributesData);
+      
+      // Trigger update event for UI components
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('categoriesUpdated', { 
+          detail: { categories: categoriesData, attributes: attributesData }
+        }));
+      }
+      
+      return { categories: categoriesData, attributes: attributesData };
+    } else {
+      console.error('Failed to fetch categories from MongoDB:', result.message);
+      return null;
+    }
+  } catch (error) {
+    console.error('Error fetching categories from MongoDB:', error);
+    return null;
+  }
+};
+
+// Function to fetch products from MongoDB (if needed)
+export const fetchProductsFromDB = async () => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/products/`);
+    const result = await response.json();
+    
+    if (result.success) {
+      productsData = result.data || [];
+      console.log('Real Products fetched from MongoDB:', productsData);
+      
+      // Trigger update event for UI components
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('productsUpdated', { 
+          detail: { products: productsData }
+        }));
+      }
+      
+      return productsData;
+    } else {
+      console.error('Failed to fetch products from MongoDB:', result.message);
+      return [];
+    }
+  } catch (error) {
+    console.error('Error fetching products from MongoDB:', error);
+    return [];
+  }
+};
+
+// Function to fetch filtered products from MongoDB based on applied filters
+export const fetchFilteredProductsFromDB = async (filters = {}) => {
+  try {
+    // Build query parameters
+    const queryParams = new URLSearchParams();
+    
+    // Add category filter
+    if (filters.category && filters.category !== '') {
+      queryParams.append('category', filters.category);
+    }
+    
+    // Add attribute filters
+    if (filters.filters) {
+      Object.entries(filters.filters).forEach(([key, values]) => {
+        if (values && Array.isArray(values) && values.length > 0) {
+          if (key === 'price') {
+            queryParams.append('minPrice', String(values[0]));
+            queryParams.append('maxPrice', String(values[1]));
+          } else if (key === 'rating') {
+            queryParams.append('minRating', String(Math.min(...values)));
+          } else if (key === 'discount') {
+            if (values.includes('yes') || values.includes(true)) {
+              queryParams.append('hasDiscount', 'true');
+            }
+          } else {
+            // Attribute filters (color, size, brand, etc.)
+            queryParams.append(`attributes.${key}`, values.join(','));
+          }
+        }
+      });
+    }
+    
+    const url = `${API_BASE_URL}/products/filter?${queryParams.toString()}`;
+    console.log('Fetching from URL:', url);
+    
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const result = await response.json();
+    
+    if (result.success) {
+      const filteredProducts = result.data || [];
+      console.log('Filtered products fetched from MongoDB:', filteredProducts);
+      
+      // Trigger update event for UI components
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('filteredProductsUpdated', { 
+          detail: { products: filteredProducts, filters }
+        }));
+      }
+      
+      return filteredProducts;
+    } else {
+      console.warn('API returned success:false, throwing an error:', result.message);
+      throw new Error(result.message || 'Failed to fetch filtered products');
+    }
+  } catch (error) {
+    console.error('Error in fetchFilteredProductsFromDB:', error);
+    return [];
+  }
+};
+
+// Function to get all real categories from MongoDB
+export const getAllCategories = () => {
+  return categoriesData;
+};
+
+// Function to get category by key
+export const getCategoryByKey = (key) => {
+  return categoriesData.find(cat => cat.key === key);
+};
+
+// Function to get category by name
+export const getCategoryByName = (name) => {
+  return categoriesData.find(cat => cat.name === name);
+};
+
+// Function to get attributes for a category
+export const getCategoryAttributes = (categoryKey) => {
+  return attributesData[categoryKey] || {};
+};
+
+// Function to get attribute values for a specific attribute
+export const getAttributeValues = (categoryKey, attributeName) => {
+  return attributesData[categoryKey]?.[attributeName] || [];
+};
+
+// Function to get all products from MongoDB
+export const getAllProducts = () => {
+  return productsData;
+};
+
+// Function to refresh categories data (for real-time updates)
+export const refreshCategoriesData = async () => {
+  console.log('Refreshing categories data from MongoDB...');
+  const result = await fetchCategoriesFromDB();
+  return result;
+};
+
+// Function to refresh products data (for real-time updates)
+export const refreshProductsData = async () => {
+  console.log('Refreshing products data from MongoDB...');
+  const result = await fetchProductsFromDB();
+  return result;
+};
+
+// Function to refresh all data
+export const refreshAllData = async () => {
+  const [categoriesResult, productsResult] = await Promise.all([
+    refreshCategoriesData(),
+    refreshProductsData()
+  ]);
+  
+  return {
+    categories: categoriesResult,
+    products: productsResult
+  };
+};
+
+// Auto-fetch real data on module load (client-side only)
+let isInitialized = false;
+
+const initializeData = () => {
+  if (typeof window !== 'undefined' && !isInitialized) {
+    isInitialized = true;
+    
+    // Fetch categories immediately
+    fetchCategoriesFromDB();
+    
+    // Fetch products if needed
+    fetchProductsFromDB();
+    
+    // Set up periodic refresh (every 2 minutes for real-time updates)
+    setInterval(refreshAllData, 2 * 60 * 1000);
+  }
+};
+
+// Initialize data when module loads
+initializeData();
+
+// NO DUMMY DATA - All data comes from MongoDB in real-time
+
+// Enhanced product functions with real-time MongoDB data
+export const getProductsByCategory = (categoryKey) => {
+  return productsData.filter(product => {
+    const category = getCategoryByKey(categoryKey);
+    return category && (product.category === category.name || product.mainCategory === category.key);
+  });
+};
+
+// Function to get products by category name
+export const getProductsByCategoryName = (categoryName) => {
+  return productsData.filter(product => {
+    return product.category === categoryName || product.mainCategory === categoryName;
+  });
+};
+
+// Function to validate product attributes against real category schema from MongoDB
+export const validateProductAttributes = (product) => {
+  const category = categoriesData.find(cat => 
+    cat.name === product.category || cat.key === product.mainCategory
+  );
+  if (!category) return false;
+  
+  const categoryAttrs = attributesData[category.key] || {};
+  const productAttrs = product.attributes || {};
+  
+  // Check if all product attributes are valid for the category
+  for (const [attrName, attrValue] of Object.entries(productAttrs)) {
+    if (categoryAttrs[attrName]) {
+      if (Array.isArray(attrValue)) {
+        // Check if all values in array are valid
+        const validValues = categoryAttrs[attrName];
+        if (!attrValue.every(val => validValues.includes(val))) {
+          return false;
+        }
+      } else {
+        // Check if single value is valid
+        if (!categoryAttrs[attrName].includes(attrValue)) {
+          return false;
+        }
+      }
+    }
+  }
+  
+  return true;
+};
+
+// Function to get filtered products based on real MongoDB data
+export const getFilteredProducts = (filters = {}) => {
+  return productsData.filter(product => {
+    // Filter by category
+    if (filters.category && 
+        product.category !== filters.category && 
+        product.mainCategory !== filters.category) {
+      return false;
+    }
+    
+    // Filter by attributes
+    if (filters.attributes) {
+      for (const [attrName, attrValues] of Object.entries(filters.attributes)) {
+        const productAttrValue = product.attributes?.[attrName];
+        if (!productAttrValue) return false;
+        
+        if (Array.isArray(productAttrValue)) {
+          // Check if any product attribute value matches filter
+          if (!productAttrValue.some(val => attrValues.includes(val))) {
+            return false;
+          }
+        } else {
+          // Check if single value matches filter
+          if (!attrValues.includes(productAttrValue)) {
+            return false;
+          }
+        }
+      }
+    }
+    
+    // Filter by price range
+    if (filters.priceRange) {
+      const { min, max } = filters.priceRange;
+      const finalPrice = product.price * (1 - (product.discount || 0) / 100);
+      if (min !== undefined && finalPrice < min) return false;
+      if (max !== undefined && finalPrice > max) return false;
+    }
+    
+    return true;
+  });
+};
+
+// Function to get unique attribute values from real products
+export const getUniqueAttributeValues = (categoryKey, attributeName) => {
+  const categoryProducts = getProductsByCategory(categoryKey);
+  const values = new Set();
+  
+  categoryProducts.forEach(product => {
+    const attrValue = product.attributes?.[attributeName];
+    if (attrValue) {
+      if (Array.isArray(attrValue)) {
+        attrValue.forEach(val => values.add(val));
+      } else {
+        values.add(attrValue);
+      }
+    }
+  });
+  
+  return Array.from(values);
+};
+
+// Real-time update listeners setup (client-side only)
+const setupEventListeners = () => {
+  if (typeof window !== 'undefined') {
+    window.addEventListener('categoriesUpdated', (event) => {
+      console.log('Real Categories data updated from MongoDB:', (event).detail);
+      // Trigger UI updates here
+    });
+    
+    window.addEventListener('productsUpdated', (event) => {
+      console.log('Real Products data updated from MongoDB:', (event).detail);
+      // Trigger UI updates here
+    });
+  }
+};
+
+// Setup event listeners when module loads
+setupEventListeners();

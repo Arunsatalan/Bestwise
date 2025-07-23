@@ -33,31 +33,11 @@ import { Modal, useConfirmModal } from "../../../components/ui/modal"
  * @property {string} key - Category key
  */
 
-// Type definitions for JSDoc
-/**
- * @typedef {Object} Product
- * @property {string} [_id] - MongoDB ObjectId
- * @property {string} [id] - Alternative ID
- * @property {string} name - Product name
- * @property {string} sku - Product SKU
- * @property {string} [mainCategory] - Main category
- * @property {string} [category] - Category
- * @property {number} price - Product price
- * @property {number} stock - Stock quantity
- * @property {string} status - Product status
- * @property {Array<{url: string}>} [images] - Product images
- */
-
-/**
- * @typedef {Object} Category
- * @property {string} [_id] - MongoDB ObjectId
- * @property {string} [id] - Alternative ID
- * @property {string} name - Category name
- * @property {string} key - Category key
- */
-
 export default function ProductDashboard() {
+  /** @type {[Product[], React.Dispatch<React.SetStateAction<Product[]>>]} */
   const [products, setProducts] = useState([])
+  /** @type {[Category[], React.Dispatch<React.SetStateAction<Category[]>>]} */
+  const [categories, setCategories] = useState([])
   const [searchTerm, setSearchTerm] = useState("")
   const [filterCategory, setFilterCategory] = useState("")
   const [filterStatus, setFilterStatus] = useState("")
@@ -78,14 +58,26 @@ export default function ProductDashboard() {
   }, [])
 
   useEffect(() => {
+    fetchProducts()
+  }, [filterCategory, filterStatus, filterStock, searchTerm])
+
+  useEffect(() => {
     if (typeof window !== "undefined") {
-      fetchProducts()
+      fetchCategories()
     }
   }, [])
 
   const fetchProducts = async () => {
+    setLoading(true)
     try {
-      const response = await fetch("http://localhost:5000/api/products")
+      const queryParams = new URLSearchParams({
+        search: searchTerm,
+        category: filterCategory,
+        status: filterStatus,
+        stock: filterStock,
+        limit: "1000",
+      })
+      const response = await fetch(`http://localhost:5000/api/products?${queryParams.toString()}`)
       const result = await response.json()
       console.log("Fetched data:", result)
       setProducts(Array.isArray(result.data) ? result.data : [])
@@ -96,9 +88,17 @@ export default function ProductDashboard() {
     }
   }
 
-  // Build unique mainCategory list from products
-  const categoryList = Array.from(new Set(products.map(p => p.mainCategory).filter(Boolean)))
-
+  const fetchCategories = async () => {
+    try {
+      const response = await fetch("http://localhost:5000/api/categories")
+      const result = await response.json()
+      if (result.success) {
+        setCategories(Array.isArray(result.data) ? result.data : [])
+      }
+    } catch (error) {
+      console.error("Error fetching categories:", error)
+    }
+  }
 
   const getStockStatus = (stock) => {
     if (stock === 0) return { label: "Out of Stock", color: "destructive" }
@@ -113,7 +113,7 @@ export default function ProductDashboard() {
       "Are you sure you want to delete this product? This action cannot be undone.",
       async () => {
         try {
-          const response = await fetch(`/api/products/${id}`, { method: "DELETE" })
+          const response = await fetch(`http://localhost:5000/api/products/${id}`, { method: "DELETE" })
           if (response.ok) {
             showSuccess("Success", "Product deleted successfully!", () => {
               // Stay on the same page and refresh the product list
@@ -130,23 +130,6 @@ export default function ProductDashboard() {
     )
   }
 
-  const filteredProducts = products.filter((product) => {
-    const matchesSearch =
-      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.sku.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesCategory = !filterCategory || product.mainCategory === filterCategory
-    const matchesStatus = !filterStatus || product.status === filterStatus
-    
-    // Stock filtering logic
-    let matchesStock = true
-    if (filterStock) {
-      const stockStatus = getStockStatus(product.stock)
-      matchesStock = stockStatus.label.toLowerCase().replace(/\s+/g, '-') === filterStock
-    }
-    
-    return matchesSearch && matchesCategory && matchesStatus && matchesStock
-  })
-
   // Helper function to get product image
   const getProductImage = (product) => {
     if (product?.images && product.images.length > 0) {
@@ -157,6 +140,11 @@ export default function ProductDashboard() {
     }
     return '/placeholder.svg';
   };
+  
+  /** @param {React.SyntheticEvent<HTMLImageElement, Event>} e */
+  const handleImageError = (e) => {
+    e.currentTarget.src = '/placeholder.svg';
+  }
 
   if (loading) {
     return (
@@ -177,7 +165,7 @@ export default function ProductDashboard() {
                 🔔 Low Stock Filter Active
               </Badge>
               <span className="text-sm text-gray-600">
-                Showing {filteredProducts.length} low stock products
+                Showing {products.length} low stock products
               </span>
             </div>
           )}
@@ -211,8 +199,8 @@ export default function ProductDashboard() {
               className="px-3 py-2 border rounded-md"
             >
               <option value="">All Categories</option>
-              {categoryList.map((cat) => (
-                <option key={cat} value={cat}>{cat}</option>
+              {categories.map((cat) => (
+                <option key={cat.key} value={cat.key}>{cat.name}</option>
               ))}
             </select>
             <select
@@ -290,7 +278,7 @@ export default function ProductDashboard() {
 
       {/* Products Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {filteredProducts.map((product) => {
+        {products.map((product) => {
           const stockStatus = getStockStatus(product.stock)
           return (
             <Card key={product._id || product.id} className="overflow-hidden">
@@ -299,9 +287,7 @@ export default function ProductDashboard() {
                   src={getProductImage(product)}
                   alt={product.name}
                   className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.target.src = '/placeholder.svg';
-                  }}
+                  onError={handleImageError}
                 />
                 <Badge variant={stockStatus.color} className="absolute top-2 right-2">
                   {stockStatus.label}
@@ -311,7 +297,7 @@ export default function ProductDashboard() {
                 <h3 className="font-semibold text-lg mb-2 truncate">{product.name}</h3>
                 <p className="text-sm text-gray-600 mb-2">SKU: {product.sku}</p>
                 <div className="flex justify-between items-center mb-3">
-                  <span className="text-lg font-bold">${product.price || product.retailPrice}</span>
+                  <span className="text-lg font-bold">${product.price}</span>
                   <Badge variant="outline">{product.mainCategory || product.category}</Badge>
                 </div>
                 <div className="flex justify-between items-center">
@@ -346,7 +332,7 @@ export default function ProductDashboard() {
         })}
       </div>
 
-      {filteredProducts.length === 0 && (
+      {products.length === 0 && !loading && (
         <div className="text-center py-12">
           <p className="text-gray-500 text-lg">No products found</p>
         </div>
@@ -356,6 +342,7 @@ export default function ProductDashboard() {
       <Modal
         isOpen={isOpen}
         onClose={closeModal}
+        onCancel={closeModal}
         title={config.title}
         message={config.message}
         type={config.type}

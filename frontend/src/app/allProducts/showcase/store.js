@@ -1,11 +1,12 @@
 import { createSlice, configureStore } from "@reduxjs/toolkit"
+import { fetchFilteredProductsFromDB } from "./sample-data"
 
 // Initial state
 const initialState = {
   products: [],
   filteredProducts: [],
   filters: {
-    category: "Balloons",
+    category: "", // Default to "All Categories" (empty string)
     filters: {},
   },
   loading: false,
@@ -20,49 +21,32 @@ export const productSlice = createSlice({
     setProducts: (state, action) => {
       state.products = action.payload
       state.filteredProducts = action.payload.filter(
-        (product) => product.category === state.filters.category
+        (product) => {
+          if (state.filters.category === "") return true
+          return product.category === state.filters.category || product.mainCategory === state.filters.category
+        }
       )
     },
     setCategory: (state, action) => {
       state.filters.category = action.payload
-      state.filters.filters = {}
-      state.filteredProducts = state.products.filter(
-        (product) => product.category === action.payload
-      )
+      state.filters.filters = {} // Reset all filters when category changes
+      
+      console.log('Setting category to:', action.payload)
+      console.log('Total products:', state.products.length)
+      
+      // Set loading state - filtered products will be set by database fetch
+      state.loading = true
     },
     setFilter: (state, action) => {
       const { key, values } = action.payload
       state.filters.filters[key] = values
-
-      state.filteredProducts = state.products.filter((product) => {
-        if (product.category !== state.filters.category) return false
-
-        for (const [filterKey, filterValues] of Object.entries(state.filters.filters)) {
-          if (!filterValues || (Array.isArray(filterValues) && filterValues.length === 0)) continue
-
-          if (filterKey === "price") {
-            const [min, max] = filterValues
-            if (product.price < min || product.price > max) return false
-          } else if (filterKey === "discount") {
-            const hasDiscount = product.discount > 0
-            if (filterValues[0] === "yes" && !hasDiscount) return false
-          } else if (filterKey === "rating") {
-            const minRating = Math.min(...filterValues)
-            if (product.rating < minRating) return false
-          } else {
-            const productValue = product.attributes?.[filterKey]
-            if (!productValue) continue
-
-            if (Array.isArray(productValue)) {
-              if (!filterValues.some((v) => productValue.includes(v))) return false
-            } else {
-              if (!filterValues.includes(productValue)) return false
-            }
-          }
-        }
-
-        return true
-      })
+      
+      // Set loading state while fetching filtered products
+      state.loading = true
+    },
+    setFilteredProducts: (state, action) => {
+      state.filteredProducts = action.payload
+      state.loading = false
     },
     setLoading: (state, action) => {
       state.loading = action.payload
@@ -92,20 +76,21 @@ export const productSlice = createSlice({
   },
 })
 
-// ✅ Export actions
+// Export actions
 export const {
   setProducts,
   setCategory,
   setFilter,
+  setFilteredProducts,
   setLoading,
   setError,
   sortProducts,
 } = productSlice.actions
 
-// ✅ Export productSlice itself
+// Export productSlice itself
 export { productSlice }
 
-// ✅ Export store
+// Export store
 export const store = configureStore({
   reducer: {
     products: productSlice.reducer,
