@@ -4,7 +4,6 @@ const {registerUser, loginUser, logoutUser, getUserProfile, changePassword, upda
 <<<<<<< HEAD
 =======
 
-const {registerUser, loginUser, logoutUser, getUserProfile, changePassword, updateUserProfile, otp, twoFactor} = require('../controllers/authController');
 
 >>>>>>> 07841920b3dbb84aed129c16ca5d6aa63c7f9f1f
 const { isAuthenticated } = require('../middleware/authMiddleware');

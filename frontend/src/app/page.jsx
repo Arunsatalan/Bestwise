@@ -22,7 +22,6 @@ import Loader from "./components/loader/page"
 import { addToCart } from "./slices/cartSlice";
 import { addToWishlist } from "./slices/wishlistSlice";
 import { toast, Toaster } from 'sonner';
-import { useRouter } from "next/navigation";
 
 const images = ["/1.jpg", "/2.jpg", "/3.jpg"]
 
@@ -72,14 +71,15 @@ export default function FancyCarousel() {
 
   const [showMoreCategories, setShowMoreCategories] = useState(false);
 
+
   useEffect(() => {
     dispatch(getProducts())
-<<<<<<< HEAD
-=======
+
     dispatch(getCategories())
     console.log("checkig",allProducts)
 
   const [categories, setCategories] = useState([]);
+
   const router = useRouter();
 
   // Event data for Upcoming Events section
@@ -118,7 +118,7 @@ export default function FancyCarousel() {
 
   useEffect(() => {
     dispatch(getProducts())
->>>>>>> 07841920b3dbb84aed129c16ca5d6aa63c7f9f1f
+
     // Fetch categories from backend
     const fetchCategories = async () => {
       try {
@@ -132,10 +132,10 @@ export default function FancyCarousel() {
       }
     };
     fetchCategories();
-<<<<<<< HEAD
-=======
 
->>>>>>> 07841920b3dbb84aed129c16ca5d6aa63c7f9f1f
+    dispatch(getCategories())
+    console.log("checking", allProducts)
+
   }, [dispatch])
 
   // Helper function to get product image
@@ -217,8 +217,6 @@ export default function FancyCarousel() {
     ],
   }
 
-  const router = useRouter();
-
   // Handle category click navigation
   const handleCategoryClick = (categoryName) => {
     // Navigate to showcase page with category parameter
@@ -256,7 +254,6 @@ export default function FancyCarousel() {
         {/* Categories Section */}
         <section className="space-y-6">
           <div className="flex justify-between items-center">
-
             <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">Shop by Categories</h2>
             <Button 
               variant="ghost" 
@@ -265,18 +262,11 @@ export default function FancyCarousel() {
             >
               {showMoreCategories ? 'Show Less' : 'Explore more'} 
               <ChevronRight className={`ml-1 h-4 w-4 transition-transform duration-200 ${showMoreCategories ? 'rotate-90' : ''}`} />
-
-            <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">Categories</h2>
-            <Button variant="ghost" className="text-purple-600 hover:text-purple-700" onClick={() => router.push('/allProducts')}>
-              Explore more <ChevronRight className="ml-1 h-4 w-4" />
-
             </Button>
           </div>
 
           <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 gap-4">
             {categories && categories.length > 0 ? (
-<<<<<<< HEAD
-=======
 
               categories.slice(0, showMoreCategories ? categories.length : 6).map((category, index) => (
                 <div 
@@ -295,7 +285,6 @@ export default function FancyCarousel() {
                   </div>
                   <span className="text-xs sm:text-sm text-center text-gray-700 group-hover:text-purple-600 transition-colors font-medium">
 
->>>>>>> 07841920b3dbb84aed129c16ca5d6aa63c7f9f1f
               categories.map((category, index) => (
                 <div
                   key={category._id || category.key || index}
@@ -326,18 +315,14 @@ export default function FancyCarousel() {
                     )}
                   </div>
                   <span className="text-xs sm:text-sm text-center text-gray-700 group-hover:text-purple-600 transition-colors">
-<<<<<<< HEAD
-=======
 
->>>>>>> 07841920b3dbb84aed129c16ca5d6aa63c7f9f1f
                     {category.name}
                   </span>
                 </div>
               ))
             ) : (
-<<<<<<< HEAD
+
               <div className="col-span-full text-center py-4 text-gray-400">No categories found.</div>
-=======
 
               // Fallback categories if database is empty
               [
@@ -370,9 +355,10 @@ export default function FancyCarousel() {
                 </div>
               ))
 
+
               <div className="col-span-full text-center py-4 text-gray-400">No categories found.</div>
 
->>>>>>> 07841920b3dbb84aed129c16ca5d6aa63c7f9f1f
+
             )}
           </div>
         </section>
@@ -507,69 +493,64 @@ export default function FancyCarousel() {
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 ">
             {allProducts && allProducts.length > 0 ? (
-              allProducts.slice(0, 12).map((product) => {
-                // const imageSrc = getProductImage(product);
-                // const isExternal = isExternalImage(imageSrc);
-                
-                return (
-                  <Link key={product._id} href={`/productDetail/${product._id}`} className="block">
-                    <CardContent className="p-0 border-1 border-[#D9D9D9] rounded-[10px]">
-                      <div className="relative">
-                        <Image
-                          src={product.images[0].url || "/placeholder.svg"}
-                          alt={product.name}
-                          width={200}
-                          height={200}
-                          className="w-full aspect-square object-cover rounded-t-lg"
-                        />
-                        <div className="absolute top-2 left-2 bg-red-100 rounded-full p-1">
-                          <Flame className="text-red-500 w-3 h-3 sm:w-4 sm:h-4" />
-                        </div>
-                        <div className="absolute top-2 right-2 bg-purple-100 rounded-full p-1 cursor-pointer hover:bg-purple-200 transition-colors"
-                          onClick={e => {
-                            e.preventDefault();
-                            if (!isAuthenticated) return alert('Please login to add to wishlist');
-                            dispatch(addToWishlist(product));
-                            toast.success('Added to wishlist!');
-                          }}
-                        >
-                          <Heart className="text-purple-500 w-3 h-3 sm:w-4 sm:h-4" />
-                        </div>
+              allProducts.slice(0, 12).map((product) => (
+                <Link key={product._id} href={`/productDetail/${product._id}`} className="block">
+                  <CardContent className="p-0 border-1 border-[#D9D9D9] rounded-[10px]">
+                    <div className="relative">
+                      <Image
+                        src={product.images[0].url || "/placeholder.svg"}
+                        alt={product.name}
+                        width={200}
+                        height={200}
+                        className="w-full aspect-square object-cover rounded-t-lg"
+                      />
+                      <div className="absolute top-2 left-2 bg-red-100 rounded-full p-1">
+                        <Flame className="text-red-500 w-3 h-3 sm:w-4 sm:h-4" />
                       </div>
-                      <div className="p-3">
-                        <h3 className="font-medium text-sm sm:text-base truncate">{product.name}</h3>
-                        <p className="font-semibold text-purple-600 text-sm sm:text-base">US ${product.price || product.retailPrice}</p>
+                      <div className="absolute top-2 right-2 bg-purple-100 rounded-full p-1 cursor-pointer hover:bg-purple-200 transition-colors"
+                        onClick={e => {
+                          e.preventDefault();
+                          if (!isAuthenticated) return alert('Please login to add to wishlist');
+                          dispatch(addToWishlist(product));
+                          toast.success('Added to wishlist!');
+                        }}
+                      >
+                        <Heart className="text-purple-500 w-3 h-3 sm:w-4 sm:h-4" />
+                      </div>
+                    </div>
+                    <div className="p-3">
+                      <h3 className="font-medium text-sm sm:text-base truncate">{product.name}</h3>
+                      <p className="font-semibold text-purple-600 text-sm sm:text-base">US ${product.price || product.retailPrice}</p>
+                      <div className="flex text-yellow-400 text-xs sm:text-sm mt-1">
                         <div className="flex text-yellow-400 text-xs sm:text-sm mt-1">
-                          <div className="flex text-yellow-400 text-xs sm:text-sm mt-1">
-                            {Array.from({ length: 5 }, (_, i) => {
-                              const fullStars = Math.floor(product.rating || 0);
-                              const hasHalfStar = (product.rating || 0) - fullStars >= 0.5;
-                              if (i < fullStars) {
-                                return <AiFillStar key={i} />;
-                              } else if (i === fullStars && hasHalfStar) {
-                                return <AiTwotoneStar key={i} />;
-                              } else {
-                                return <AiOutlineStar key={i} />;
-                              }
-                            })}
-                          </div>
+                          {Array.from({ length: 5 }, (_, i) => {
+                            const fullStars = Math.floor(product.rating || 0);
+                            const hasHalfStar = (product.rating || 0) - fullStars >= 0.5;
+                            if (i < fullStars) {
+                              return <AiFillStar key={i} />;
+                            } else if (i === fullStars && hasHalfStar) {
+                              return <AiTwotoneStar key={i} />;
+                            } else {
+                              return <AiOutlineStar key={i} />;
+                            }
+                          })}
                         </div>
-                        <Button
-                          className="mt-2 w-full bg-purple-600 hover:bg-purple-700 text-white"
-                          onClick={e => {
-                            e.preventDefault();
-                            if (!isAuthenticated) return alert('Please login to add to cart');
-                            dispatch(addToCart({ product, quantity: 1 }));
-                            toast.success('Added to cart!');
-                          }}
-                        >
-                          Add to Cart
-                        </Button>
                       </div>
-                    </CardContent>
-                  </Link>
-                );
-              })
+                      <Button
+                        className="mt-2 w-full bg-purple-600 hover:bg-purple-700 text-white"
+                        onClick={e => {
+                          e.preventDefault();
+                          if (!isAuthenticated) return alert('Please login to add to cart');
+                          dispatch(addToCart({ product, quantity: 1 }));
+                          toast.success('Added to cart!');
+                        }}
+                      >
+                        Add to Cart
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Link>
+              ))
             ) : (
               <div className="col-span-full text-center py-12">
                 <p className="text-red-500 text-lg">Server currently busy!</p>

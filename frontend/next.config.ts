@@ -27,20 +27,20 @@ const nextConfig = {
         pathname: "/**",
       },
       {
-        protocol: 'https',
-        hostname: 'example.com',
-        port: '',
-        pathname: '/**',
+        protocol: "https",
+        hostname: "res.cloudinary.com",
+        port: "",
+        pathname: "/**",
       },
       {
-        protocol: 'http',
-        hostname: 'example.com',
-        port: '',
-        pathname: '/**',
+        protocol: "https",
+        hostname: "example.com",
+        port: "",
+        pathname: "/**",
       },
     ],
-    domains: ['res.cloudinary.com', 'cloudinary.com', 'example.com'],
+    domains: ["res.cloudinary.com", "cloudinary.com", "example.com"],
   },
-}
+};
 
-module.exports = nextConfig
+module.exports = nextConfig;
