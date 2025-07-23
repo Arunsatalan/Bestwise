@@ -147,7 +147,7 @@ export default function CategoryFilters({
   useEffect(() => {
     async function fetchCategories() {
       try {
-        const res = await fetch("http://localhost:5000/api/categories");
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/categories`);
         const result = await res.json();
         const data = result.data;
         if (Array.isArray(data)) {
@@ -168,7 +168,7 @@ export default function CategoryFilters({
 
   const loadCategories = async () => {
     try {
-      const response = await fetch("http://localhost:5000/api/categories")
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/categories`)
       const data = await response.json()
       setCategorySystem(data)
     } catch (error) {
@@ -180,7 +180,7 @@ export default function CategoryFilters({
 
   const loadProducts = async () => {
     try {
-      const response = await fetch("http://localhost:5000/api/products")
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products`)
       const data = await response.json()
       setProducts(data)
     } catch (error) {
@@ -444,7 +444,7 @@ export default function CategoryFilters({
     if (confirm(`Delete the entire "${categorySystem[categoryKey].name}" category? This cannot be undone.`)) {
       try {
         // Delete from database
-        const response = await fetch(`http://localhost:5000/api/categories/${categoryKey}`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/categories/${categoryKey}`, {
           method: 'DELETE',
           headers: {
             'Content-Type': 'application/json'
@@ -586,7 +586,7 @@ export default function CategoryFilters({
       }
 
       // Add to database
-      const response = await fetch(`http://localhost:5000/api/categories/${selectedMainCategory}/attributes/${attributeName}/items`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/categories/${selectedMainCategory}/attributes/${attributeName}/items`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -639,7 +639,7 @@ export default function CategoryFilters({
       }
 
       // Add to database
-      const response = await fetch(`http://localhost:5000/api/categories/${selectedMainCategory}/attributes/${attributeName}/items`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/categories/${selectedMainCategory}/attributes/${attributeName}/items`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -726,11 +726,11 @@ export default function CategoryFilters({
         }
       }
 
-      console.log('Making PUT request to:', `http://localhost:5000/api/categories/${selectedMainCategory}/attributes/${attributeName}/items/${encodeURIComponent(oldValue)}`);
+      console.log('Making PUT request to:', `${process.env.NEXT_PUBLIC_API_URL}/categories/${selectedMainCategory}/attributes/${attributeName}/items/${encodeURIComponent(oldValue)}`);
       console.log('Request body:', { newValue: trimmedValue });
 
       // Update in database
-      const response = await fetch(`http://localhost:5000/api/categories/${selectedMainCategory}/attributes/${attributeName}/items/${encodeURIComponent(oldValue)}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/categories/${selectedMainCategory}/attributes/${attributeName}/items/${encodeURIComponent(oldValue)}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
@@ -840,7 +840,7 @@ export default function CategoryFilters({
       };
 
       // Update in database
-      const response = await fetch(`http://localhost:5000/api/categories/${oldKey}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/categories/${oldKey}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
@@ -1137,7 +1137,7 @@ export default function CategoryFilters({
 
   useEffect(() => {
     if (productId) {
-      fetch(`http://localhost:5000/api/products/${productId}`)
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/products/${productId}`)
         .then(res => res.json())
         .then(data => setProduct(data));
     }
@@ -1146,7 +1146,7 @@ export default function CategoryFilters({
   useEffect(() => {
     if (!selectedMainCategory) return;
     async function fetchAttributes() {
-      const res = await fetch(`http://localhost:5000/api/categories/${selectedMainCategory}`);
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/categories/${selectedMainCategory}`);
       const result = await res.json();
       const category = result.data || result;
       setAttributes(category.attributes || []);
@@ -1681,7 +1681,7 @@ export default function CategoryFilters({
                                 async () => {
                                   try {
                                     // Delete from database first
-                                    const response = await fetch(`http://localhost:5000/api/categories/${selectedMainCategory}/attributes/${attr.name}/items/${encodeURIComponent(item)}`, {
+                                    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/categories/${selectedMainCategory}/attributes/${attr.name}/items/${encodeURIComponent(item)}`, {
                                       method: 'DELETE',
                                       headers: {
                                         'Content-Type': 'application/json'
@@ -2036,7 +2036,7 @@ export default function CategoryFilters({
                                   if (confirm(`Delete "${item}" from ${attr.displayName}?`)) {
                                     try {
                                       // Delete from database first
-                                      const response = await fetch(`http://localhost:5000/api/categories/${selectedMainCategory}/attributes/${attr.name}/items/${encodeURIComponent(item)}`, {
+                                      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/categories/${selectedMainCategory}/attributes/${attr.name}/items/${encodeURIComponent(item)}`, {
                                         method: 'DELETE',
                                         headers: {
                                           'Content-Type': 'application/json'
