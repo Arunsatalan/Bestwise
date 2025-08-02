@@ -39,7 +39,8 @@ const nextConfig = {
         pathname: "/**",
       },
     ],
+    domains: ["res.cloudinary.com", "cloudinary.com", "example.com"],
   },
-}
+};
 
-module.exports = nextConfig
+module.exports = nextConfig;

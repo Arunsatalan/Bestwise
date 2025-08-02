@@ -33,9 +33,7 @@ export default function FancyCarousel() {
   const dispatch = useDispatch()
     
   const [loading, setLoading] = useState(true);
-
-  const [showMoreCategories, setShowMoreCategories] = useState(false);
-
+  const [localCategories, setLocalCategories] = useState([]);
   const router = useRouter();
   const isMobile = useIsMobile();
   const initialCount = isMobile ? 4 : 6;
@@ -49,10 +47,27 @@ export default function FancyCarousel() {
     { key: "new-year", name: "New Year's Eve" },
   ];
 
+  const [showMoreCategories, setShowMoreCategories] = useState(false);
+
+
   useEffect(() => {
     dispatch(getProducts())
     dispatch(getCategories())
     console.log("checking", allProducts)
+
+    // Fetch categories from backend
+    const fetchCategories = async () => {
+      try {
+        const res = await fetch("/api/categories");
+        const data = await res.json();
+        // If data is an array, use it directly; if wrapped in {data: []}, unwrap
+        const cats = Array.isArray(data) ? data : data.data;
+        setLocalCategories(cats || []);
+      } catch (err) {
+        setLocalCategories([]);
+      }
+    };
+    fetchCategories();
   }, [dispatch])
 
   // Helper function to get product image
@@ -182,61 +197,63 @@ export default function FancyCarousel() {
             </Button>
           </div>
 
-          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 gap-4">
-            {categories && categories.length > 0 ? (
-              categories.slice(0, showMoreCategories ? categories.length : 6).map((category, index) => (
-                <div 
-                  key={category._id || index} 
-                  className="flex flex-col items-center space-y-2 group cursor-pointer transform hover:scale-105 transition-all duration-300"
-                  onClick={() => handleCategoryClick(category.name)}
-                >
-                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-2 border-gray-200 overflow-hidden group-hover:border-purple-400 group-hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-purple-50 to-pink-50">
-                    <Image
-                      src={getCategoryImage(category)}
-                      alt={category.name}
-                      width={80}
-                      height={80}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                    />
-                  </div>
-                  <span className="text-xs sm:text-sm text-center text-gray-700 group-hover:text-purple-600 transition-colors font-medium">
-                    {category.name}
-                  </span>
-                </div>
-              ))
-            ) : (
-              // Fallback categories if database is empty
-              [
-                { name: "Balloons", image: "/balloon.svg" },
-                { name: "Mugs", image: "/mug.svg" },
-                { name: "Birthday Cards", image: "/birthday-invitation.svg" },
-                { name: "Home & Living", image: "/home.svg" },
-                { name: "Party Supplies", image: "/party.svg" },
-                { name: "Decorations", image: "/decoration.svg" },
-                { name: "Gifts", image: "/gift.svg" },
-                { name: "Keychains", image: "/keychain.svg" },
-              ].slice(0, showMoreCategories ? 8 : 6).map((category, index) => (
-                <div 
-                  key={index} 
-                  className="flex flex-col items-center space-y-2 group cursor-pointer transform hover:scale-105 transition-all duration-300"
-                  onClick={() => handleCategoryClick(category.name)}
-                >
-                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-2 border-gray-200 overflow-hidden group-hover:border-purple-400 group-hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-purple-50 to-pink-50">
-                    <Image
-                      src={category.image}
-                      alt={category.name}
-                      width={80}
-                      height={80}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                    />
-                  </div>
-                  <span className="text-xs sm:text-sm text-center text-gray-700 group-hover:text-purple-600 transition-colors font-medium">
-                    {category.name}
-                  </span>
-                </div>
-              ))
-            )}
-          </div>
+          // ...existing code...
+<div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 gap-4">
+  {categories && categories.length > 0 ? (
+    categories.slice(0, showMoreCategories ? categories.length : 6).map((category, index) => (
+      <div 
+        key={category._id || index} 
+        className="flex flex-col items-center space-y-2 group cursor-pointer transform hover:scale-105 transition-all duration-300"
+        onClick={() => handleCategoryClick(category.name)}
+      >
+        <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-2 border-gray-200 overflow-hidden group-hover:border-purple-400 group-hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-purple-50 to-pink-50">
+          <Image
+            src={getCategoryImage(category)}
+            alt={category.name}
+            width={80}
+            height={80}
+            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+          />
+        </div>
+        <span className="text-xs sm:text-sm text-center text-gray-700 group-hover:text-purple-600 transition-colors font-medium">
+          {category.name}
+        </span>
+      </div>
+    ))
+  ) : (
+    // Fallback categories if database is empty
+    [
+      { name: "Balloons", image: "/balloon.svg" },
+      { name: "Mugs", image: "/mug.svg" },
+      { name: "Birthday Cards", image: "/birthday-invitation.svg" },
+      { name: "Home & Living", image: "/home.svg" },
+      { name: "Party Supplies", image: "/party.svg" },
+      { name: "Decorations", image: "/decoration.svg" },
+      { name: "Gifts", image: "/gift.svg" },
+      { name: "Keychains", image: "/keychain.svg" },
+    ].slice(0, showMoreCategories ? 8 : 6).map((category, index) => (
+      <div 
+        key={index} 
+        className="flex flex-col items-center space-y-2 group cursor-pointer transform hover:scale-105 transition-all duration-300"
+        onClick={() => handleCategoryClick(category.name)}
+      >
+        <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-2 border-gray-200 overflow-hidden group-hover:border-purple-400 group-hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-purple-50 to-pink-50">
+          <Image
+            src={category.image}
+            alt={category.name}
+            width={80}
+            height={80}
+            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+          />
+        </div>
+        <span className="text-xs sm:text-sm text-center text-gray-700 group-hover:text-purple-600 transition-colors font-medium">
+          {category.name}
+        </span>
+      </div>
+    ))
+  )}
+</div>
+// ...existing code...
         </section>
 
         {/* Hot Sales Section */}

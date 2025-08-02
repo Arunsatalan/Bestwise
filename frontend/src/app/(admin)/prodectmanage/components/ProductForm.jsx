@@ -318,7 +318,7 @@ const handleSubmit = async () => {
     });
 
     // Use hardcoded URL for now to avoid double /api issue
-    const baseURL = "http://localhost:5000";
+    const baseURL = process.env.NEXT_PUBLIC_API_URL_2;
     const url = product ? `${baseURL}/api/products/${product.id}` : `${baseURL}/api/products`;
 
     const method = product ? "PUT" : "POST";

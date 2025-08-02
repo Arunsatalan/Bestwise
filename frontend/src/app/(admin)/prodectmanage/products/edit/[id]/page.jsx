@@ -24,7 +24,7 @@ export default function EditProduct() {
       setError(null)
       
       // Fetch product data from backend
-      const response = await fetch(`http://localhost:5000/api/products/${params.id}`)
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products/${params.id}`)
       
       if (!response.ok) {
         throw new Error(`Failed to fetch product: ${response.status}`)

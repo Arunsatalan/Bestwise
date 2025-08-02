@@ -3,6 +3,7 @@
 import React from 'react';
 import { useEffect, useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
+import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { setProducts, setLoading } from "./store"
 import { 
@@ -22,6 +23,7 @@ function getValidImageUrl(url) {
 
 export function ProductShowcase({ filtered }) {
   const dispatch = useDispatch()
+  const router = useRouter()
   const { products, filteredProducts, loading, error } = useSelector((state) => state.products)
   const [realProducts, setRealProducts] = useState([])
   const [isLoadingProducts, setIsLoadingProducts] = useState(true)
@@ -118,7 +120,8 @@ export function ProductShowcase({ filtered }) {
   // Function to handle buy now
   const handleBuyNow = (product) => {
     console.log("Buy now:", product)
-    // Add your buy now logic here
+    // Navigate to product detail page with product ID
+    router.push(`/productDetail/${product._id}`)
   }
 
   if (loading || isLoadingProducts) {
@@ -170,11 +173,16 @@ export function ProductShowcase({ filtered }) {
         >
           <div className="relative h-48">
             <Image 
-              src={getValidImageUrl(product.image)} 
+              src={
+                product.images && product.images.length > 0
+                  ? (typeof product.images[0] === 'object' && product.images[0].url 
+                      ? product.images[0].url 
+                      : product.images[0])
+                  : "/placeholder.svg"
+              } 
               alt={product.name} 
               fill 
-              className="object-contain p-4"
-              unoptimized={getValidImageUrl(product.image) === '/placeholder.svg'}
+              className="object-contain p-4" 
             />
 
             {/* Improved discount tag design */}

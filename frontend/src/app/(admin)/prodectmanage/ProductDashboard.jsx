@@ -85,7 +85,14 @@ export default function ProductDashboard() {
 
   const fetchProducts = async () => {
     try {
-      const response = await fetch("http://localhost:5000/api/products")
+      const queryParams = new URLSearchParams({
+        search: searchTerm,
+        category: filterCategory,
+        status: filterStatus,
+        stock: filterStock,
+        limit: "1000",
+      })
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products?${queryParams.toString()}`)
       const result = await response.json()
       console.log("Fetched data:", result)
       setProducts(Array.isArray(result.data) ? result.data : [])
@@ -96,9 +103,17 @@ export default function ProductDashboard() {
     }
   }
 
-  // Build unique mainCategory list from products
-  const categoryList = Array.from(new Set(products.map(p => p.mainCategory).filter(Boolean)))
-
+  const fetchCategories = async () => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/categories`)
+      const result = await response.json()
+      if (result.success) {
+        setCategories(Array.isArray(result.data) ? result.data : [])
+      }
+    } catch (error) {
+      console.error("Error fetching categories:", error)
+    }
+  }
 
   const getStockStatus = (stock) => {
     if (stock === 0) return { label: "Out of Stock", color: "destructive" }
@@ -113,7 +128,7 @@ export default function ProductDashboard() {
       "Are you sure you want to delete this product? This action cannot be undone.",
       async () => {
         try {
-          const response = await fetch(`/api/products/${id}`, { method: "DELETE" })
+          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products/${id}`, { method: "DELETE" })
           if (response.ok) {
             showSuccess("Success", "Product deleted successfully!", () => {
               // Stay on the same page and refresh the product list
