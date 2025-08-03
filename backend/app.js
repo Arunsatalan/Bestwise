@@ -1,4 +1,5 @@
 const express = require("express");
+const path = require('path');
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const connectDB = require("./config/db");
@@ -12,6 +13,7 @@ const categoryRoutes = require('./routes/categoryRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
 const sendEmailRoutes = require('./routes/sendMailRotes');
 const giftContributionRoutes = require('./routes/giftContributionRoutes');
+const heroSectionRoutes = require('./routes/heroSectionRoutes');
 
 
 
@@ -23,6 +25,9 @@ const allowedOrigins = ['http://localhost:3000', 'http://localhost:3001'];
 if (process.env.FRONT_URL) {
   allowedOrigins.push(process.env.FRONT_URL);
 }
+
+// Serve static files from uploads directory
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.use(cors({
   origin: allowedOrigins,
@@ -43,6 +48,7 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/Email', sendEmailRoutes);
 app.use('/api/gift', giftContributionRoutes);
+app.use('/api/herosection', heroSectionRoutes);
 
 
 module.exports = app;

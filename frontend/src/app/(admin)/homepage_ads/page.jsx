@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
 import { Plus, Edit, Trash2, Upload, Eye, Save, X } from 'lucide-react'
 import Image from 'next/image'
-
+import SliderManagement from './components/SliderManagement'
 const HomepageAdsAdmin = () => {
   // State for different sections
   const [heroSlides, setHeroSlides] = useState([
@@ -157,51 +157,8 @@ const HomepageAdsAdmin = () => {
 
         {/* Hero Slider Tab */}
         <TabsContent value="hero" className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-semibold">Hero Slider Management</h2>
-            <Button onClick={() => openModal('hero')} className="bg-purple-600 hover:bg-purple-700">
-              <Plus className="w-4 h-4 mr-2" />
-              Add Slide
-            </Button>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {heroSlides.map((slide) => (
-              <Card key={slide.id} className="overflow-hidden">
-                <div className="relative h-48">
-                  <Image
-                    src={slide.image || '/placeholder.svg'}
-                    alt={slide.title}
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-                <CardContent className="p-4">
-                  <h3 className="font-semibold text-lg mb-2">{slide.title}</h3>
-                  <p className="text-gray-600 text-sm mb-4">{slide.description}</p>
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => openModal('hero', slide)}
-                    >
-                      <Edit className="w-4 h-4 mr-1" />
-                      Edit
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={() => handleDelete('hero', slide.id)}
-                    >
-                      <Trash2 className="w-4 h-4 mr-1" />
-                      Delete
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
+  <SliderManagement />
+</TabsContent>
 
         {/* Events Tab */}
         <TabsContent value="events" className="space-y-4">

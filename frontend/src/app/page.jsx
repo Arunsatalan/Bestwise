@@ -24,8 +24,6 @@ import { addToWishlist } from "./slices/wishlistSlice";
 import { toast, Toaster } from 'sonner';
 import useIsMobile from "./hooks/useIsMobile";
 
-const images = ["/1.jpg", "/2.jpg", "/3.jpg"]
-
 export default function FancyCarousel() {
   const { allProducts } = useSelector((state) => state.productsState)
   const { categories } = useSelector((state) => state.categoriesState)
@@ -33,6 +31,8 @@ export default function FancyCarousel() {
   const dispatch = useDispatch()
     
   const [showMoreCategories, setShowMoreCategories] = useState(false); 
+  const [heroImages, setHeroImages] = useState([]);
+  const [heroLoading, setHeroLoading] = useState(true);
 
   const [loading, setLoading] = useState(true);
   const [localCategories, setLocalCategories] = useState([]);
@@ -65,7 +65,33 @@ export default function FancyCarousel() {
         setLocalCategories([]);
       }
     };
+
+    // Fetch hero section images from backend
+    const fetchHeroImages = async () => {
+      try {
+        setHeroLoading(true);
+        const res = await fetch("/api/herosection");
+        const data = await res.json();
+        
+        if (data.success && data.data && data.data.length > 0) {
+          // Extract image URLs from hero section data
+          const images = data.data.map(slide => slide.image);
+          setHeroImages(images);
+        } else {
+          // Fallback to static images if no data from backend
+          setHeroImages(["/1.jpg", "/2.jpg", "/3.jpg"]);
+        }
+      } catch (err) {
+        console.error("Error fetching hero images:", err);
+        // Fallback to static images on error
+        setHeroImages(["/1.jpg", "/2.jpg", "/3.jpg"]);
+      } finally {
+        setHeroLoading(false);
+      }
+    };
+
     fetchCategories();
+    fetchHeroImages();
   }, [dispatch])
 
   // Helper function to get product image
@@ -135,7 +161,7 @@ export default function FancyCarousel() {
     slidesToShow: 1,
     slidesToScroll: 1,
     autoplay: true,
-    autoplaySpeed: 3000,
+    autoplaySpeed: 4000, // Changed from 3000 to 4000 (4 seconds)
     arrows: true,
     responsive: [
       {
@@ -166,19 +192,25 @@ export default function FancyCarousel() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-12">
         {/* Hero Carousel */}
         <div className="w-full h-[300px] sm:h-[400px] lg:h-[500px] relative rounded-xl overflow-hidden shadow-lg">
-          <Slider {...settings}>
-            {images.map((src, index) => (
-              <div key={index} className="relative w-full h-[300px] sm:h-[400px] lg:h-[500px]">
-                <Image
-                  src={src || "/placeholder.svg"}
-                  alt={`Slide ${index}`}
-                  fill
-                  className="object-cover"
-                  priority={index === 0}
-                />
-              </div>
-            ))}
-          </Slider>
+          {heroLoading ? (
+            <div className="w-full h-full flex items-center justify-center bg-gray-200">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+            </div>
+          ) : (
+            <Slider {...settings}>
+              {heroImages.map((src, index) => (
+                <div key={index} className="relative w-full h-[300px] sm:h-[400px] lg:h-[500px]">
+                  <Image
+                    src={src || "/placeholder.svg"}
+                    alt={`Hero Slide ${index + 1}`}
+                    fill
+                    className="object-cover"
+                    priority={index === 0}
+                  />
+                </div>
+              ))}
+            </Slider>
+          )}
         </div>
 
         {/* Categories Section */}
