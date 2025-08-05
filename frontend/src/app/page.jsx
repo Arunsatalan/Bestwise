@@ -33,6 +33,8 @@ export default function FancyCarousel() {
   const [showMoreCategories, setShowMoreCategories] = useState(false); 
   const [heroImages, setHeroImages] = useState([]);
   const [heroLoading, setHeroLoading] = useState(true);
+  const [events, setEvents] = useState([]);
+  const [eventsLoading, setEventsLoading] = useState(true);
 
   const [loading, setLoading] = useState(true);
   const [localCategories, setLocalCategories] = useState([]);
@@ -40,13 +42,6 @@ export default function FancyCarousel() {
   const isMobile = useIsMobile();
   const initialCount = isMobile ? 4 : 6;
   const categoriesToShow = showMoreCategories ? categories : categories.slice(0, initialCount);
-  // Event data for Upcoming Events section
-  const events = [
-    { key: "birthday", name: "Birthday Party" },
-    { key: "anniversary", name: "Anniversary Celebration" },
-    { key: "holiday", name: "Holiday Gift Guide" },
-    { key: "new-year", name: "New Year's Eve" },
-  ];
 
   useEffect(() => {
     dispatch(getProducts())
@@ -90,8 +85,37 @@ export default function FancyCarousel() {
       }
     };
 
+    // Fetch upcoming events from backend
+    const fetchEvents = async () => {
+      try {
+        setEventsLoading(true);
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/upcomingevent`);
+        const data = await res.json();
+        
+        console.log("Events fetched:", data); // Debug log
+        console.log("Data type:", typeof data, "Is array:", Array.isArray(data)); // Debug log
+        
+        if (data && Array.isArray(data)) {
+          // Show all active events for now (remove featured filter temporarily)
+          const activeEvents = data.filter(event => event.isActive);
+          console.log("Active events:", activeEvents); // Debug log
+          console.log("Setting events to:", activeEvents.length, "events"); // Debug log
+          setEvents(activeEvents);
+        } else {
+          console.log("No events data or not array"); // Debug log
+          setEvents([]);
+        }
+      } catch (err) {
+        console.error("Error fetching events:", err);
+        setEvents([]);
+      } finally {
+        setEventsLoading(false);
+      }
+    };
+
     fetchCategories();
     fetchHeroImages();
+    fetchEvents();
   }, [dispatch])
 
   // Helper function to get product image
@@ -382,29 +406,58 @@ export default function FancyCarousel() {
           <div className="flex items-center gap-2">
             <FaRegClock className="text-purple-600" />
             <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">Upcoming Events</h2>
+            <span className="text-sm text-gray-500">({events.length} events)</span>
           </div>
 
-          <div
-            className="flex flex-row gap-4 overflow-x-auto pb-2 -mx-4 px-4 sm:grid sm:grid-cols-2 lg:grid-cols-4 sm:gap-6 sm:overflow-visible sm:mx-0 sm:px-0"
-            style={{ WebkitOverflowScrolling: 'touch' }}
-          >
-            {events.map((event) => (
-              <Card
-                key={event.key}
-                className="min-w-[220px] max-w-[90vw] sm:min-w-0 sm:max-w-none overflow-hidden group hover:shadow-lg transition-shadow cursor-pointer flex-shrink-0"
-                onClick={() => router.push(`/allProducts/showcase/${event.key}`)}
-              >
-                <CardContent className="p-0">
-                  <div className="relative h-48 sm:h-56 flex items-center justify-center bg-gray-100">
-                    {/* Removed Image rendering */}
-                    <div className="absolute bottom-0 right-0 bg-white/95 backdrop-blur-sm px-4 py-2 rounded-tl-2xl">
-                      <span className="font-medium text-gray-900">{event.name}</span>
+          {eventsLoading ? (
+            <div className="flex justify-center items-center h-48">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+            </div>
+          ) : events.length === 0 ? (
+            <div className="text-center py-12">
+              <FaRegClock className="mx-auto h-12 w-12 text-gray-400" />
+              <h3 className="mt-2 text-sm font-medium text-gray-900">No upcoming events</h3>
+              <p className="mt-1 text-sm text-gray-500">Check back later for exciting events!</p>
+            </div>
+          ) : (
+            <div
+              className="flex flex-row gap-4 overflow-x-auto pb-2 -mx-4 px-4 sm:grid sm:grid-cols-2 lg:grid-cols-4 sm:gap-6 sm:overflow-visible sm:mx-0 sm:px-0"
+              style={{ WebkitOverflowScrolling: 'touch' }}
+            >
+              {events.map((event) => (
+                <Card
+                  key={event._id}
+                  className="min-w-[220px] max-w-[90vw] sm:min-w-0 sm:max-w-none overflow-hidden group hover:shadow-lg transition-shadow cursor-pointer flex-shrink-0"
+                  onClick={() => router.push(`/allProducts/showcase?category=${encodeURIComponent(event.category)}`)}
+                >
+                  <CardContent className="p-0">
+                    <div className="relative h-48 sm:h-56">
+                      {event.image ? (
+                        <Image
+                          src={event.image}
+                          alt={event.name}
+                          fill
+                          className="object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-100 to-pink-100">
+                          <FaRegClock className="text-purple-400 text-4xl" />
+                        </div>
+                      )}
+                      <div className="absolute bottom-0 right-0 bg-white/95 backdrop-blur-sm px-4 py-2 rounded-tl-2xl">
+                        <span className="font-medium text-gray-900">{event.name}</span>
+                      </div>
+                      <div className="absolute top-2 left-2">
+                        <div className="bg-purple-600 text-white px-2 py-1 rounded-full text-xs font-medium">
+                          {new Date(event.date).toLocaleDateString()}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </section>
 
         {/* All Products */}

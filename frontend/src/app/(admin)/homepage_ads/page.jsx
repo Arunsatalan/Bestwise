@@ -13,6 +13,9 @@ import { toast } from 'sonner'
 import { Plus, Edit, Trash2, Upload, Eye, Save, X } from 'lucide-react'
 import Image from 'next/image'
 import SliderManagement from './components/SliderManagement'
+import EventManagement from './components/EventManagement'
+
+
 const HomepageAdsAdmin = () => {
   // State for different sections
   const [heroSlides, setHeroSlides] = useState([
@@ -162,51 +165,7 @@ const HomepageAdsAdmin = () => {
 
         {/* Events Tab */}
         <TabsContent value="events" className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-semibold">Events Management</h2>
-            <Button onClick={() => openModal('events')} className="bg-purple-600 hover:bg-purple-700">
-              <Plus className="w-4 h-4 mr-2" />
-              Add Event
-            </Button>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {events.map((event) => (
-              <Card key={event.id} className="overflow-hidden">
-                <div className="relative h-48">
-                  <Image
-                    src={event.image || '/placeholder.svg'}
-                    alt={event.name}
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-                <CardContent className="p-4">
-                  <h3 className="font-semibold text-lg mb-2">{event.name}</h3>
-                  <p className="text-gray-600 text-sm mb-2">Key: {event.key}</p>
-                  <p className="text-gray-600 text-sm mb-4">{event.description}</p>
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => openModal('events', event)}
-                    >
-                      <Edit className="w-4 h-4 mr-1" />
-                      Edit
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={() => handleDelete('events', event.id)}
-                    >
-                      <Trash2 className="w-4 h-4 mr-1" />
-                      Delete
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          <EventManagement events={events} setEvents={setEvents} />
         </TabsContent>
 
         {/* Services Tab */}

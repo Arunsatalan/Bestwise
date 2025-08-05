@@ -14,7 +14,7 @@ const uploadRoutes = require('./routes/uploadRoutes');
 const sendEmailRoutes = require('./routes/sendMailRotes');
 const giftContributionRoutes = require('./routes/giftContributionRoutes');
 const heroSectionRoutes = require('./routes/heroSectionRoutes');
-
+const upcomingevent = require('./routes/upcomingevent');
 
 
 const app = express();
@@ -49,7 +49,7 @@ app.use('/api/upload', uploadRoutes);
 app.use('/api/Email', sendEmailRoutes);
 app.use('/api/gift', giftContributionRoutes);
 app.use('/api/herosection', heroSectionRoutes);
-
+app.use("/api/upcomingevent", upcomingevent);
 
 module.exports = app;
 

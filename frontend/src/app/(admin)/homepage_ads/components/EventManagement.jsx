@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -13,41 +13,30 @@ import { Plus, Edit, Trash2, Calendar, Upload } from "lucide-react"
 import Image from "next/image"
 
 export default function EventManagement() {
-  const [events, setEvents] = useState([
-    {
-      id: "1",
-      name: "Summer Sale",
-      description: "Amazing summer discounts on all products",
-      date: "2024-07-15",
-      image: "/placeholder.svg?height=300&width=400",
-      isActive: true,
-      category: "Sale",
-      featured: true,
-    },
-    {
-      id: "2",
-      name: "Birthday Party Package",
-      description: "Complete birthday celebration package",
-      date: "2024-08-01",
-      image: "/placeholder.svg?height=300&width=400",
-      isActive: true,
-      category: "Party",
-      featured: false,
-    },
-    {
-      id: "3",
-      name: "Wedding Showcase",
-      description: "Elegant wedding decoration showcase",
-      date: "2024-09-10",
-      image: "/placeholder.svg?height=300&width=400",
-      isActive: false,
-      category: "Wedding",
-      featured: false,
-    },
-  ])
-
+  const [events, setEvents] = useState([])
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
+  const [loading, setLoading] = useState(false)
+
+  // Fetch events from backend
+  useEffect(() => {
+    fetchEvents()
+  }, [])
+
+  const fetchEvents = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/upcomingevent/all`)
+      if (response.ok) {
+        const data = await response.json()
+        setEvents(data)
+      }
+    } catch (error) {
+      console.error('Error fetching events:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const filteredEvents = events.filter(
     (event) =>
@@ -55,16 +44,53 @@ export default function EventManagement() {
       event.category.toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
-  const toggleEventStatus = (id) => {
-    setEvents(events.map((event) => (event.id === id ? { ...event, isActive: !event.isActive } : event)))
+  const toggleEventStatus = async (id) => {
+    try {
+      const event = events.find(e => e._id === id)
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/upcomingevent/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ ...event, isActive: !event.isActive }),
+      })
+      if (response.ok) {
+        fetchEvents() // Refresh the events list
+      }
+    } catch (error) {
+      console.error('Error updating event status:', error)
+    }
   }
 
-  const toggleFeatured = (id) => {
-    setEvents(events.map((event) => (event.id === id ? { ...event, featured: !event.featured } : event)))
+  const toggleFeatured = async (id) => {
+    try {
+      const event = events.find(e => e._id === id)
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/upcomingevent/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ ...event, featured: !event.featured }),
+      })
+      if (response.ok) {
+        fetchEvents() // Refresh the events list
+      }
+    } catch (error) {
+      console.error('Error updating featured status:', error)
+    }
   }
 
-  const deleteEvent = (id) => {
-    setEvents(events.filter((event) => event.id !== id))
+  const deleteEvent = async (id) => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/upcomingevent/${id}`, {
+        method: 'DELETE',
+      })
+      if (response.ok) {
+        fetchEvents() // Refresh the events list
+      }
+    } catch (error) {
+      console.error('Error deleting event:', error)
+    }
   }
 
   const EventForm = ({ event, onSave, onCancel }) => {
@@ -79,14 +105,36 @@ export default function EventManagement() {
         featured: false,
       },
     )
+    const [uploading, setUploading] = useState(false)
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
       e.preventDefault()
-      const newEvent = {
-        id: event?.id || Date.now().toString(),
-        ...formData,
+      
+      try {
+        const url = event 
+          ? `${process.env.NEXT_PUBLIC_API_URL}/upcomingevent/${event._id}`
+          : `${process.env.NEXT_PUBLIC_API_URL}/upcomingevent`
+        
+        const method = event ? 'PUT' : 'POST'
+        
+        const response = await fetch(url, {
+          method: method,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(formData),
+        })
+
+        if (response.ok) {
+          const savedEvent = await response.json()
+          onSave(savedEvent)
+          fetchEvents() // Refresh the events list
+        } else {
+          console.error('Error saving event')
+        }
+      } catch (error) {
+        console.error('Error saving event:', error)
       }
-      onSave(newEvent)
     }
 
     return (
@@ -136,18 +184,41 @@ export default function EventManagement() {
 
         <div>
           <Label htmlFor="image">Event Image</Label>
-          <div className="flex items-center gap-4">
-            <Input
-              id="image"
-              value={formData.image}
-              onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-              placeholder="Image URL"
-            />
-            <Button type="button" variant="outline">
-              <Upload className="w-4 h-4 mr-2" />
-              Upload
-            </Button>
-          </div>
+          <input
+            id="image"
+            type="file"
+            accept="image/*"
+            onChange={async (e) => {
+              const file = e.target.files[0]
+              if (!file) return
+              setUploading(true)
+              const formDataUpload = new FormData()
+              formDataUpload.append('file', file)
+              try {
+                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/upload/single`, {
+                  method: 'POST',
+                  body: formDataUpload,
+                })
+                if (res.ok) {
+                  const data = await res.json()
+                  setFormData(prev => ({ ...prev, image: data.data.url }))
+                } else {
+                  alert('Image upload failed')
+                }
+              } catch (err) {
+                alert('Image upload error')
+              } finally {
+                setUploading(false)
+              }
+            }}
+            className="block w-full border rounded p-2"
+          />
+          {uploading && <div className="text-sm text-gray-500 mt-2">Uploading...</div>}
+          {formData.image && (
+            <div className="mt-2">
+              <Image src={formData.image} alt="Preview" width={120} height={80} className="rounded" />
+            </div>
+          )}
         </div>
 
         <div className="flex items-center justify-between">
@@ -173,7 +244,7 @@ export default function EventManagement() {
           <Button type="button" variant="outline" onClick={onCancel}>
             Cancel
           </Button>
-          <Button type="submit" className="bg-purple-600 hover:bg-purple-700">
+          <Button type="submit" className="bg-purple-600 hover:bg-purple-700" disabled={uploading}>
             {event ? "Update" : "Add"} Event
           </Button>
         </div>
@@ -222,9 +293,20 @@ export default function EventManagement() {
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {loading ? (
+            <div className="flex justify-center items-center h-48">
+              <div className="text-lg">Loading events...</div>
+            </div>
+          ) : filteredEvents.length === 0 ? (
+            <div className="text-center py-12">
+              <Calendar className="mx-auto h-12 w-12 text-gray-400" />
+              <h3 className="mt-2 text-sm font-medium text-gray-900">No events</h3>
+              <p className="mt-1 text-sm text-gray-500">Get started by creating a new event.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredEvents.map((event) => (
-              <Card key={event.id} className="overflow-hidden">
+              <Card key={event._id} className="overflow-hidden">
                 <CardContent className="p-0">
                   <div className="relative h-48">
                     <Image src={event.image || "/placeholder.svg"} alt={event.name} fill className="object-cover" />
@@ -245,11 +327,11 @@ export default function EventManagement() {
                     <div className="flex justify-between items-center">
                       <div className="flex items-center gap-4">
                         <div className="flex items-center gap-2">
-                          <Switch checked={event.isActive} onCheckedChange={() => toggleEventStatus(event.id)} />
+                          <Switch checked={event.isActive} onCheckedChange={() => toggleEventStatus(event._id)} />
                           <span className="text-sm">Active</span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <Switch checked={event.featured} onCheckedChange={() => toggleFeatured(event.id)} />
+                          <Switch checked={event.featured} onCheckedChange={() => toggleFeatured(event._id)} />
                           <span className="text-sm">Featured</span>
                         </div>
                       </div>
@@ -269,7 +351,7 @@ export default function EventManagement() {
                           <EventForm
                             event={event}
                             onSave={(updatedEvent) => {
-                              setEvents(events.map((e) => (e.id === updatedEvent.id ? updatedEvent : e)))
+                              setEvents(events.map((e) => (e._id === updatedEvent._id ? updatedEvent : e)))
                             }}
                             onCancel={() => {}}
                           />
@@ -279,7 +361,7 @@ export default function EventManagement() {
                         variant="outline"
                         size="sm"
                         className="text-red-600 hover:text-red-700 bg-transparent"
-                        onClick={() => deleteEvent(event.id)}
+                        onClick={() => deleteEvent(event._id)}
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
@@ -289,6 +371,7 @@ export default function EventManagement() {
               </Card>
             ))}
           </div>
+          )}
         </CardContent>
       </Card>
     </div>
