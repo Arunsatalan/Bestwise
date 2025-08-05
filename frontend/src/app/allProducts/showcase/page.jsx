@@ -139,7 +139,7 @@ export default function ShowcasePage() {
         </div>
 
         {/* Mobile filter drawer */}
-        <MobileFilterDrawer initialCategory={categoryFromUrl} />
+        <MobileFilterDrawer />
       </div>
     </Providers>
   )
