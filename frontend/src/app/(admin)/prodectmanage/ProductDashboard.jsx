@@ -58,12 +58,16 @@ import { Modal, useConfirmModal } from "../../../components/ui/modal"
 
 export default function ProductDashboard() {
   const [products, setProducts] = useState([])
+  const [categories, setCategories] = useState([])
   const [searchTerm, setSearchTerm] = useState("")
   const [filterCategory, setFilterCategory] = useState("")
   const [filterStatus, setFilterStatus] = useState("")
   const [filterStock, setFilterStock] = useState("")
   const [loading, setLoading] = useState(true)
   const { isOpen, config, showDelete, showSuccess, showError, closeModal } = useConfirmModal()
+
+  // Derive categoryList from categories
+  const categoryList = categories.map(cat => cat.name || cat.key || cat)
 
   // Check URL parameters for automatic filtering
   useEffect(() => {
@@ -80,6 +84,7 @@ export default function ProductDashboard() {
   useEffect(() => {
     if (typeof window !== "undefined") {
       fetchProducts()
+      fetchCategories()
     }
   }, [])
 
@@ -112,6 +117,7 @@ export default function ProductDashboard() {
       }
     } catch (error) {
       console.error("Error fetching categories:", error)
+      setCategories([]) // Set empty array on error
     }
   }
 
