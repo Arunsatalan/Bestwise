@@ -30,6 +30,7 @@ function ProductDetailPage() {
   const [mainImageError, setMainImageError] = useState(false);
   const [thumbnailErrors, setThumbnailErrors] = useState({});
   const [productImageErrors, setProductImageErrors] = useState({});
+  const [recommendedProducts, setRecommendedProducts] = useState([]);
 
 
   // Fetch specific product by ID
@@ -77,6 +78,17 @@ function ProductDetailPage() {
   useEffect(() => {
     dispatch(getProducts());
   }, [dispatch])
+
+  // Generate random recommended products
+  useEffect(() => {
+    if (allProducts && allProducts.length > 0 && product) {
+      const filtered = allProducts
+        .filter(p => p._id !== product._id)
+        .sort(() => 0.5 - Math.random())
+        .slice(0, 9);
+      setRecommendedProducts(filtered);
+    }
+  }, [allProducts, product]);
 
   // Get the main product image
   const getMainImage = () => {
@@ -133,15 +145,15 @@ function ProductDetailPage() {
 
   return (
 
-    <div className='w-full justify-center flex-co px-4 sm:px-8 md:px-16 lg:px-24'>  <Navbar />
+    <div className='w-full justify-center flex-col px-4 sm:px-8 md:px-16 lg:px-24'>  <Navbar />
       <div className='w-full flex flex-col lg:flex-row h-auto mt-[20px]'>
         {/* Left Section - Image & Description */}
         <div className='flex-col justify-center w-full lg:w-[60%]'>
-          <div className='w-full h-[300px] sm:h-[400px] md:h-[500px] bg-gray-300 rounded-[10px] overflow-hidden relative'>
+          <div className='w-full h-[300px] sm:h-[400px] md:h-[500px] bg-gray-100 rounded-[10px] overflow-hidden relative flex items-center justify-center'>
             <img
               src={getMainImage()}
               alt={product.name}
-              className="w-full h-full object-cover rounded-[10px]"
+              className="max-w-full max-h-full object-contain rounded-[10px] p-4"
               onError={() => {
                 if (!mainImageError) setMainImageError(true);
               }}
@@ -398,8 +410,8 @@ function ProductDetailPage() {
 
       {/* all Products */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 mt-8 md:mt-[100px]">
-        {allProducts && allProducts.length > 0 ? (
-          allProducts.slice(0, 9).map((product) => {
+        {recommendedProducts.length > 0 ? (
+          recommendedProducts.map((product) => {
             const getProductImage = () => {
               if (productImageErrors[product._id]) return '/placeholder.svg';
               if (product?.images && product.images.length > 0) {
